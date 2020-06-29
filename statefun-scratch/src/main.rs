@@ -1,43 +1,42 @@
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
+use bytes::buf::BufExt;
 use exitfailure::ExitFailure;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
-use prost::Message;
+use protobuf::Message;
 
-use bytes::BytesMut;
-use statefun_protos::http_function::to_function;
 use statefun_protos::http_function::FromFunction;
 use statefun_protos::http_function::ToFunction;
+use statefun_protos::http_function::ToFunction_oneof_request;
 use statefun_scratch_protos::example::GreetRequest;
 
 async fn hello_world(req: Request<Body>) -> Result<Response<Body>, failure::Error> {
-    let (parts, body) = req.into_parts();
-    log::info!("Parts {:#?}", parts);
+    let (_parts, body) = req.into_parts();
+    log::info!("Parts {:#?}", _parts);
 
     let full_body = hyper::body::to_bytes(body).await?;
-    let to_function = ToFunction::decode(full_body)?;
+    let to_function: ToFunction = protobuf::parse_from_reader(&mut full_body.reader())?;
 
     let batch_request = to_function.request.expect("No request was sent.");
-    let to_function::Request::Invocation(batch_request) = batch_request;
+    let ToFunction_oneof_request::invocation(batch_request) = batch_request;
 
     log::info!("Got batch request {:#?}", batch_request);
 
-    for invocation in batch_request.invocations {
-        let argument = invocation.argument.expect("No argument given.");
-        let greet_request = GreetRequest::decode(argument.value.as_ref())?;
-        log::info!("We should greet {:#?}", greet_request);
+    for invocation in batch_request.invocations.into_iter() {
+        let argument = invocation.argument.unwrap();
+        let _greet_request: GreetRequest = argument.unpack()?.unwrap();
+        log::info!("We should greet {:#?}", _greet_request);
     }
 
-    let from_function = FromFunction { response: None };
+    let from_function = FromFunction::new();
 
-    let mut buffer = BytesMut::new();
-    from_function.encode(&mut buffer)?;
+    let encoded_result = from_function.write_to_bytes()?;
 
     let response = Response::builder()
         .header("content-type", "application/octet-stream")
-        .body(buffer.freeze().into())?;
+        .body(encoded_result.into())?;
 
     Ok(response)
 }

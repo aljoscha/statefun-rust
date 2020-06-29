@@ -13,7 +13,6 @@ env_logger = "0.7.1"
 tokio = { version = "0.2", features = ["full"] }
 hyper = "0.13"
 bytes = "0.5"
-prost = "0.6"
-prost-types = "0.6"
+protobuf = "2.15"
 statefun-protos = { path = "../statefun-protos" }
 statefun-scratch-protos = { path = "../statefun-scratch-protos" }

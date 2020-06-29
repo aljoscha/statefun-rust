@@ -5,9 +5,8 @@ authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-bytes = "0.5"
-prost = "0.6"
-prost-types = "0.6"
+protobuf = "2.15"
 
 [build-dependencies]
-prost-build = { version = "0.6" }
+protoc-rust = "2.15"
+glob = "0.3"
