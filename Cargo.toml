@@ -1,12 +1,6 @@
-[package]
-name = "statefun-rs"
-version = "0.1.0"
-authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-failure = "0.1.5"
-exitfailure = "0.5.1"
-structopt = "0.3.5"
-log = "0.4.8"
-env_logger = "0.7.1"
+[workspace]
+members = [
+    "statefun-protos",
+    "statefun-scratch",
+    "statefun-scratch-protos",
+]
