@@ -7,18 +7,15 @@ use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;
 
 pub fn greet(_context: Context, request: GreetRequest) -> Effects {
-    log::info!("We should greet {:?}", request.get_who());
+    log::info!("We should greet {:?}", request.get_name());
 
     let mut effects = Effects::new();
 
     let mut greet_response = GreetResponse::new();
-    greet_response.set_who(request.get_who().to_owned());
+    greet_response.set_name(request.get_name().to_owned());
     greet_response.set_greeting("ciao".to_string());
 
-    effects.egress(
-        EgressIdentifier::new("org.apache.flink.statefun.examples.harness", "out"),
-        greet_response,
-    );
+    effects.egress(EgressIdentifier::new("example", "greets"), greet_response);
 
     effects
 }
