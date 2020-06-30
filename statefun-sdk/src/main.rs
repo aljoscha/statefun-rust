@@ -1,12 +1,10 @@
 use exitfailure::ExitFailure;
 
-use statefun_scratch::functions::{
-    Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-};
-use statefun_scratch::transport::hyper::HyperHttpTransport;
-use statefun_scratch::transport::Transport;
 use statefun_scratch_protos::example::GreetRequest;
 use statefun_scratch_protos::example::GreetResponse;
+use statefun_sdk::functions::{Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
+use statefun_sdk::transport::hyper::HyperHttpTransport;
+use statefun_sdk::transport::Transport;
 
 pub fn greet(_context: Context, request: GreetRequest) -> Effects {
     log::info!("We should greet {:?}", request.get_who());

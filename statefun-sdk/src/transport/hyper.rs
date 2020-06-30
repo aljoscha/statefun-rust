@@ -8,10 +8,10 @@ use hyper::{Body, Request, Response, Server};
 use protobuf::Message;
 use tokio::runtime;
 
+use statefun_protos::http_function::ToFunction;
+
 use crate::functions::FunctionRegistry;
 use crate::transport::Transport;
-
-use statefun_protos::http_function::ToFunction;
 
 pub struct HyperHttpTransport {
     bind_address: SocketAddr,

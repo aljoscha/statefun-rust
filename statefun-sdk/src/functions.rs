@@ -1,13 +1,14 @@
+use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
+
+use failure::format_err;
 use protobuf::well_known_types::Any;
 use protobuf::Message;
 
-use failure::format_err;
 use statefun_protos::http_function::FromFunction;
 use statefun_protos::http_function::FromFunction_EgressMessage;
 use statefun_protos::http_function::FromFunction_InvocationResponse;
 use statefun_protos::http_function::ToFunction;
-use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 
 pub struct FunctionRegistry {
     functions: HashMap<FunctionType, Box<dyn InvokableFunction + Send>>,

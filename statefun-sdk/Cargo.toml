@@ -1,5 +1,5 @@
 [package]
-name = "statefun-scratch"
+name = "statefun-sdk"
 version = "0.1.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 edition = "2018"
