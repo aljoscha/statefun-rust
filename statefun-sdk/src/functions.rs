@@ -10,6 +10,7 @@ use statefun_protos::http_function::FromFunction_EgressMessage;
 use statefun_protos::http_function::FromFunction_InvocationResponse;
 use statefun_protos::http_function::ToFunction;
 
+#[derive(Default)]
 pub struct FunctionRegistry {
     functions: HashMap<FunctionType, Box<dyn InvokableFunction + Send>>,
 }
@@ -78,6 +79,7 @@ pub struct Address {
     pub id: String,
 }
 
+#[derive(Default)]
 pub struct Effects {
     egress_messages: Vec<(EgressIdentifier, Any)>,
 }
