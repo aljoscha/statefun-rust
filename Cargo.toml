@@ -2,5 +2,6 @@
 members = [
     "statefun-protos",
     "statefun-sdk",
-    "statefun-scratch-protos",
+    "statefun-example",
+    "statefun-example-protos",
 ]

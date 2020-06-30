@@ -1,5 +1,5 @@
 [package]
-name = "statefun-scratch-protos"
+name = "statefun-example-protos"
 version = "0.1.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 edition = "2018"

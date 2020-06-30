@@ -1,7 +1,7 @@
 use exitfailure::ExitFailure;
 
-use statefun_scratch_protos::example::GreetRequest;
-use statefun_scratch_protos::example::GreetResponse;
+use statefun_example_protos::example::GreetRequest;
+use statefun_example_protos::example::GreetResponse;
 use statefun_sdk::functions::{Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;
