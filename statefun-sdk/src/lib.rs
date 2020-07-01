@@ -57,6 +57,13 @@ impl Display for Address {
 }
 
 impl Address {
+    pub fn new(function_type: FunctionType, id: &str) -> Self {
+        Address {
+            function_type,
+            id: id.to_owned(),
+        }
+    }
+
     fn from_proto(proto_address: &ProtoAddress) -> Self {
         Address {
             function_type: FunctionType::new(
