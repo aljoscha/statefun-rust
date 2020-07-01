@@ -6,14 +6,14 @@ use statefun_example_protos::example::GreetResponse;
 use statefun_sdk::io::kafka;
 use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;
-use statefun_sdk::{Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
+use statefun_sdk::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 
 pub fn greet(context: Context, request: GreetRequest) -> Effects {
-    log::debug!("We should greet {:?}", request.get_name());
+    log::info!("We should greet {:?}", request.get_name());
 
     let seen_count: Option<Int32Value> = context.get_state("seen_count");
 
-    log::debug!(
+    log::info!(
         "We have seen {:?} {:?} times.",
         request.get_name(),
         seen_count
@@ -25,9 +25,7 @@ pub fn greet(context: Context, request: GreetRequest) -> Effects {
         Some(count) => count,
         None => Int32Value::new(),
     };
-
     updated_seen_count.set_value(updated_seen_count.get_value() + 1);
-
     effects.update_state("seen_count", &updated_seen_count);
 
     let mut greet_response = GreetResponse::new();
@@ -37,7 +35,22 @@ pub fn greet(context: Context, request: GreetRequest) -> Effects {
         request.get_name(),
         updated_seen_count.get_value()
     ));
-    let kafka_message = kafka::keyed_egress_record("greetings", request.get_name(), greet_response);
+
+    effects.send(
+        Address::new(FunctionType::new("example", "relay"), request.get_name()),
+        greet_response,
+    );
+
+    effects
+}
+
+pub fn relay(_context: Context, message: GreetResponse) -> Effects {
+    log::info!("Relaying message {:?} to Kafka.", message);
+
+    let mut effects = Effects::new();
+
+    let kafka_message =
+        kafka::keyed_egress_record("greetings", &message.get_name().to_string(), message);
     effects.egress(EgressIdentifier::new("example", "greets"), kafka_message);
 
     effects
@@ -48,6 +61,7 @@ fn main() -> Result<(), ExitFailure> {
 
     let mut function_registry = FunctionRegistry::new();
     function_registry.register_fn(FunctionType::new("example", "greeter"), greet);
+    function_registry.register_fn(FunctionType::new("example", "relay"), relay);
 
     let hyper_transport = HyperHttpTransport::new("127.0.0.1:5000".parse()?);
     hyper_transport.run(function_registry)?;
