@@ -4,10 +4,10 @@ use std::fmt::{Display, Formatter};
 use protobuf::well_known_types::Any;
 use protobuf::Message;
 
-pub use function_registry::FunctionRegistry;
+pub use internal::FunctionRegistry;
 use statefun_protos::http_function::Address as ProtoAddress;
 
-mod function_registry;
+mod internal;
 pub mod io;
 pub mod transport;
 

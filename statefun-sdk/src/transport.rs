@@ -1,4 +1,4 @@
-use crate::function_registry::FunctionRegistry;
+use crate::internal::FunctionRegistry;
 
 pub mod hyper;
 
