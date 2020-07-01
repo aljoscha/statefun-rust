@@ -1,6 +1,6 @@
 use exitfailure::ExitFailure;
-
 use protobuf::well_known_types::Int32Value;
+
 use statefun_example_protos::example::GreetRequest;
 use statefun_example_protos::example::GreetResponse;
 use statefun_sdk::io::kafka;
