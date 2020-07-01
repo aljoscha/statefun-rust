@@ -1,26 +1,29 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use protobuf::well_known_types::Any;
 use protobuf::Message;
 
 pub use function_registry::FunctionRegistry;
-use std::collections::HashMap;
+use statefun_protos::http_function::Address as ProtoAddress;
 
 mod function_registry;
 pub mod io;
 pub mod transport;
 
 pub struct Context<'a> {
-    state: &'a HashMap<String, Vec<u8>>,
+    state: &'a HashMap<&'a str, &'a [u8]>,
+    self_address: &'a ProtoAddress,
+    caller_address: &'a ProtoAddress,
 }
 
 impl<'a> Context<'a> {
-    pub fn self_address() -> Address {
-        unimplemented!()
+    pub fn self_address(&self) -> Address {
+        parse_address(self.self_address)
     }
 
-    pub fn caller_address() -> Address {
-        unimplemented!()
+    pub fn caller_address(&self) -> Address {
+        parse_address(self.caller_address)
     }
 
     pub fn get_state<T: Message>(&self, name: &str) -> Option<T> {
@@ -40,9 +43,26 @@ impl<'a> Context<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Address {
     pub function_type: FunctionType,
     pub id: String,
+}
+
+impl Display for Address {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Address {}/{}", self.function_type, self.id)
+    }
+}
+
+fn parse_address(proto_address: &ProtoAddress) -> Address {
+    Address {
+        function_type: FunctionType::new(
+            proto_address.get_namespace(),
+            proto_address.get_field_type(),
+        ),
+        id: proto_address.get_id().to_owned(),
+    }
 }
 
 #[derive(Default)]
@@ -82,7 +102,7 @@ impl Effects {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub struct FunctionType {
     namespace: String,
     name: String,

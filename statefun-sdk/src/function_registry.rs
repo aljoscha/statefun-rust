@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use failure::format_err;
-use protobuf::{Message, RepeatedField};
+use protobuf::Message;
 
 use statefun_protos::http_function::FromFunction;
 use statefun_protos::http_function::FromFunction_EgressMessage;
@@ -72,22 +72,26 @@ struct FnInvokableFunction<I: Message, F: Fn(Context, I) -> Effects> {
 }
 
 impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokableFunction<I, F> {
-    fn invoke(&self, mut to_function: ToFunction) -> Result<FromFunction, failure::Error> {
-        let mut batch_request = to_function.take_invocation();
+    fn invoke(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error> {
+        let batch_request = to_function.get_invocation();
         log::debug!(
             "CallableFunction: processing batch request {:#?}",
             batch_request
         );
 
-        let persisted_values = parse_persisted_values(batch_request.take_state());
+        let self_address = batch_request.get_target();
+        let persisted_values = parse_persisted_values(batch_request.get_state());
 
         let mut invocation_respose = FromFunction_InvocationResponse::new();
 
         for invocation in batch_request.get_invocations() {
+            let caller_address = invocation.get_caller();
             let argument = invocation.get_argument();
             let unpacked_argument: I = argument.unpack()?.unwrap();
             let context = Context {
                 state: &persisted_values,
+                self_address,
+                caller_address,
             };
             let effects = (self.function)(context, unpacked_argument);
 
@@ -102,14 +106,12 @@ impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokable
     }
 }
 
-fn parse_persisted_values(
-    persisted_values: RepeatedField<ToFunction_PersistedValue>,
-) -> HashMap<String, Vec<u8>> {
+fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<&str, &[u8]> {
     let mut result = HashMap::new();
-    for mut persisted_value in persisted_values.into_iter() {
+    for persisted_value in persisted_values {
         result.insert(
-            persisted_value.take_state_name(),
-            persisted_value.take_state_value(),
+            persisted_value.get_state_name(),
+            persisted_value.get_state_value(),
         );
     }
     result
