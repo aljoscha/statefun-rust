@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+// This is imported from the flink-statefun project
+
 syntax = "proto3";
 
 package org.apache.flink.statefun.flink.core.polyglot;
