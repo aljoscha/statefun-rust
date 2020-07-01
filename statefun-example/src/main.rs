@@ -63,7 +63,7 @@ fn main() -> Result<(), ExitFailure> {
     function_registry.register_fn(FunctionType::new("example", "greeter"), greet);
     function_registry.register_fn(FunctionType::new("example", "relay"), relay);
 
-    let hyper_transport = HyperHttpTransport::new("127.0.0.1:5000".parse()?);
+    let hyper_transport = HyperHttpTransport::new("0.0.0.0:5000".parse()?);
     hyper_transport.run(function_registry)?;
 
     Ok(())
