@@ -68,11 +68,15 @@ async fn handle_request(
         function_registry.invoke(to_function)?
     };
 
+    log::debug!("Response: {:#?}", from_function);
+
     let encoded_result = from_function.write_to_bytes()?;
 
     let response = Response::builder()
         .header("content-type", "application/octet-stream")
         .body(encoded_result.into())?;
+
+    log::debug!("Succesfully encoded response.");
 
     Ok(response)
 }
