@@ -1,15 +1,18 @@
 use std::collections::HashMap;
 
 use failure::format_err;
-use protobuf::well_known_types::Any;
-use protobuf::Message;
+use protobuf::{Message, RepeatedField};
 
 use statefun_protos::http_function::FromFunction;
 use statefun_protos::http_function::FromFunction_EgressMessage;
 use statefun_protos::http_function::FromFunction_InvocationResponse;
+use statefun_protos::http_function::FromFunction_PersistedValueMutation;
+use statefun_protos::http_function::FromFunction_PersistedValueMutation_MutationType;
 use statefun_protos::http_function::ToFunction;
+use statefun_protos::http_function::ToFunction_PersistedValue;
 
-use crate::{Context, Effects, EgressIdentifier, FunctionType};
+use crate::{Context, Effects, EgressIdentifier, FunctionType, StateUpdate};
+use protobuf::well_known_types::Any;
 
 #[derive(Default)]
 pub struct FunctionRegistry {
@@ -69,22 +72,27 @@ struct FnInvokableFunction<I: Message, F: Fn(Context, I) -> Effects> {
 }
 
 impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokableFunction<I, F> {
-    fn invoke(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error> {
-        let batch_request = to_function.get_invocation();
+    fn invoke(&self, mut to_function: ToFunction) -> Result<FromFunction, failure::Error> {
+        let mut batch_request = to_function.take_invocation();
         log::debug!(
             "CallableFunction: processing batch request {:#?}",
             batch_request
         );
+
+        let persisted_values = parse_persisted_values(batch_request.take_state());
 
         let mut invocation_respose = FromFunction_InvocationResponse::new();
 
         for invocation in batch_request.get_invocations() {
             let argument = invocation.get_argument();
             let unpacked_argument: I = argument.unpack()?.unwrap();
-            let context = Context {};
+            let context = Context {
+                state: &persisted_values,
+            };
             let effects = (self.function)(context, unpacked_argument);
 
             serialize_egress_messages(&mut invocation_respose, effects.egress_messages);
+            serialize_state_updates(&mut invocation_respose, effects.state_updates)?;
         }
 
         let mut from_function = FromFunction::new();
@@ -92,6 +100,19 @@ impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokable
 
         Ok(from_function)
     }
+}
+
+fn parse_persisted_values(
+    persisted_values: RepeatedField<ToFunction_PersistedValue>,
+) -> HashMap<String, Vec<u8>> {
+    let mut result = HashMap::new();
+    for mut persisted_value in persisted_values.into_iter() {
+        result.insert(
+            persisted_value.take_state_name(),
+            persisted_value.take_state_value(),
+        );
+    }
+    result
 }
 
 fn serialize_egress_messages(
@@ -107,4 +128,30 @@ fn serialize_egress_messages(
             .outgoing_egresses
             .push(proto_egress_message);
     }
+}
+
+fn serialize_state_updates(
+    invocation_response: &mut FromFunction_InvocationResponse,
+    state_updates: Vec<StateUpdate>,
+) -> Result<(), failure::Error> {
+    for state_update in state_updates {
+        match state_update {
+            StateUpdate::Delete(name) => {
+                let mut proto_state_update = FromFunction_PersistedValueMutation::new();
+                proto_state_update.set_state_name(name);
+                proto_state_update
+                    .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::DELETE);
+                invocation_response.state_mutations.push(proto_state_update);
+            }
+            StateUpdate::Update(name, state) => {
+                let mut proto_state_update = FromFunction_PersistedValueMutation::new();
+                proto_state_update.set_state_name(name);
+                proto_state_update.set_state_value(state.write_to_bytes()?);
+                proto_state_update
+                    .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
+                invocation_response.state_mutations.push(proto_state_update);
+            }
+        }
+    }
+    Ok(())
 }

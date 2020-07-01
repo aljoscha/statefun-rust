@@ -11,3 +11,4 @@ log = "0.4.8"
 env_logger = "0.7.1"
 statefun-sdk = { path = "../statefun-sdk" }
 statefun-example-protos = { path = "../statefun-example-protos" }
+protobuf = "2.15"
