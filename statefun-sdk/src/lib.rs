@@ -19,11 +19,11 @@ pub struct Context<'a> {
 
 impl<'a> Context<'a> {
     pub fn self_address(&self) -> Address {
-        parse_address(self.self_address)
+        Address::from_proto(self.self_address)
     }
 
     pub fn caller_address(&self) -> Address {
-        parse_address(self.caller_address)
+        Address::from_proto(self.caller_address)
     }
 
     pub fn get_state<T: Message>(&self, name: &str) -> Option<T> {
@@ -55,18 +55,29 @@ impl Display for Address {
     }
 }
 
-fn parse_address(proto_address: &ProtoAddress) -> Address {
-    Address {
-        function_type: FunctionType::new(
-            proto_address.get_namespace(),
-            proto_address.get_field_type(),
-        ),
-        id: proto_address.get_id().to_owned(),
+impl Address {
+    fn from_proto(proto_address: &ProtoAddress) -> Self {
+        Address {
+            function_type: FunctionType::new(
+                proto_address.get_namespace(),
+                proto_address.get_field_type(),
+            ),
+            id: proto_address.get_id().to_owned(),
+        }
+    }
+
+    fn into_proto(self) -> ProtoAddress {
+        let mut result = ProtoAddress::new();
+        result.set_namespace(self.function_type.namespace);
+        result.set_field_type(self.function_type.name);
+        result.set_id(self.id);
+        result
     }
 }
 
 #[derive(Default)]
 pub struct Effects {
+    invocations: Vec<(Address, Any)>,
     egress_messages: Vec<(EgressIdentifier, Any)>,
     state_updates: Vec<StateUpdate>,
 }
@@ -79,9 +90,15 @@ enum StateUpdate {
 impl Effects {
     pub fn new() -> Effects {
         Effects {
+            invocations: Vec::new(),
             egress_messages: Vec::new(),
             state_updates: Vec::new(),
         }
+    }
+
+    pub fn send<M: Message>(&mut self, address: Address, message: M) {
+        let packed_message = Any::pack(&message).unwrap();
+        self.invocations.push((address, packed_message));
     }
 
     pub fn egress<M: Message>(&mut self, identifier: EgressIdentifier, message: M) {
