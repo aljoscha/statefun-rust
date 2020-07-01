@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+use std::time::Duration;
 
 use protobuf::well_known_types::Any;
 use protobuf::Message;
@@ -78,6 +79,7 @@ impl Address {
 #[derive(Default)]
 pub struct Effects {
     invocations: Vec<(Address, Any)>,
+    delayed_invocations: Vec<(Address, Duration, Any)>,
     egress_messages: Vec<(EgressIdentifier, Any)>,
     state_updates: Vec<StateUpdate>,
 }
@@ -91,6 +93,7 @@ impl Effects {
     pub fn new() -> Effects {
         Effects {
             invocations: Vec::new(),
+            delayed_invocations: Vec::new(),
             egress_messages: Vec::new(),
             state_updates: Vec::new(),
         }
@@ -99,6 +102,12 @@ impl Effects {
     pub fn send<M: Message>(&mut self, address: Address, message: M) {
         let packed_message = Any::pack(&message).unwrap();
         self.invocations.push((address, packed_message));
+    }
+
+    pub fn send_after<M: Message>(&mut self, address: Address, delay: Duration, message: M) {
+        let packed_message = Any::pack(&message).unwrap();
+        self.delayed_invocations
+            .push((address, delay, packed_message));
     }
 
     pub fn egress<M: Message>(&mut self, identifier: EgressIdentifier, message: M) {

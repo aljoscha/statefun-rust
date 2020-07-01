@@ -4,6 +4,7 @@ use failure::format_err;
 use protobuf::Message;
 
 use statefun_protos::http_function::FromFunction;
+use statefun_protos::http_function::FromFunction_DelayedInvocation;
 use statefun_protos::http_function::FromFunction_EgressMessage;
 use statefun_protos::http_function::FromFunction_Invocation;
 use statefun_protos::http_function::FromFunction_InvocationResponse;
@@ -14,6 +15,7 @@ use statefun_protos::http_function::ToFunction_PersistedValue;
 
 use crate::{Address, Context, Effects, EgressIdentifier, FunctionType, StateUpdate};
 use protobuf::well_known_types::Any;
+use std::time::Duration;
 
 #[derive(Default)]
 pub struct FunctionRegistry {
@@ -97,6 +99,10 @@ impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokable
             let effects = (self.function)(context, unpacked_argument);
 
             serialize_invocation_messages(&mut invocation_respose, effects.invocations);
+            serialize_delayed_invocation_messages(
+                &mut invocation_respose,
+                effects.delayed_invocations,
+            );
             serialize_egress_messages(&mut invocation_respose, effects.egress_messages);
             serialize_state_updates(&mut invocation_respose, effects.state_updates)?;
         }
@@ -129,6 +135,21 @@ fn serialize_invocation_messages(
         proto_invocation_message.set_argument(invocation_message.1);
         invocation_response
             .outgoing_messages
+            .push(proto_invocation_message);
+    }
+}
+
+fn serialize_delayed_invocation_messages(
+    invocation_response: &mut FromFunction_InvocationResponse,
+    delayed_invocation_messages: Vec<(Address, Duration, Any)>,
+) {
+    for invocation_message in delayed_invocation_messages {
+        let mut proto_invocation_message = FromFunction_DelayedInvocation::new();
+        proto_invocation_message.set_target(invocation_message.0.into_proto());
+        proto_invocation_message.set_delay_in_ms(invocation_message.1.as_millis() as i64);
+        proto_invocation_message.set_argument(invocation_message.2);
+        invocation_response
+            .delayed_invocations
             .push(proto_invocation_message);
     }
 }
