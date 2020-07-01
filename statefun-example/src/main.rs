@@ -3,19 +3,20 @@ use exitfailure::ExitFailure;
 use statefun_example_protos::example::GreetRequest;
 use statefun_example_protos::example::GreetResponse;
 use statefun_sdk::functions::{Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
+use statefun_sdk::io::kafka;
 use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;
 
 pub fn greet(_context: Context, request: GreetRequest) -> Effects {
-    log::info!("We should greet {:?}", request.get_name());
+    log::debug!("We should greet {:?}", request.get_name());
 
     let mut effects = Effects::new();
 
     let mut greet_response = GreetResponse::new();
     greet_response.set_name(request.get_name().to_owned());
-    greet_response.set_greeting("ciao".to_string());
-
-    effects.egress(EgressIdentifier::new("example", "greets"), greet_response);
+    greet_response.set_greeting(format!("Say hello to {} from Rust", request.get_name()));
+    let kafka_message = kafka::keyed_egress_record("greetings", request.get_name(), greet_response);
+    effects.egress(EgressIdentifier::new("example", "greets"), kafka_message);
 
     effects
 }
