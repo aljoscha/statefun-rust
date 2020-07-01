@@ -25,6 +25,11 @@ impl HyperHttpTransport {
 
 impl Transport for HyperHttpTransport {
     fn run(self, function_registry: FunctionRegistry) -> Result<(), failure::Error> {
+        log::info!(
+            "Hyper transport will start listening on {}",
+            self.bind_address
+        );
+
         let mut runtime = runtime::Builder::new()
             .threaded_scheduler()
             .enable_all()
