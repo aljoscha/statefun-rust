@@ -10,7 +10,7 @@ use tokio::runtime;
 
 use statefun_protos::http_function::ToFunction;
 
-use crate::functions::FunctionRegistry;
+use crate::function_registry::FunctionRegistry;
 use crate::transport::Transport;
 
 pub struct HyperHttpTransport {

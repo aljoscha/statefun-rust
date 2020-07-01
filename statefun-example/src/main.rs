@@ -2,10 +2,10 @@ use exitfailure::ExitFailure;
 
 use statefun_example_protos::example::GreetRequest;
 use statefun_example_protos::example::GreetResponse;
-use statefun_sdk::functions::{Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 use statefun_sdk::io::kafka;
 use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;
+use statefun_sdk::{Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 
 pub fn greet(_context: Context, request: GreetRequest) -> Effects {
     log::debug!("We should greet {:?}", request.get_name());
