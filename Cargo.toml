@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "statefun-protos",
+    "statefun-proto",
     "statefun-sdk",
     "statefun-example",
-    "statefun-example-protos",
+    "statefun-example-proto",
 ]

@@ -1,7 +1,7 @@
 pub mod kafka {
     use protobuf::Message;
 
-    use statefun_protos::kafka_egress::KafkaProducerRecord;
+    use statefun_proto::kafka_egress::KafkaProducerRecord;
 
     pub fn egress_record<M: Message>(topic: &str, value: M) -> KafkaProducerRecord {
         let mut result = KafkaProducerRecord::new();

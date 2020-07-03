@@ -1,8 +1,8 @@
 use exitfailure::ExitFailure;
 use protobuf::well_known_types::Int32Value;
 
-use statefun_example_protos::example::GreetRequest;
-use statefun_example_protos::example::GreetResponse;
+use statefun_example_proto::example::GreetRequest;
+use statefun_example_proto::example::GreetResponse;
 use statefun_sdk::io::kafka;
 use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;

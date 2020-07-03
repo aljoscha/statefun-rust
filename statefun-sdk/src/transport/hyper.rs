@@ -8,7 +8,7 @@ use hyper::{Body, Request, Response, Server};
 use protobuf::Message;
 use tokio::runtime;
 
-use statefun_protos::http_function::ToFunction;
+use statefun_proto::http_function::ToFunction;
 
 use crate::internal::FunctionRegistry;
 use crate::transport::Transport;

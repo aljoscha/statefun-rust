@@ -21,4 +21,4 @@ tokio = { version = "0.2", features = ["full"] }
 hyper = "0.13"
 bytes = "0.5"
 protobuf = "2.15"
-statefun-protos = { path = "../statefun-protos", version = "0.1.0" }
+statefun-proto = { path = "../statefun-proto", version = "0.1.0" }

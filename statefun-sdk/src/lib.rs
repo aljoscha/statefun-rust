@@ -6,7 +6,7 @@ use protobuf::well_known_types::Any;
 use protobuf::Message;
 
 pub use internal::FunctionRegistry;
-use statefun_protos::http_function::Address as ProtoAddress;
+use statefun_proto::http_function::Address as ProtoAddress;
 
 mod internal;
 pub mod io;

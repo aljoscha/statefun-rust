@@ -3,15 +3,15 @@ use std::collections::HashMap;
 use failure::format_err;
 use protobuf::Message;
 
-use statefun_protos::http_function::FromFunction;
-use statefun_protos::http_function::FromFunction_DelayedInvocation;
-use statefun_protos::http_function::FromFunction_EgressMessage;
-use statefun_protos::http_function::FromFunction_Invocation;
-use statefun_protos::http_function::FromFunction_InvocationResponse;
-use statefun_protos::http_function::FromFunction_PersistedValueMutation;
-use statefun_protos::http_function::FromFunction_PersistedValueMutation_MutationType;
-use statefun_protos::http_function::ToFunction;
-use statefun_protos::http_function::ToFunction_PersistedValue;
+use statefun_proto::http_function::FromFunction;
+use statefun_proto::http_function::FromFunction_DelayedInvocation;
+use statefun_proto::http_function::FromFunction_EgressMessage;
+use statefun_proto::http_function::FromFunction_Invocation;
+use statefun_proto::http_function::FromFunction_InvocationResponse;
+use statefun_proto::http_function::FromFunction_PersistedValueMutation;
+use statefun_proto::http_function::FromFunction_PersistedValueMutation_MutationType;
+use statefun_proto::http_function::ToFunction;
+use statefun_proto::http_function::ToFunction_PersistedValue;
 
 use crate::{Address, Context, Effects, EgressIdentifier, FunctionType, StateUpdate};
 use protobuf::well_known_types::Any;
