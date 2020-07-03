@@ -12,6 +12,7 @@ mod internal;
 pub mod io;
 pub mod transport;
 
+#[derive(Debug)]
 pub struct Context<'a> {
     state: &'a HashMap<&'a str, &'a [u8]>,
     self_address: &'a ProtoAddress,
@@ -83,14 +84,14 @@ impl Address {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Effects {
     invocations: Vec<(Address, Any)>,
     delayed_invocations: Vec<(Address, Duration, Any)>,
     egress_messages: Vec<(EgressIdentifier, Any)>,
     state_updates: Vec<StateUpdate>,
 }
-
+#[derive(Debug)]
 enum StateUpdate {
     Update(String, Any),
     Delete(String),
@@ -156,6 +157,7 @@ impl Display for FunctionType {
     }
 }
 
+#[derive(Debug)]
 pub struct EgressIdentifier {
     namespace: String,
     name: String,
