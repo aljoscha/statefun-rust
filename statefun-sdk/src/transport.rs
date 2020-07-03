@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use crate::internal::FunctionRegistry;
 
 pub mod hyper;

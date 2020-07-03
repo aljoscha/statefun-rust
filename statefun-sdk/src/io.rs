@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 pub mod kafka {
     use protobuf::Message;
 
