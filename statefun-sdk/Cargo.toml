@@ -2,8 +2,15 @@
 name = "statefun-sdk"
 version = "0.1.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
+readme = "../README.md"
 edition = "2018"
 license = "MIT"
+
+description = "A Rust SDK for the Apache Flink Stateful Functions (StateFun) project. See: https://flink.apache.org/stateful-functions.html"
+
+documentation = "https://docs.rs/statefun/"
+homepage = "https://github.com/aljoscha/statefun-rust"
+repository = "https://github.com/aljoscha/statefun-rust.git"
 
 [dependencies]
 failure = "0.1.5"
