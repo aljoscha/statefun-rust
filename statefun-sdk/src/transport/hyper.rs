@@ -1,3 +1,4 @@
+//! `Transport` that uses [Hyper](http://docs.rs/hyper) to serve stateful functions.
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -13,11 +14,15 @@ use statefun_proto::http_function::ToFunction;
 use crate::internal::FunctionRegistry;
 use crate::transport::Transport;
 
+/// A [Transport](crate::transport::Transport) that serves stateful functions on a http endpoint at
+/// the given `bind_address`.
 pub struct HyperHttpTransport {
     bind_address: SocketAddr,
 }
 
 impl HyperHttpTransport {
+    /// Creates a new `HyperHttpTransport` that can serve stateful functions at the given
+    /// `bind_address`.
     pub fn new(bind_address: SocketAddr) -> HyperHttpTransport {
         HyperHttpTransport { bind_address }
     }

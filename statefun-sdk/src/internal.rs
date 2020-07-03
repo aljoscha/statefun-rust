@@ -1,5 +1,3 @@
-#![allow(missing_docs)]
-
 use std::collections::HashMap;
 
 use failure::format_err;
@@ -19,18 +17,25 @@ use crate::{Address, Context, Effects, EgressIdentifier, FunctionType, StateUpda
 use protobuf::well_known_types::Any;
 use std::time::Duration;
 
+/// Keeps a mapping from `FunctionType` to stateful functions. Use this together with a
+/// [Transport](crate::transport::Transport) to serve stateful functions.
+///
+/// Use `register_fn()` to register functions before handing the registry over to a `Transport` for
+/// serving.
 #[derive(Default)]
 pub struct FunctionRegistry {
     functions: HashMap<FunctionType, Box<dyn InvokableFunction + Send>>,
 }
 
 impl FunctionRegistry {
+    /// Creates a new empty `FunctionRegistry`.
     pub fn new() -> FunctionRegistry {
         FunctionRegistry {
             functions: HashMap::new(),
         }
     }
 
+    /// Registers the given function under the `function_type`.
     pub fn register_fn<I: Message, F: Fn(Context, I) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
@@ -44,6 +49,7 @@ impl FunctionRegistry {
             .insert(function_type, Box::new(callable_function));
     }
 
+    /// Not really public.
     pub fn invoke(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error> {
         let batch_request = to_function.get_invocation();
         log::debug!(
