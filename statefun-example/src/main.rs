@@ -3,7 +3,7 @@ use protobuf::well_known_types::Int32Value;
 
 use statefun_example_proto::example::GreetRequest;
 use statefun_example_proto::example::GreetResponse;
-use statefun_sdk::io::kafka;
+use statefun_sdk::io::kafka::KafkaEgress;
 use statefun_sdk::transport::hyper::HyperHttpTransport;
 use statefun_sdk::transport::Transport;
 use statefun_sdk::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
@@ -49,9 +49,12 @@ pub fn relay(_context: Context, message: GreetResponse) -> Effects {
 
     let mut effects = Effects::new();
 
-    let kafka_message =
-        kafka::keyed_egress_record("greetings", &message.get_name().to_string(), message);
-    effects.egress(EgressIdentifier::new("example", "greets"), kafka_message);
+    effects.kafka_keyed_egress(
+        EgressIdentifier::new("example", "greets"),
+        "greeting",
+        &message.get_name().to_string(),
+        message,
+    );
 
     effects
 }
