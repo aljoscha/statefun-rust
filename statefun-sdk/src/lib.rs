@@ -84,17 +84,33 @@ impl Address {
     }
 }
 
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub struct FunctionType {
+    namespace: String,
+    name: String,
+}
+
+impl FunctionType {
+    pub fn new(namespace: &str, name: &str) -> FunctionType {
+        FunctionType {
+            namespace: namespace.to_string(),
+            name: name.to_string(),
+        }
+    }
+}
+
+impl Display for FunctionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "FunctionType {}/{}", self.namespace, self.name)
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct Effects {
     invocations: Vec<(Address, Any)>,
     delayed_invocations: Vec<(Address, Duration, Any)>,
     egress_messages: Vec<(EgressIdentifier, Any)>,
     state_updates: Vec<StateUpdate>,
-}
-#[derive(Debug)]
-enum StateUpdate {
-    Update(String, Any),
-    Delete(String),
 }
 
 impl Effects {
@@ -136,25 +152,10 @@ impl Effects {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Debug)]
-pub struct FunctionType {
-    namespace: String,
-    name: String,
-}
-
-impl FunctionType {
-    pub fn new(namespace: &str, name: &str) -> FunctionType {
-        FunctionType {
-            namespace: namespace.to_string(),
-            name: name.to_string(),
-        }
-    }
-}
-
-impl Display for FunctionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "FunctionType {}/{}", self.namespace, self.name)
-    }
+#[derive(Debug)]
+enum StateUpdate {
+    Update(String, Any),
+    Delete(String),
 }
 
 #[derive(Debug)]
