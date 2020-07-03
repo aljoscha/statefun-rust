@@ -3,6 +3,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
+use crate::invocation_bridge::InvocationBridge;
 use bytes::buf::BufExt;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
@@ -11,7 +12,7 @@ use tokio::runtime;
 
 use statefun_proto::http_function::ToFunction;
 
-use crate::internal::FunctionRegistry;
+use crate::function_registry::FunctionRegistry;
 use crate::transport::Transport;
 
 /// A [Transport](crate::transport::Transport) that serves stateful functions on a http endpoint at
@@ -75,7 +76,7 @@ async fn handle_request(
     let to_function: ToFunction = protobuf::parse_from_reader(&mut full_body.reader())?;
     let from_function = {
         let function_registry = function_registry.lock().unwrap();
-        function_registry.invoke(to_function)?
+        function_registry.invoke_old(to_function)?
     };
 
     log::debug!("Response: {:#?}", from_function);

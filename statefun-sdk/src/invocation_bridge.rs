@@ -1,6 +1,8 @@
+///! A bridge between the Protobuf world and the world of the Rust SDK. For use by `Transports`.
 use std::collections::HashMap;
+use std::time::Duration;
 
-use failure::format_err;
+use protobuf::well_known_types::Any;
 use protobuf::Message;
 
 use statefun_proto::http_function::FromFunction;
@@ -13,98 +15,37 @@ use statefun_proto::http_function::FromFunction_PersistedValueMutation_MutationT
 use statefun_proto::http_function::ToFunction;
 use statefun_proto::http_function::ToFunction_PersistedValue;
 
-use crate::{Address, Context, Effects, EgressIdentifier, FunctionType, StateUpdate};
-use protobuf::well_known_types::Any;
-use std::time::Duration;
+use crate::function_registry::FunctionRegistry;
+use crate::{Address, Context, EgressIdentifier, StateUpdate};
 
-/// Keeps a mapping from `FunctionType` to stateful functions. Use this together with a
-/// [Transport](crate::transport::Transport) to serve stateful functions.
-///
-/// Use `register_fn()` to register functions before handing the registry over to a `Transport` for
-/// serving.
-#[derive(Default)]
-pub struct FunctionRegistry {
-    functions: HashMap<FunctionType, Box<dyn InvokableFunction + Send>>,
+/// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
+pub trait InvocationBridge {
+    fn invoke_old(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error>;
 }
 
-impl FunctionRegistry {
-    /// Creates a new empty `FunctionRegistry`.
-    pub fn new() -> FunctionRegistry {
-        FunctionRegistry {
-            functions: HashMap::new(),
-        }
-    }
-
-    /// Registers the given function under the `function_type`.
-    pub fn register_fn<I: Message, F: Fn(Context, I) -> Effects + Send + 'static>(
-        &mut self,
-        function_type: FunctionType,
-        function: F,
-    ) {
-        let callable_function = FnInvokableFunction {
-            function,
-            marker: ::std::marker::PhantomData,
-        };
-        self.functions
-            .insert(function_type, Box::new(callable_function));
-    }
-
-    /// Not really public.
-    pub fn invoke(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error> {
-        let batch_request = to_function.get_invocation();
+impl InvocationBridge for FunctionRegistry {
+    fn invoke_old(&self, mut to_function: ToFunction) -> Result<FromFunction, failure::Error> {
+        let mut batch_request = to_function.take_invocation();
         log::debug!(
             "FunctionRegistry: processing batch request {:#?}",
             batch_request
         );
 
-        let target = batch_request.get_target();
-        let namespace = target.get_namespace();
-        let name = target.get_field_type();
-
-        let function_type = FunctionType::new(namespace, name);
-        let function = self.functions.get(&function_type);
-        match function {
-            Some(fun) => fun.invoke(to_function),
-            None => Err(format_err!(
-                "No function registered under {}",
-                function_type
-            )),
-        }
-    }
-}
-
-trait InvokableFunction {
-    fn invoke(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error>;
-}
-
-struct FnInvokableFunction<I: Message, F: Fn(Context, I) -> Effects> {
-    function: F,
-    marker: ::std::marker::PhantomData<I>,
-}
-
-impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokableFunction<I, F> {
-    fn invoke(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error> {
-        let batch_request = to_function.get_invocation();
-        log::debug!(
-            "CallableFunction: processing batch request {:#?}",
-            batch_request
-        );
-
-        let self_address = batch_request.get_target();
-        let persisted_values = parse_persisted_values(batch_request.get_state());
+        let self_address = batch_request.take_target();
+        let persisted_values_proto = batch_request.take_state();
+        let persisted_values = parse_persisted_values(&persisted_values_proto);
 
         let mut invocation_respose = FromFunction_InvocationResponse::new();
 
-        for invocation in batch_request.get_invocations() {
-            let caller_address = invocation.get_caller();
-            let argument = invocation.get_argument();
-            let unpacked_argument: I = argument.unpack()?.unwrap();
+        for mut invocation in batch_request.take_invocations().into_iter() {
+            let caller_address = invocation.take_caller();
+            let argument = invocation.take_argument();
             let context = Context {
                 state: &persisted_values,
-                self_address,
-                caller_address,
+                self_address: &self_address,
+                caller_address: &caller_address,
             };
-            let effects = (self.function)(context, unpacked_argument);
+            let effects = self.invoke(context.self_address().function_type, context, argument)?;
 
             serialize_invocation_messages(&mut invocation_respose, effects.invocations);
             serialize_delayed_invocation_messages(

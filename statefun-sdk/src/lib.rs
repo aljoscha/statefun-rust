@@ -58,10 +58,11 @@ use std::time::Duration;
 use protobuf::well_known_types::Any;
 use protobuf::Message;
 
-pub use internal::FunctionRegistry;
+pub use function_registry::FunctionRegistry;
 use statefun_proto::http_function::Address as ProtoAddress;
 
-mod internal;
+mod function_registry;
+mod invocation_bridge;
 pub mod io;
 pub mod transport;
 

@@ -1,6 +1,6 @@
 //! Transports are used to serve stateful functions to make them invokable.
 
-use crate::internal::FunctionRegistry;
+use crate::function_registry::FunctionRegistry;
 
 pub mod hyper;
 
