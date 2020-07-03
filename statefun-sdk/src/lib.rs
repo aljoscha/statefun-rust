@@ -78,6 +78,18 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+    fn new(
+        state: &'a HashMap<&str, &[u8]>,
+        self_address: &'a ProtoAddress,
+        caller_address: &'a ProtoAddress,
+    ) -> Self {
+        Context {
+            state,
+            self_address,
+            caller_address,
+        }
+    }
+
     /// Returns the [Address](Address) of the stateful function that is being called. This is the
     /// statefun equivalent of `self`.
     pub fn self_address(&self) -> Address {

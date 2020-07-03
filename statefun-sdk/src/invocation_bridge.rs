@@ -40,11 +40,8 @@ impl InvocationBridge for FunctionRegistry {
         for mut invocation in batch_request.take_invocations().into_iter() {
             let caller_address = invocation.take_caller();
             let argument = invocation.take_argument();
-            let context = Context {
-                state: &persisted_values,
-                self_address: &self_address,
-                caller_address: &caller_address,
-            };
+            let context = Context::new(&persisted_values, &self_address, &caller_address);
+
             let effects = self.invoke(context.self_address().function_type, context, argument)?;
 
             serialize_invocation_messages(&mut invocation_respose, effects.invocations);
