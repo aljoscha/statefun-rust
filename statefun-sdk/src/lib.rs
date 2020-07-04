@@ -68,8 +68,9 @@ pub mod transport;
 
 /// Context for a single invocation of a stateful function.
 ///
-/// The context may be used to obtain the [Address](Address) of itself or the calling
-/// function (if the function was invoked by another function), or to access state.
+/// The context may be used to obtain the [Address](Address) of the function of the current
+/// invocation or the calling function (if the function was invoked by another function), or to
+/// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
     state: &'a HashMap<&'a str, &'a [u8]>,
