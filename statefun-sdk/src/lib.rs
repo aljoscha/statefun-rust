@@ -108,18 +108,24 @@ impl<'a> Context<'a> {
     pub fn get_state<T: Message>(&self, name: &str) -> Option<T> {
         let state = self.state.get(name);
         state.and_then(|serialized_state| {
-            let packed_state: Any =
-                protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
-
-            log::debug!("Packed state for {}: {:?}", name, packed_state);
-
-            let unpacked_state: Option<T> = packed_state
-                .unpack()
-                .expect("Could not unpack state from Any.");
-
+            let unpacked_state: Option<T> = unpack_state(name, serialized_state);
             unpacked_state
         })
     }
+}
+
+/// Unpacks the given state, which is expected to be a serialized `Any<T>`.
+fn unpack_state<T: Message>(state_name: &str, serialized_state: &[u8]) -> Option<T> {
+    let packed_state: Any =
+        protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
+
+    log::debug!("Packed state for {}: {:?}", state_name, packed_state);
+
+    let unpacked_state: Option<T> = packed_state
+        .unpack()
+        .expect("Could not unpack state from Any.");
+
+    unpacked_state
 }
 
 /// The unique identity of an individual stateful function.
@@ -130,7 +136,7 @@ impl<'a> Context<'a> {
 ///
 /// This must be used when sending messages to stateful functions as part of the function
 /// [Effects](Effects).
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Address {
     /// `FunctionType` of the stateful function that this `Address` refers to.
     pub function_type: FunctionType,

@@ -76,7 +76,7 @@ async fn handle_request(
     let to_function: ToFunction = protobuf::parse_from_reader(&mut full_body.reader())?;
     let from_function = {
         let function_registry = function_registry.lock().unwrap();
-        function_registry.invoke_old(to_function)?
+        function_registry.invoke_from_proto(to_function)?
     };
 
     log::debug!("Response: {:#?}", from_function);
