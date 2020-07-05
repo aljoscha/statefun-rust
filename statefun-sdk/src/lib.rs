@@ -9,10 +9,10 @@
 //! ```no_run
 //! use protobuf::well_known_types::StringValue;
 //!
-//! use statefun_sdk::io::kafka;
-//! use statefun_sdk::transport::hyper::HyperHttpTransport;
-//! use statefun_sdk::transport::Transport;
-//! use statefun_sdk::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
+//! use statefun::io::kafka;
+//! use statefun::transport::hyper::HyperHttpTransport;
+//! use statefun::transport::Transport;
+//! use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 //!
 //! let mut function_registry = FunctionRegistry::new();
 //!

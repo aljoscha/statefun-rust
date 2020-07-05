@@ -10,8 +10,8 @@
 //! ```
 //! use protobuf::well_known_types::StringValue;
 //!
-//! use statefun_sdk::io::kafka::KafkaEgress;
-//! use statefun_sdk::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
+//! use statefun::io::kafka::KafkaEgress;
+//! use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 //!
 //! pub fn relay_to_kafka(_context: Context, message: StringValue) -> Effects {
 //!     let mut effects = Effects::new();

@@ -1,5 +1,5 @@
 [package]
-name = "statefun-sdk"
+name = "statefun"
 version = "0.1.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 readme = "../README.md"

@@ -1,12 +1,12 @@
 use exitfailure::ExitFailure;
 use protobuf::well_known_types::Int32Value;
 
+use statefun::io::kafka::KafkaEgress;
+use statefun::transport::hyper::HyperHttpTransport;
+use statefun::transport::Transport;
+use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 use statefun_example_proto::example::GreetRequest;
 use statefun_example_proto::example::GreetResponse;
-use statefun_sdk::io::kafka::KafkaEgress;
-use statefun_sdk::transport::hyper::HyperHttpTransport;
-use statefun_sdk::transport::Transport;
-use statefun_sdk::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
 
 pub fn greet(context: Context, request: GreetRequest) -> Effects {
     log::info!("We should greet {:?}", request.get_name());

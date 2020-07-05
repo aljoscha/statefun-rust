@@ -17,6 +17,6 @@ failure = "0.1.5"
 exitfailure = "0.5.1"
 log = "0.4.8"
 env_logger = "0.7.1"
-statefun-sdk = { path = "../statefun-sdk", version = "0.1.0" }
+statefun = { path = "../statefun-sdk", version = "0.1.0" }
 statefun-example-proto = { path = "../statefun-example-proto", version = "0.1.0" }
 protobuf = "2.15"
