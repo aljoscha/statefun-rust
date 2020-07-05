@@ -6,3 +6,12 @@ information about the project.
 
 At the moment this project is very bare-bones. I'm just getting started and
 there's no tests yet and probably some bugs.
+
+## Building
+
+You need to have the Protobuf compiler `protoc` available in your `$PATH`. On
+macOS you can install this via
+
+```
+brew install protobuf
+```
