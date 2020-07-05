@@ -13,11 +13,11 @@ use crate::{Context, Effects, FunctionType};
 ///
 /// Use `register_fn()` to register functions before handing the registry over to a `Transport` for
 /// serving.
-#[derive(Default)]
 pub struct FunctionRegistry {
     functions: HashMap<FunctionType, Box<dyn InvokableFunction + Send>>,
 }
 
+#[allow(clippy::new_without_default)]
 impl FunctionRegistry {
     /// Creates a new empty `FunctionRegistry`.
     pub fn new() -> FunctionRegistry {
@@ -75,5 +75,117 @@ impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokable
         let unpacked_argument: I = message.unpack()?.unwrap();
         let effects = (self.function)(context, unpacked_argument);
         Ok(effects)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::FunctionRegistry;
+    use crate::*;
+    use protobuf::well_known_types::StringValue;
+
+    #[test]
+    fn call_registered_function() -> Result<(), failure::Error> {
+        let state = HashMap::new();
+        let address = address_foo().into_proto();
+        let context = Context::new(&state, &address, &address);
+
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type_foo(), |_context, _message: StringValue| {
+            Effects::new()
+        });
+
+        let packed_argument = Any::pack(&StringValue::new())?;
+        let _effects = registry.invoke(function_type_foo(), context, packed_argument)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn call_unknown_function() -> Result<(), failure::Error> {
+        let state = HashMap::new();
+        let address = address_foo().into_proto();
+        let context = Context::new(&state, &address, &address);
+
+        let registry = FunctionRegistry::new();
+
+        let packed_argument = Any::pack(&StringValue::new())?;
+        let result = registry.invoke(function_type_bar(), context, packed_argument);
+
+        assert!(result.is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn call_correct_function() -> Result<(), failure::Error> {
+        let state = HashMap::new();
+
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type_foo(), |context, _message: StringValue| {
+            let mut effects = Effects::new();
+
+            let mut message = StringValue::new();
+            message.set_value("function_foo".to_owned());
+            effects.send(context.self_address(), message);
+
+            effects
+        });
+
+        registry.register_fn(function_type_bar(), |context, _message: StringValue| {
+            let mut effects = Effects::new();
+
+            let mut message = StringValue::new();
+            message.set_value("function_bar".to_owned());
+            effects.send(context.self_address(), message);
+
+            effects
+        });
+
+        let address_foo = address_foo().into_proto();
+        let context = Context::new(&state, &address_foo, &address_foo);
+        let packed_argument = Any::pack(&StringValue::new())?;
+        let effects_foo = registry.invoke(function_type_foo(), context, packed_argument)?;
+        assert_eq!(
+            effects_foo.invocations[0]
+                .1
+                .unpack::<StringValue>()
+                .unwrap()
+                .unwrap()
+                .get_value(),
+            "function_foo",
+        );
+
+        let address_bar = address_bar().into_proto();
+        let context = Context::new(&state, &address_bar, &address_bar);
+        let packed_argument = Any::pack(&StringValue::new())?;
+        let effects_bar = registry.invoke(function_type_bar(), context, packed_argument)?;
+        assert_eq!(
+            effects_bar.invocations[0]
+                .1
+                .unpack::<StringValue>()
+                .unwrap()
+                .unwrap()
+                .get_value(),
+            "function_bar",
+        );
+
+        Ok(())
+    }
+
+    fn function_type_foo() -> FunctionType {
+        FunctionType::new("namespace", "foo")
+    }
+
+    fn function_type_bar() -> FunctionType {
+        FunctionType::new("namespace", "bar")
+    }
+
+    fn address_foo() -> Address {
+        Address::new(function_type_foo(), "doctor")
+    }
+
+    fn address_bar() -> Address {
+        Address::new(function_type_bar(), "doctor")
     }
 }
