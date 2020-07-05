@@ -6,7 +6,7 @@ readme = "../README.md"
 edition = "2018"
 license = "MIT"
 
-description = "Protobuf definitions for the Statefun Rust SDK"
+description = "Protobuf definitions for the Statefun Rust SDK (statefun-sdk)"
 
 documentation = "https://docs.rs/statefun/"
 homepage = "https://github.com/aljoscha/statefun-rust"
