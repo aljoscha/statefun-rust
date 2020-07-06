@@ -13,6 +13,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - uses: arduino/setup-protoc@master
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -27,6 +28,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - uses: arduino/setup-protoc@master
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -58,6 +60,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
+      - uses: arduino/setup-protoc@master
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
