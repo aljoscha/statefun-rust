@@ -73,14 +73,14 @@ pub mod transport;
 /// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
-    state: &'a HashMap<&'a str, &'a [u8]>,
+    state: &'a HashMap<String, Any>,
     self_address: &'a ProtoAddress,
     caller_address: &'a ProtoAddress,
 }
 
 impl<'a> Context<'a> {
     fn new(
-        state: &'a HashMap<&str, &[u8]>,
+        state: &'a HashMap<String, Any>,
         self_address: &'a ProtoAddress,
         caller_address: &'a ProtoAddress,
     ) -> Self {
@@ -115,9 +115,9 @@ impl<'a> Context<'a> {
 }
 
 /// Unpacks the given state, which is expected to be a serialized `Any<T>`.
-fn unpack_state<T: Message>(state_name: &str, serialized_state: &[u8]) -> Option<T> {
-    let packed_state: Any =
-        protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
+fn unpack_state<T: Message>(state_name: &str, packed_state: &Any) -> Option<T> {
+    // let packed_state: Any =
+    //     protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
 
     log::debug!("Packed state for {}: {:?}", state_name, packed_state);
 

@@ -36,7 +36,13 @@ impl InvocationBridge for FunctionRegistry {
 
         let self_address = batch_request.take_target();
         let persisted_values_proto = batch_request.take_state();
-        let persisted_values = parse_persisted_values(&persisted_values_proto);
+        let mut persisted_values = parse_persisted_values(&persisted_values_proto);
+
+        // we maintain a map of state updates that we update after every invocation. We maintain
+        // this to be able to send back coalesced state updates to the statefun runtime but we
+        // also need to update persisted_values so that subsequent invocations also "see" state
+        // updates
+        let mut coalesced_state_updates: HashMap<String, StateUpdate> = HashMap::new();
 
         let mut invocation_respose = FromFunction_InvocationResponse::new();
 
@@ -53,8 +59,15 @@ impl InvocationBridge for FunctionRegistry {
                 effects.delayed_invocations,
             );
             serialize_egress_messages(&mut invocation_respose, effects.egress_messages);
-            serialize_state_updates(&mut invocation_respose, effects.state_updates)?;
+            update_state(
+                &mut persisted_values,
+                &mut coalesced_state_updates,
+                effects.state_updates,
+            )?;
         }
+
+        let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
+        serialize_state_updates(&mut invocation_respose, state_values)?;
 
         let mut from_function = FromFunction::new();
         from_function.set_invocation_result(invocation_respose);
@@ -63,15 +76,40 @@ impl InvocationBridge for FunctionRegistry {
     }
 }
 
-fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<&str, &[u8]> {
+fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<String, Any> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        result.insert(
-            persisted_value.get_state_name(),
-            persisted_value.get_state_value(),
-        );
+        let packed_state: Any = deserialize_state(persisted_value.get_state_value());
+        result.insert(persisted_value.get_state_name().to_string(), packed_state);
     }
     result
+}
+
+fn deserialize_state(serialized_state: &[u8]) -> Any {
+    protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.")
+}
+
+fn update_state(
+    persisted_state: &mut HashMap<String, Any>,
+    coalesced_state: &mut HashMap<String, StateUpdate>,
+    state_updates: Vec<StateUpdate>,
+) -> Result<(), failure::Error> {
+    for state_update in state_updates {
+        match state_update {
+            StateUpdate::Delete(name) => {
+                persisted_state.remove(&name);
+                coalesced_state.insert(name.clone(), StateUpdate::Delete(name.clone()));
+            }
+            StateUpdate::Update(name, state) => {
+                persisted_state.insert(name.clone(), state.clone());
+                coalesced_state.insert(
+                    name.clone(),
+                    StateUpdate::Update(name.clone(), state.clone()),
+                );
+            }
+        }
+    }
+    Ok(())
 }
 
 fn serialize_invocation_messages(
@@ -118,10 +156,13 @@ fn serialize_egress_messages(
     }
 }
 
-fn serialize_state_updates(
+fn serialize_state_updates<T>(
     invocation_response: &mut FromFunction_InvocationResponse,
-    state_updates: Vec<StateUpdate>,
-) -> Result<(), failure::Error> {
+    state_updates: T,
+) -> Result<(), failure::Error>
+where
+    T: IntoIterator<Item = StateUpdate>,
+{
     for state_update in state_updates {
         match state_update {
             StateUpdate::Delete(name) => {
@@ -159,7 +200,7 @@ mod tests {
     use statefun_proto::http_function::ToFunction_InvocationBatchRequest;
     use statefun_proto::http_function::ToFunction_PersistedValue;
 
-    use crate::invocation_bridge::InvocationBridge;
+    use crate::invocation_bridge::{deserialize_state, InvocationBridge};
     use crate::FunctionRegistry;
     use crate::*;
 
@@ -337,19 +378,60 @@ mod tests {
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
         let mut invocation_respose = from_function.take_invocation_result();
-        let mut state_mutations = invocation_respose.take_state_mutations();
+        let state_mutations = invocation_respose.take_state_mutations();
 
-        // TODO: This behaviour is incorrect. The processing logic must coalesce state updates
-        // and state updates of one invocation in a batch must be visible to subsequent
-        // invocations
-        assert_state_update(state_mutations.remove(0), BAR_STATE, i32_value(42));
-        assert_state_delete(state_mutations.remove(0), FOO_STATE);
+        let state_map = to_state_map(state_mutations);
+        assert_eq!(state_map.len(), 2);
 
-        assert_state_update(state_mutations.remove(0), BAR_STATE, i32_value(42));
-        assert_state_delete(state_mutations.remove(0), FOO_STATE);
+        let bar_state = state_map.get(BAR_STATE).unwrap();
+        let foo_state = state_map.get(FOO_STATE).unwrap();
 
-        assert_state_update(state_mutations.remove(0), BAR_STATE, i32_value(42));
-        assert_state_delete(state_mutations.remove(0), FOO_STATE);
+        // state updates are coalesced
+        assert_state_update(bar_state, BAR_STATE, i32_value(42));
+        assert_state_delete(foo_state, FOO_STATE);
+
+        Ok(())
+    }
+
+    fn to_state_map(
+        state_mutations: RepeatedField<FromFunction_PersistedValueMutation>,
+    ) -> HashMap<String, FromFunction_PersistedValueMutation> {
+        let mut state_mutations_map = HashMap::new();
+        for state_mutation in state_mutations.into_iter() {
+            state_mutations_map.insert(state_mutation.get_state_name().to_string(), state_mutation);
+        }
+        state_mutations_map
+    }
+
+    // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
+    #[test]
+    fn state_mutations_available_in_subsequent_invocations() -> Result<(), failure::Error> {
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type(), |context, _message: StringValue| {
+            let state: Int32Value = context.get_state(BAR_STATE).unwrap();
+
+            let mut effects = Effects::new();
+            effects.update_state(BAR_STATE, &i32_value(state.get_value() + 1));
+            effects.delete_state(FOO_STATE);
+
+            effects
+        });
+
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
+
+        let mut invocation_respose = from_function.take_invocation_result();
+        let state_mutations = invocation_respose.take_state_mutations();
+
+        let state_map = to_state_map(state_mutations);
+        assert_eq!(state_map.len(), 2);
+
+        let bar_state = state_map.get(BAR_STATE).unwrap();
+        let foo_state = state_map.get(FOO_STATE).unwrap();
+
+        // state updates are coalesced
+        assert_state_update(bar_state, BAR_STATE, i32_value(3));
+        assert_state_delete(foo_state, FOO_STATE);
 
         Ok(())
     }
@@ -401,7 +483,7 @@ mod tests {
     }
 
     fn assert_state_update<T: Message + PartialEq>(
-        state_mutation: FromFunction_PersistedValueMutation,
+        state_mutation: &FromFunction_PersistedValueMutation,
         expected_name: &str,
         expected_value: T,
     ) {
@@ -410,13 +492,13 @@ mod tests {
             FromFunction_PersistedValueMutation_MutationType::MODIFY
         );
         assert_eq!(state_mutation.get_state_name(), expected_name);
-        let unpacked_state_value: Option<T> =
-            unpack_state(expected_name, state_mutation.get_state_value());
+        let packed_state: Any = deserialize_state(state_mutation.get_state_value());
+        let unpacked_state_value: Option<T> = unpack_state(expected_name, &packed_state);
         assert_eq!(unpacked_state_value.unwrap(), expected_value)
     }
 
     fn assert_state_delete(
-        state_mutation: FromFunction_PersistedValueMutation,
+        state_mutation: &FromFunction_PersistedValueMutation,
         expected_name: &str,
     ) {
         assert_eq!(
