@@ -15,7 +15,6 @@ repository = "https://github.com/aljoscha/statefun-rust.git"
 [dependencies]
 failure = "0.1.5"
 exitfailure = "0.5.1"
-structopt = "0.3.5"
 log = "0.4.8"
 tokio = { version = "0.2", features = ["full"] }
 hyper = "0.13"
