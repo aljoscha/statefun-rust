@@ -2,11 +2,11 @@
 
 use std::collections::HashMap;
 
-use failure::format_err;
 use protobuf::well_known_types::Any;
 use protobuf::Message;
 
-use crate::{Context, Effects, FunctionType};
+use crate::InvocationError::FunctionNotFound;
+use crate::{Context, Effects, FunctionType, InvocationError};
 
 /// Keeps a mapping from `FunctionType` to stateful functions. Use this together with a
 /// [Transport](crate::transport::Transport) to serve stateful functions.
@@ -47,21 +47,18 @@ impl FunctionRegistry {
         target_function: FunctionType,
         context: Context,
         message: Any,
-    ) -> Result<Effects, failure::Error> {
+    ) -> Result<Effects, InvocationError> {
         let function = self.functions.get(&target_function);
         match function {
             Some(fun) => fun.invoke(context, message),
-            None => Err(format_err!(
-                "No function registered under {}",
-                target_function
-            )),
+            None => Err(FunctionNotFound(target_function)),
         }
     }
 }
 
 /// A function that can be invoked. This is used as trait objects in the `FunctionRegistry`.
 trait InvokableFunction {
-    fn invoke(&self, context: Context, message: Any) -> Result<Effects, failure::Error>;
+    fn invoke(&self, context: Context, message: Any) -> Result<Effects, InvocationError>;
 }
 
 /// An `InvokableFunction` that is backed by a `Fn`.
@@ -71,7 +68,7 @@ struct FnInvokableFunction<I: Message, F: Fn(Context, I) -> Effects> {
 }
 
 impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokableFunction<I, F> {
-    fn invoke(&self, context: Context, message: Any) -> Result<Effects, failure::Error> {
+    fn invoke(&self, context: Context, message: Any) -> Result<Effects, InvocationError> {
         let unpacked_argument: I = message.unpack()?.unwrap();
         let effects = (self.function)(context, unpacked_argument);
         Ok(effects)
@@ -80,12 +77,13 @@ impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokable
 
 #[cfg(test)]
 mod tests {
-    use crate::FunctionRegistry;
-    use crate::*;
     use protobuf::well_known_types::StringValue;
 
+    use crate::FunctionRegistry;
+    use crate::*;
+
     #[test]
-    fn call_registered_function() -> Result<(), failure::Error> {
+    fn call_registered_function() -> anyhow::Result<()> {
         let state = HashMap::new();
         let address = address_foo().into_proto();
         let context = Context::new(&state, &address, &address);
@@ -102,7 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn call_unknown_function() -> Result<(), failure::Error> {
+    fn call_unknown_function() -> anyhow::Result<()> {
         let state = HashMap::new();
         let address = address_foo().into_proto();
         let context = Context::new(&state, &address, &address);
@@ -118,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn call_correct_function() -> Result<(), failure::Error> {
+    fn call_correct_function() -> anyhow::Result<()> {
         let state = HashMap::new();
 
         let mut registry = FunctionRegistry::new();

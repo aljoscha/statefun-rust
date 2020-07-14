@@ -33,7 +33,7 @@
 //! let hyper_transport = HyperHttpTransport::new("0.0.0.0:5000".parse()?);
 //! hyper_transport.run(function_registry)?;
 //!
-//! # Ok::<(), failure::Error>(())
+//! # Ok::<(), anyhow::Error>(())
 //! ```
 //!
 //! The program creates a [FunctionRegistry](crate::FunctionRegistry), which can be used to
@@ -56,7 +56,8 @@ use std::fmt::{Display, Formatter};
 use std::time::Duration;
 
 use protobuf::well_known_types::Any;
-use protobuf::Message;
+use protobuf::{Message, ProtobufError};
+use thiserror::Error;
 
 pub use function_registry::FunctionRegistry;
 use statefun_proto::http_function::Address as ProtoAddress;
@@ -298,4 +299,19 @@ impl Display for EgressIdentifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "EgressIdentifier {}/{}", self.namespace, self.name)
     }
+}
+
+/// Errors that can occur during function invocation.
+///
+/// These mostly forward underlying errors from serialization or Protobuf.
+#[derive(Error, Debug)]
+#[non_exhaustive]
+pub enum InvocationError {
+    /// There was no function registered for the given `FunctionType`.
+    #[error("function {0} not found in registry")]
+    FunctionNotFound(FunctionType),
+
+    /// Something went wrong with Protobuf parsing, writing, packing, or unpacking.
+    #[error(transparent)]
+    ProtobufError(#[from] ProtobufError),
 }

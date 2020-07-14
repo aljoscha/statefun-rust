@@ -1,4 +1,3 @@
-use exitfailure::ExitFailure;
 use protobuf::well_known_types::Int32Value;
 
 use statefun::io::kafka::KafkaEgress;
@@ -59,7 +58,7 @@ pub fn relay(_context: Context, message: GreetResponse) -> Effects {
     effects
 }
 
-fn main() -> Result<(), ExitFailure> {
+fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();

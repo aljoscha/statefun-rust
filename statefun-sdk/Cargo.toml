@@ -13,11 +13,13 @@ homepage = "https://github.com/aljoscha/statefun-rust"
 repository = "https://github.com/aljoscha/statefun-rust.git"
 
 [dependencies]
-failure = "0.1.5"
-exitfailure = "0.5.1"
+thiserror = "1.0"
 log = "0.4.8"
 tokio = { version = "0.2", features = ["full"] }
 hyper = "0.13"
 bytes = "0.5"
 protobuf = "2.15"
 statefun-proto = { path = "../statefun-proto", version = "0.1.1" }
+
+[dev-dependencies]
+anyhow = "1.0"
