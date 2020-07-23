@@ -56,14 +56,16 @@ use std::fmt::{Display, Formatter};
 use std::time::Duration;
 
 use protobuf::well_known_types::Any;
-use protobuf::{Message, ProtobufError};
-use thiserror::Error;
+use protobuf::Message;
 
+pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
 use statefun_proto::http_function::Address as ProtoAddress;
 
+mod error;
 mod function_registry;
 mod invocation_bridge;
+
 pub mod io;
 pub mod transport;
 
@@ -299,19 +301,4 @@ impl Display for EgressIdentifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "EgressIdentifier {}/{}", self.namespace, self.name)
     }
-}
-
-/// Errors that can occur during function invocation.
-///
-/// These mostly forward underlying errors from serialization or Protobuf.
-#[derive(Error, Debug)]
-#[non_exhaustive]
-pub enum InvocationError {
-    /// There was no function registered for the given `FunctionType`.
-    #[error("function {0} not found in registry")]
-    FunctionNotFound(FunctionType),
-
-    /// Something went wrong with Protobuf parsing, writing, packing, or unpacking.
-    #[error(transparent)]
-    ProtobufError(#[from] ProtobufError),
 }
