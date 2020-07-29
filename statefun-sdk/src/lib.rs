@@ -33,7 +33,7 @@
 //! let hyper_transport = HyperHttpTransport::new("0.0.0.0:5000".parse()?);
 //! hyper_transport.run(function_registry)?;
 //!
-//! # Ok::<(), failure::Error>(())
+//! # Ok::<(), anyhow::Error>(())
 //! ```
 //!
 //! The program creates a [FunctionRegistry](crate::FunctionRegistry), which can be used to
@@ -58,11 +58,14 @@ use std::time::Duration;
 use protobuf::well_known_types::Any;
 use protobuf::Message;
 
+pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
 use statefun_proto::http_function::Address as ProtoAddress;
 
+mod error;
 mod function_registry;
 mod invocation_bridge;
+
 pub mod io;
 pub mod transport;
 

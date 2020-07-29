@@ -3,17 +3,20 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
-use crate::invocation_bridge::InvocationBridge;
 use bytes::buf::BufExt;
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, Server};
-use protobuf::Message;
+use hyper::{http, Body, Request, Response, Server};
+use protobuf::{Message, ProtobufError};
+use thiserror::Error;
 use tokio::runtime;
 
 use statefun_proto::http_function::ToFunction;
 
 use crate::function_registry::FunctionRegistry;
+use crate::invocation_bridge::InvocationBridge;
+use crate::transport::hyper::HyperTransportError::TokioInitializationFailure;
 use crate::transport::Transport;
+use crate::InvocationError;
 
 /// A [Transport](crate::transport::Transport) that serves stateful functions on a http endpoint at
 /// the given `bind_address`.
@@ -30,16 +33,22 @@ impl HyperHttpTransport {
 }
 
 impl Transport for HyperHttpTransport {
-    fn run(self, function_registry: FunctionRegistry) -> Result<(), failure::Error> {
+    type Error = HyperTransportError;
+
+    fn run(self, function_registry: FunctionRegistry) -> Result<(), Self::Error> {
         log::info!(
             "Hyper transport will start listening on {}",
             self.bind_address
         );
 
-        let mut runtime = runtime::Builder::new()
+        let runtime = runtime::Builder::new()
             .threaded_scheduler()
             .enable_all()
-            .build()?;
+            .build();
+        let mut runtime = match runtime {
+            Ok(rt) => rt,
+            Err(error) => return Err(TokioInitializationFailure(error)),
+        };
 
         let function_registry = Arc::new(Mutex::new(function_registry));
 
@@ -68,7 +77,7 @@ impl Transport for HyperHttpTransport {
 async fn handle_request(
     function_registry: Arc<Mutex<FunctionRegistry>>,
     req: Request<Body>,
-) -> Result<Response<Body>, failure::Error> {
+) -> Result<Response<Body>, HyperTransportError> {
     let (_parts, body) = req.into_parts();
     log::debug!("Parts {:#?}", _parts);
 
@@ -90,6 +99,34 @@ async fn handle_request(
     log::debug!("Succesfully encoded response.");
 
     Ok(response)
+}
+
+/// The error type for the `HyperHttpTransport` `Transport`.
+///
+/// Errors can originate from many different source because a `Transport` is the entry point that
+/// pulls everything together. This mostly wraps error types of other crates/modules that we use.
+#[derive(Error, Debug)]
+#[non_exhaustive]
+pub enum HyperTransportError {
+    /// Something went wrong with Protobuf parsing, writing, packing, or unpacking.
+    #[error(transparent)]
+    ProtobufError(#[from] ProtobufError),
+
+    /// An error occurred while invoking a user function.
+    #[error(transparent)]
+    InvocationError(#[from] InvocationError),
+
+    /// An error from the underlying hyper
+    #[error(transparent)]
+    HyperError(#[from] hyper::error::Error),
+
+    /// An error from the underlying hyper/http.
+    #[error(transparent)]
+    HttpError(#[from] http::Error),
+
+    /// Something went wrong with Tokio.
+    #[error("Tokio runtime could not be initialized")]
+    TokioInitializationFailure(#[source] std::io::Error),
 }
 
 async fn shutdown_signal() {

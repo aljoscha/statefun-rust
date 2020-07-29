@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use protobuf::well_known_types::Any;
-use protobuf::Message;
+use protobuf::{Message, ProtobufError};
 
 use statefun_proto::http_function::FromFunction;
 use statefun_proto::http_function::FromFunction_DelayedInvocation;
@@ -16,18 +16,18 @@ use statefun_proto::http_function::ToFunction;
 use statefun_proto::http_function::ToFunction_PersistedValue;
 
 use crate::function_registry::FunctionRegistry;
-use crate::{Address, Context, EgressIdentifier, StateUpdate};
+use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
 pub trait InvocationBridge {
-    fn invoke_from_proto(&self, to_function: ToFunction) -> Result<FromFunction, failure::Error>;
+    fn invoke_from_proto(&self, to_function: ToFunction) -> Result<FromFunction, InvocationError>;
 }
 
 impl InvocationBridge for FunctionRegistry {
     fn invoke_from_proto(
         &self,
         mut to_function: ToFunction,
-    ) -> Result<FromFunction, failure::Error> {
+    ) -> Result<FromFunction, InvocationError> {
         let mut batch_request = to_function.take_invocation();
         log::debug!(
             "FunctionRegistry: processing batch request {:#?}",
@@ -63,7 +63,7 @@ impl InvocationBridge for FunctionRegistry {
                 &mut persisted_values,
                 &mut coalesced_state_updates,
                 effects.state_updates,
-            )?;
+            );
         }
 
         let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
@@ -93,7 +93,7 @@ fn update_state(
     persisted_state: &mut HashMap<String, Any>,
     coalesced_state: &mut HashMap<String, StateUpdate>,
     state_updates: Vec<StateUpdate>,
-) -> Result<(), failure::Error> {
+) {
     for state_update in state_updates {
         match state_update {
             StateUpdate::Delete(name) => {
@@ -109,7 +109,6 @@ fn update_state(
             }
         }
     }
-    Ok(())
 }
 
 fn serialize_invocation_messages(
@@ -159,7 +158,7 @@ fn serialize_egress_messages(
 fn serialize_state_updates<T>(
     invocation_response: &mut FromFunction_InvocationResponse,
     state_updates: T,
-) -> Result<(), failure::Error>
+) -> Result<(), ProtobufError>
 where
     T: IntoIterator<Item = StateUpdate>,
 {
@@ -212,7 +211,7 @@ mod tests {
 
     // Verifies that all possible fields in a ToFunction are accessible in a function
     #[test]
-    fn forward_to_function() -> Result<(), failure::Error> {
+    fn forward_to_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), |context, message: StringValue| {
             assert_eq!(context.self_address(), self_address());
@@ -255,7 +254,7 @@ mod tests {
 
     // Verifies that messages are correctly forwarded to the Protobuf FromFunction
     #[test]
-    fn forward_messages_from_function() -> Result<(), failure::Error> {
+    fn forward_messages_from_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), |_context, message: StringValue| {
             let mut effects = Effects::new();
@@ -280,7 +279,7 @@ mod tests {
 
     // Verifies that delayed messages are correctly forwarded to the Protobuf FromFunction
     #[test]
-    fn forward_delayed_messages_from_function() -> Result<(), failure::Error> {
+    fn forward_delayed_messages_from_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), |_context, message: StringValue| {
             let mut effects = Effects::new();
@@ -320,7 +319,7 @@ mod tests {
 
     // Verifies that egresses are correctly forwarded to the Protobuf FromFunction
     #[test]
-    fn forward_egresses_from_function() -> Result<(), failure::Error> {
+    fn forward_egresses_from_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), |_context, _message: StringValue| {
             let mut effects = Effects::new();
@@ -363,7 +362,7 @@ mod tests {
 
     // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
     #[test]
-    fn forward_state_mutations_from_function() -> Result<(), failure::Error> {
+    fn forward_state_mutations_from_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), |_context, _message: StringValue| {
             let mut effects = Effects::new();
@@ -405,7 +404,7 @@ mod tests {
 
     // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
     #[test]
-    fn state_mutations_available_in_subsequent_invocations() -> Result<(), failure::Error> {
+    fn state_mutations_available_in_subsequent_invocations() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), |context, _message: StringValue| {
             let state: Int32Value = context.get_state(BAR_STATE).unwrap();
