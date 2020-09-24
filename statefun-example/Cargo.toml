@@ -19,3 +19,10 @@ env_logger = "0.7.1"
 statefun = { path = "../statefun-sdk", version = "0.1.1" }
 statefun-example-proto = { path = "../statefun-example-proto", version = "0.1.1" }
 protobuf = "2.15"
+
+# for reading/writing from/to Kafka in the data generator
+rdkafka = { version = "0.24", features = ["cmake-build"] }
+tokio = { version = "0.2", features = ["full"] }
+structopt = "0.3.5"
+rand = "0.7"
+futures = "0.3"
