@@ -50,7 +50,7 @@ pub fn relay(_context: Context, message: GreetResponse) -> Effects {
 
     effects.kafka_keyed_egress(
         EgressIdentifier::new("example", "greets"),
-        "greeting",
+        "greetings",
         &message.get_name().to_string(),
         message,
     );

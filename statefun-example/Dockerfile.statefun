@@ -1,0 +1,6 @@
+# Dockerfile for the Statefun Runtime
+
+FROM ververica/flink-statefun:2.1.0
+
+RUN mkdir -p /opt/statefun/modules/example
+ADD module.yaml /opt/statefun/modules/example
