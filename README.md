@@ -5,7 +5,8 @@ Functions](https://flink.apache.org/stateful-functions.html) website for more
 information about the project.
 
 Please refer to the [documentation](https://docs.rs/statefun) to learn how to
-use this.
+use this. There is a complete example available in `statefun-example` along
+with another `README.md`.
 
 ## Building
 
