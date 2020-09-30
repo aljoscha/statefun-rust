@@ -7,8 +7,8 @@ use rdkafka::ClientConfig;
 use rdkafka::Message as KafkaMessage;
 use structopt::StructOpt;
 
-use statefun_example_proto::example::GreetRequest;
-use statefun_example_proto::example::GreetResponse;
+use statefun_greeter_example_proto::example::GreetRequest;
+use statefun_greeter_example_proto::example::GreetResponse;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "datagen")]

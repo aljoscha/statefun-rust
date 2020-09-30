@@ -1,12 +1,12 @@
 [package]
-name = "statefun-example-proto"
+name = "statefun-greeter-example-proto"
 version = "0.1.1"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 readme = "../README.md"
 edition = "2018"
 license = "MIT"
 
-description = "Protobuf definitions for the Statefun Rust example"
+description = "Protobuf definitions for the Statefun Rust Greeter example"
 
 documentation = "https://docs.rs/statefun/"
 homepage = "https://github.com/aljoscha/statefun-rust"

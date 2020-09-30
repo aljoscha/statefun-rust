@@ -4,8 +4,8 @@ use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
-use statefun_example_proto::example::GreetRequest;
-use statefun_example_proto::example::GreetResponse;
+use statefun_greeter_example_proto::example::GreetRequest;
+use statefun_greeter_example_proto::example::GreetResponse;
 
 pub fn greet(context: Context, request: GreetRequest) -> Effects {
     log::info!("We should greet {:?}", request.get_name());

@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/src/statefun
 COPY . .
 
-RUN cargo install --path statefun-example
+RUN cargo install --path statefun-greeter-example
 
 ENV RUST_LOG debug
 

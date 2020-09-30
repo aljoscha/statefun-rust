@@ -2,6 +2,6 @@
 members = [
     "statefun-proto",
     "statefun-sdk",
-    "statefun-example",
-    "statefun-example-proto",
+    "statefun-greeter-example",
+    "statefun-greeter-example-proto",
 ]
