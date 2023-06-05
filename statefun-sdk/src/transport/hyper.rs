@@ -82,6 +82,7 @@ async fn handle_request(
     log::debug!("Parts {:#?}", _parts);
 
     let full_body = hyper::body::to_bytes(body).await?;
+    log::debug!("--drey: full body: {:?}", full_body);
     let to_function: ToFunction = protobuf::parse_from_reader(&mut full_body.reader())?;
     let from_function = {
         let function_registry = function_registry.lock().unwrap();
