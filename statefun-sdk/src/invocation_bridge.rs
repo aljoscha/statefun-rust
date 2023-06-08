@@ -44,7 +44,7 @@ impl InvocationBridge for FunctionRegistry {
         // updates
         let mut coalesced_state_updates: HashMap<String, StateUpdate> = HashMap::new();
 
-        let mut invocation_respose = FromFunction_InvocationResponse::new();
+        let mut invocation_response = FromFunction_InvocationResponse::new();
 
         for mut invocation in batch_request.take_invocations().into_iter() {
             let caller_address = invocation.take_caller();
@@ -53,12 +53,12 @@ impl InvocationBridge for FunctionRegistry {
 
             let effects = self.invoke(context.self_address().function_type, context, argument)?;
 
-            serialize_invocation_messages(&mut invocation_respose, effects.invocations);
+            serialize_invocation_messages(&mut invocation_response, effects.invocations);
             serialize_delayed_invocation_messages(
-                &mut invocation_respose,
+                &mut invocation_response,
                 effects.delayed_invocations,
             );
-            serialize_egress_messages(&mut invocation_respose, effects.egress_messages);
+            serialize_egress_messages(&mut invocation_response, effects.egress_messages);
             update_state(
                 &mut persisted_values,
                 &mut coalesced_state_updates,
@@ -67,10 +67,10 @@ impl InvocationBridge for FunctionRegistry {
         }
 
         let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
-        serialize_state_updates(&mut invocation_respose, state_values)?;
+        serialize_state_updates(&mut invocation_response, state_values)?;
 
         let mut from_function = FromFunction::new();
-        from_function.set_invocation_result(invocation_respose);
+        from_function.set_invocation_result(invocation_response);
 
         Ok(from_function)
     }
@@ -242,8 +242,8 @@ mod tests {
 
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        let mut invocation_respose = from_function.take_invocation_result();
-        let mut outgoing = invocation_respose.take_outgoing_messages();
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut outgoing = invocation_response.take_outgoing_messages();
 
         assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE1));
         assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE2));
@@ -267,8 +267,8 @@ mod tests {
         let to_function = complete_to_function();
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        let mut invocation_respose = from_function.take_invocation_result();
-        let mut outgoing = invocation_respose.take_outgoing_messages();
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut outgoing = invocation_response.take_outgoing_messages();
 
         assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE1));
         assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE2));
@@ -292,8 +292,8 @@ mod tests {
         let to_function = complete_to_function();
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        let mut invocation_respose = from_function.take_invocation_result();
-        let mut delayed = invocation_respose.take_delayed_invocations();
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut delayed = invocation_response.take_delayed_invocations();
 
         assert_delayed_invocation(
             delayed.remove(0),
@@ -335,8 +335,8 @@ mod tests {
         let to_function = complete_to_function();
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        let mut invocation_respose = from_function.take_invocation_result();
-        let mut egresses = invocation_respose.take_outgoing_egresses();
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut egresses = invocation_response.take_outgoing_egresses();
 
         assert_egress(
             egresses.remove(0),
@@ -376,8 +376,8 @@ mod tests {
         let to_function = complete_to_function();
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        let mut invocation_respose = from_function.take_invocation_result();
-        let state_mutations = invocation_respose.take_state_mutations();
+        let mut invocation_response = from_function.take_invocation_result();
+        let state_mutations = invocation_response.take_state_mutations();
 
         let state_map = to_state_map(state_mutations);
         assert_eq!(state_map.len(), 2);
@@ -419,8 +419,8 @@ mod tests {
         let to_function = complete_to_function();
         let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        let mut invocation_respose = from_function.take_invocation_result();
-        let state_mutations = invocation_respose.take_state_mutations();
+        let mut invocation_response = from_function.take_invocation_result();
+        let state_mutations = invocation_response.take_state_mutations();
 
         let state_map = to_state_map(state_mutations);
         assert_eq!(state_map.len(), 2);
