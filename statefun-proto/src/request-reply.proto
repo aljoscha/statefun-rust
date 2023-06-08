@@ -16,15 +16,13 @@
  * limitations under the License.
  */
 
-// This is imported from the flink-statefun project
-
 syntax = "proto3";
 
-package org.apache.flink.statefun.flink.core.polyglot;
-option java_package = "org.apache.flink.statefun.flink.core.polyglot.generated";
-option java_multiple_files = true;
+package io.statefun.sdk.reqreply;
 
-import "google/protobuf/any.proto";
+option java_package = "org.apache.flink.statefun.sdk.reqreply.generated";
+option java_multiple_files = true;
+option go_package = ".;protocol";
 
 // -------------------------------------------------------------------------------------------------------------------
 // Common message definitions
@@ -40,6 +38,14 @@ message Address {
     string id = 3;
 }
 
+message TypedValue {
+    string typename = 1;
+    // has_value is set to differentiate a zero length value bytes explicitly set,
+    // or a non existing value.
+    bool has_value = 2;
+    bytes value = 3;
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 // Messages sent to a Remote Function
 // -------------------------------------------------------------------------------------------------------------------
@@ -52,7 +58,7 @@ message ToFunction {
         // The unique name of the persisted state.
         string state_name = 1;
         // The serialized state value
-        bytes state_value = 2;
+        TypedValue state_value = 2;
     }
 
     // Invocation represents a remote function call, it associated with an (optional) return address,
@@ -61,15 +67,15 @@ message ToFunction {
         // The address of the function that requested the invocation (possibly absent)
         Address caller = 1;
         // The invocation argument (aka the message sent to the target function)
-        google.protobuf.Any argument = 2;
+        TypedValue argument = 2;
     }
 
     // InvocationBatchRequest represents a request to invoke a remote function. It is always associated with a target
-    // address (the function to invoke), a list of eager state values.
+    // address (the function to invoke), and a list of values for registered state.
     message InvocationBatchRequest {
         // The address of the function to invoke
         Address target = 1;
-        // A list of PersistedValues that were registered as an eager state.
+        // A list of PersistedValues that were registered as a persisted state.
         repeated PersistedValue state = 2;
         // A non empty (at least one) list of invocations
         repeated Invocation invocations = 3;
@@ -95,7 +101,7 @@ message FromFunction {
         }
         MutationType mutation_type = 1;
         string state_name = 2;
-        bytes state_value = 3;
+        TypedValue state_value = 3;
     }
 
     // Invocation represents a remote function call, it associated with a (mandatory) target address,
@@ -104,33 +110,42 @@ message FromFunction {
         // The target function to invoke
         Address target = 1;
         // The invocation argument (aka the message sent to the target function)
-        google.protobuf.Any argument = 2;
+        TypedValue argument = 2;
     }
 
     // DelayedInvocation represents a delayed remote function call with a target address, an argument
     // and a delay in milliseconds, after which this message to be sent.
     message DelayedInvocation {
+        // a boolean value (default false) that indicates rather this is a regular delayed message, or (true) a message
+        // cancellation request.
+        // in case of a regular delayed message all other fields are expected to be preset, otherwise only the
+        // cancellation_token is expected
+        bool is_cancellation_request = 10;
+
+        // an optional cancellation token that can be used to request the "unsending" of a delayed message.
+        string cancellation_token = 11;
+
         // the amount of milliseconds to wait before sending this message
         int64 delay_in_ms = 1;
         // the target address to send this message to
         Address target = 2;
         // the invocation argument
-        google.protobuf.Any argument = 3;
+        TypedValue argument = 3;
     }
 
     // EgressMessage an argument to forward to an egress.
     // An egress is identified by a namespace and type (see EgressIdentifier SDK class).
-    // The argument is a google.protobuf.Any
+    // The argument is an io.statefun.sdk.reqreply.TypedValue.
     message EgressMessage {
         // The target egress namespace
         string egress_namespace = 1;
         // The target egress type
         string egress_type = 2;
         // egress argument
-        google.protobuf.Any argument = 3;
+        TypedValue argument = 3;
     }
 
-    // InvocationResponse represents a result of an org.apache.flink.statefun.flink.core.polyglot.ToFunction.InvocationBatchRequest
+    // InvocationResponse represents a result of an io.statefun.sdk.reqreply.ToFunction.InvocationBatchRequest
     // it contains a list of state mutation to preform as a result of computing this batch, and a list of outgoing messages.
     message InvocationResponse {
         repeated PersistedValueMutation state_mutations = 1;
@@ -139,7 +154,39 @@ message FromFunction {
         repeated EgressMessage outgoing_egresses = 4;
     }
 
+    // ExpirationSpec represents TTL (Time-To-Live) configuration for persisted states.
+    message ExpirationSpec {
+        enum ExpireMode {
+            NONE = 0;
+            AFTER_WRITE = 1;
+            AFTER_INVOKE = 2;
+        }
+        ExpireMode mode = 1;
+        int64 expire_after_millis = 2;
+    }
+
+    // PersistedValueSpec represents specifications of a function's persisted value state.
+    message PersistedValueSpec {
+        string state_name = 1;
+        ExpirationSpec expiration_spec = 2;
+        string type_typename = 3;
+    }
+
+    // IncompleteInvocationContext represents a result of an io.statefun.sdk.reqreply.ToFunction.InvocationBatchRequest,
+    // which should be used as the response if the InvocationBatchRequest provided incomplete information about the
+    // invocation, e.g. insufficient state values were provided.
+    message IncompleteInvocationContext {
+        repeated PersistedValueSpec missing_values = 1;
+    }
+
+    // Response sent from the function, as a result of an io.statefun.sdk.reqreply.ToFunction.InvocationBatchRequest.
+    // It can be one of the following types:
+    //   - io.statefun.sdk.reqreply.FromFunction.InvocationResponse
+    //   - io.statefun.sdk.reqreply.FromFunction.IncompleteInvocationContext
     oneof response {
         InvocationResponse invocation_result = 100;
+        IncompleteInvocationContext incomplete_invocation_context = 101;
     }
 }
+
+
