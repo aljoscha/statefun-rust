@@ -8,6 +8,8 @@ use protobuf::Message;
 use crate::InvocationError::FunctionNotFound;
 use crate::{Context, Effects, FunctionType, InvocationError};
 
+use statefun_proto::request_reply::TypedValue;
+
 /// Keeps a mapping from `FunctionType` to stateful functions. Use this together with a
 /// [Transport](crate::transport::Transport) to serve stateful functions.
 ///
@@ -27,7 +29,7 @@ impl FunctionRegistry {
     }
 
     /// Registers the given function under the `function_type`.
-    pub fn register_fn<I: Message, F: Fn(Context, I) -> Effects + Send + 'static>(
+    pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
         function: F,
@@ -46,7 +48,7 @@ impl FunctionRegistry {
         &self,
         target_function: FunctionType,
         context: Context,
-        message: Any,
+        message: TypedValue,
     ) -> Result<Effects, InvocationError> {
         let function = self.functions.get(&target_function);
         match function {
@@ -58,19 +60,19 @@ impl FunctionRegistry {
 
 /// A function that can be invoked. This is used as trait objects in the `FunctionRegistry`.
 trait InvokableFunction {
-    fn invoke(&self, context: Context, message: Any) -> Result<Effects, InvocationError>;
+    fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError>;
 }
 
 /// An `InvokableFunction` that is backed by a `Fn`.
-struct FnInvokableFunction<I: Message, F: Fn(Context, I) -> Effects> {
+struct FnInvokableFunction<F: Fn(Context, TypedValue) -> Effects> {
     function: F,
-    marker: ::std::marker::PhantomData<I>,
+    marker: ::std::marker::PhantomData<TypedValue>,
 }
 
-impl<I: Message, F: Fn(Context, I) -> Effects> InvokableFunction for FnInvokableFunction<I, F> {
-    fn invoke(&self, context: Context, message: Any) -> Result<Effects, InvocationError> {
-        let unpacked_argument: I = message.unpack()?.unwrap();
-        let effects = (self.function)(context, unpacked_argument);
+impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFunction<F> {
+    fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError> {
+        log::debug!("--drey: Trying to unpack message: {:?}", &message);
+        let effects = (self.function)(context, message);
         Ok(effects)
     }
 }
@@ -93,6 +95,7 @@ mod tests {
             Effects::new()
         });
 
+        // todo: fixup with invoke
         let packed_argument = Any::pack(&StringValue::new())?;
         let _effects = registry.invoke(function_type_foo(), context, packed_argument)?;
 
@@ -107,6 +110,7 @@ mod tests {
 
         let registry = FunctionRegistry::new();
 
+        // todo: Fixup
         let packed_argument = Any::pack(&StringValue::new())?;
         let result = registry.invoke(function_type_bar(), context, packed_argument);
 
@@ -142,6 +146,7 @@ mod tests {
 
         let address_foo = address_foo().into_proto();
         let context = Context::new(&state, &address_foo, &address_foo);
+        // todo: fixup
         let packed_argument = Any::pack(&StringValue::new())?;
         let effects_foo = registry.invoke(function_type_foo(), context, packed_argument)?;
         assert_eq!(
@@ -156,6 +161,7 @@ mod tests {
 
         let address_bar = address_bar().into_proto();
         let context = Context::new(&state, &address_bar, &address_bar);
+        // todo: fixup
         let packed_argument = Any::pack(&StringValue::new())?;
         let effects_bar = registry.invoke(function_type_bar(), context, packed_argument)?;
         assert_eq!(

@@ -10,7 +10,7 @@ use protobuf::{Message, ProtobufError};
 use thiserror::Error;
 use tokio::runtime;
 
-use statefun_proto::http_function::ToFunction;
+use statefun_proto::request_reply::ToFunction;
 
 use crate::function_registry::FunctionRegistry;
 use crate::invocation_bridge::InvocationBridge;

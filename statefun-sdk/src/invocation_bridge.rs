@@ -5,15 +5,16 @@ use std::time::Duration;
 use protobuf::well_known_types::Any;
 use protobuf::{Message, ProtobufError};
 
-use statefun_proto::http_function::FromFunction;
-use statefun_proto::http_function::FromFunction_DelayedInvocation;
-use statefun_proto::http_function::FromFunction_EgressMessage;
-use statefun_proto::http_function::FromFunction_Invocation;
-use statefun_proto::http_function::FromFunction_InvocationResponse;
-use statefun_proto::http_function::FromFunction_PersistedValueMutation;
-use statefun_proto::http_function::FromFunction_PersistedValueMutation_MutationType;
-use statefun_proto::http_function::ToFunction;
-use statefun_proto::http_function::ToFunction_PersistedValue;
+use statefun_proto::request_reply::FromFunction;
+use statefun_proto::request_reply::FromFunction_DelayedInvocation;
+use statefun_proto::request_reply::FromFunction_EgressMessage;
+use statefun_proto::request_reply::FromFunction_Invocation;
+use statefun_proto::request_reply::FromFunction_InvocationResponse;
+use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
+use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
+use statefun_proto::request_reply::ToFunction;
+use statefun_proto::request_reply::ToFunction_PersistedValue;
+use statefun_proto::request_reply::TypedValue;
 
 use crate::function_registry::FunctionRegistry;
 use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate};
@@ -35,8 +36,8 @@ impl InvocationBridge for FunctionRegistry {
         );
 
         let self_address = batch_request.take_target();
-        let persisted_values_proto = batch_request.take_state();
-        let mut persisted_values = parse_persisted_values(&persisted_values_proto);
+        let persisted_values = batch_request.take_state();
+        let mut persisted_values = parse_persisted_values(&persisted_values);
 
         // we maintain a map of state updates that we update after every invocation. We maintain
         // this to be able to send back coalesced state updates to the statefun runtime but we
@@ -51,6 +52,7 @@ impl InvocationBridge for FunctionRegistry {
             let argument = invocation.take_argument();
             let context = Context::new(&persisted_values, &self_address, &caller_address);
 
+            // this passes in TypedValue
             let effects = self.invoke(context.self_address().function_type, context, argument)?;
 
             serialize_invocation_messages(&mut invocation_response, effects.invocations);
@@ -76,10 +78,26 @@ impl InvocationBridge for FunctionRegistry {
     }
 }
 
+/// These are temporary shims until we add direct support for TypedValue
+fn to_proto_any(value: TypedValue) -> Any {
+    let mut res = Any::new();
+    res.value = value.get_value().to_vec();
+    res
+}
+
+/// ditto
+fn from_proto_any(value: Any) -> TypedValue {
+    let mut res = TypedValue::new();
+    // todo: store type name URL?
+    res.value = value.value;
+    res
+}
+
 fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<String, Any> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        let packed_state: Any = deserialize_state(persisted_value.get_state_value());
+        // note: we're currently circumventing typename / has_value in TypedValue in this commit
+        let packed_state: Any = deserialize_state(persisted_value.get_state_value().get_value());
         result.insert(persisted_value.get_state_name().to_string(), packed_state);
     }
     result
@@ -118,7 +136,8 @@ fn serialize_invocation_messages(
     for invocation_message in invocation_messages {
         let mut proto_invocation_message = FromFunction_Invocation::new();
         proto_invocation_message.set_target(invocation_message.0.into_proto());
-        proto_invocation_message.set_argument(invocation_message.1);
+        let typed_value = from_proto_any(invocation_message.1);
+        proto_invocation_message.set_argument(typed_value);
         invocation_response
             .outgoing_messages
             .push(proto_invocation_message);
@@ -133,7 +152,8 @@ fn serialize_delayed_invocation_messages(
         let mut proto_invocation_message = FromFunction_DelayedInvocation::new();
         proto_invocation_message.set_target(invocation_message.0.into_proto());
         proto_invocation_message.set_delay_in_ms(invocation_message.1.as_millis() as i64);
-        proto_invocation_message.set_argument(invocation_message.2);
+        let typed_value = from_proto_any(invocation_message.2);
+        proto_invocation_message.set_argument(typed_value);
         invocation_response
             .delayed_invocations
             .push(proto_invocation_message);
@@ -148,7 +168,8 @@ fn serialize_egress_messages(
         let mut proto_egress_message = FromFunction_EgressMessage::new();
         proto_egress_message.set_egress_namespace(egress_message.0.namespace);
         proto_egress_message.set_egress_type(egress_message.0.name);
-        proto_egress_message.set_argument(egress_message.1);
+        let typed_value = from_proto_any(egress_message.1);
+        proto_egress_message.set_argument(typed_value);
         invocation_response
             .outgoing_egresses
             .push(proto_egress_message);
@@ -174,7 +195,7 @@ where
             StateUpdate::Update(name, state) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(name);
-                proto_state_update.set_state_value(state.write_to_bytes()?);
+                proto_state_update.set_state_value(from_proto_any(state));
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
                 invocation_response.state_mutations.push(proto_state_update);
@@ -189,15 +210,15 @@ mod tests {
     use protobuf::well_known_types::{Int32Value, StringValue};
     use protobuf::RepeatedField;
 
-    use statefun_proto::http_function::FromFunction_DelayedInvocation;
-    use statefun_proto::http_function::FromFunction_EgressMessage;
-    use statefun_proto::http_function::FromFunction_Invocation;
-    use statefun_proto::http_function::FromFunction_PersistedValueMutation;
-    use statefun_proto::http_function::FromFunction_PersistedValueMutation_MutationType;
-    use statefun_proto::http_function::ToFunction;
-    use statefun_proto::http_function::ToFunction_Invocation;
-    use statefun_proto::http_function::ToFunction_InvocationBatchRequest;
-    use statefun_proto::http_function::ToFunction_PersistedValue;
+    use statefun_proto::request_reply::FromFunction_DelayedInvocation;
+    use statefun_proto::request_reply::FromFunction_EgressMessage;
+    use statefun_proto::request_reply::FromFunction_Invocation;
+    use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
+    use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
+    use statefun_proto::request_reply::ToFunction;
+    use statefun_proto::request_reply::ToFunction_Invocation;
+    use statefun_proto::request_reply::ToFunction_InvocationBatchRequest;
+    use statefun_proto::request_reply::ToFunction_PersistedValue;
 
     use crate::invocation_bridge::{deserialize_state, InvocationBridge};
     use crate::FunctionRegistry;

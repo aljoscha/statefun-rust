@@ -60,7 +60,7 @@ use protobuf::Message;
 
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
-use statefun_proto::http_function::Address as ProtoAddress;
+use statefun_proto::request_reply::Address as ProtoAddress;
 
 mod error;
 mod function_registry;
