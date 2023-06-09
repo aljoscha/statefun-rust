@@ -79,7 +79,7 @@ impl InvocationBridge for FunctionRegistry {
                             value_spec.state_name = name;
                             value_spec.expiration_spec = SingularPtrField::some(expiration_spec);
                             // todo: this should be figured out at runtime
-                            value_spec.type_typename = "greeter.fns/seen_count".to_string();
+                            value_spec.type_typename = "greeter.fns/int".to_string();
 
                             incomplete_context.missing_values.push(value_spec);
                         }
@@ -131,7 +131,7 @@ fn from_proto_any(value: Any) -> TypedValue {
     let mut res = TypedValue::new();
     // todo: store type name URL?
     // todo: this needs to be the same as the variable path
-    res.typename = "greeter.fns/seen_count".to_string();
+    res.typename = "greeter.fns/int".to_string();
     res.has_value = true;
     res.value = value.value;
     res
