@@ -7,6 +7,7 @@ use protobuf::Message;
 
 use crate::InvocationError::FunctionNotFound;
 use crate::{Context, Effects, FunctionType, InvocationError};
+use crate::MissingStateCollection;
 
 use statefun_proto::request_reply::TypedValue;
 
@@ -82,6 +83,10 @@ impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFun
             if context.state.contains_key(&name) {
                 missing_states.push(name.to_string());
             }
+        }
+
+        if missing_states.len() > 0 {
+            return Err(InvocationError::MissingStates(MissingStateCollection { states: missing_states }));
         }
 
         // todo: check if state values are here
