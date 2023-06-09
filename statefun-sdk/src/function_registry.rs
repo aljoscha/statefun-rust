@@ -81,7 +81,7 @@ impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFun
 
         let mut missing_states : Vec<ValueSpec> = Vec::new();
         for value_spec in (&self.value_specs).into_iter() {
-            if !context.state.contains_key(&value_spec.name) {
+            if !context.state.contains_key(&value_spec) {
                 missing_states.push(value_spec.clone());
             }
         }

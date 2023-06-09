@@ -22,7 +22,7 @@ use statefun_proto::request_reply::FromFunction_ExpirationSpec;
 use statefun_proto::request_reply::FromFunction_ExpirationSpec_ExpireMode;
 
 use crate::function_registry::FunctionRegistry;
-use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate};
+use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpec};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
 pub trait InvocationBridge {
@@ -48,7 +48,7 @@ impl InvocationBridge for FunctionRegistry {
         // this to be able to send back coalesced state updates to the statefun runtime but we
         // also need to update persisted_values so that subsequent invocations also "see" state
         // updates
-        let mut coalesced_state_updates: HashMap<String, StateUpdate> = HashMap::new();
+        let mut coalesced_state_updates: HashMap<ValueSpec, StateUpdate> = HashMap::new();
 
         let mut invocation_response = FromFunction_InvocationResponse::new();
 
@@ -137,12 +137,11 @@ fn from_proto_any(value: Any) -> TypedValue {
     res
 }
 
-fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<String, Any> {
+fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpec, Any> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        // note: we're currently circumventing typename / has_value in TypedValue in this commit
         let packed_state: Any = deserialize_state(persisted_value.get_state_value().get_value());
-        result.insert(persisted_value.get_state_name().to_string(), packed_state);
+        result.insert(ValueSpec::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()), packed_state);
     }
     result
 }
@@ -152,21 +151,21 @@ fn deserialize_state(serialized_state: &[u8]) -> Any {
 }
 
 fn update_state(
-    persisted_state: &mut HashMap<String, Any>,
-    coalesced_state: &mut HashMap<String, StateUpdate>,
+    persisted_state: &mut HashMap<ValueSpec, Any>,
+    coalesced_state: &mut HashMap<ValueSpec, StateUpdate>,
     state_updates: Vec<StateUpdate>,
 ) {
     for state_update in state_updates {
         match state_update {
-            StateUpdate::Delete(name) => {
-                persisted_state.remove(&name);
-                coalesced_state.insert(name.clone(), StateUpdate::Delete(name.clone()));
+            StateUpdate::Delete(value_spec) => {
+                persisted_state.remove(&value_spec);
+                coalesced_state.insert(value_spec.clone(), StateUpdate::Delete(value_spec.clone()));
             }
-            StateUpdate::Update(name, state) => {
-                persisted_state.insert(name.clone(), state.clone());
+            StateUpdate::Update(value_spec, state) => {
+                persisted_state.insert(value_spec.clone(), state.clone());
                 coalesced_state.insert(
-                    name.clone(),
-                    StateUpdate::Update(name.clone(), state.clone()),
+                    value_spec.clone(),
+                    StateUpdate::Update(value_spec.clone(), state.clone()),
                 );
             }
         }
@@ -180,6 +179,7 @@ fn serialize_invocation_messages(
     for invocation_message in invocation_messages {
         let mut proto_invocation_message = FromFunction_Invocation::new();
         proto_invocation_message.set_target(invocation_message.0.into_proto());
+        // todo: need real type here
         let typed_value = from_proto_any(invocation_message.1);
         proto_invocation_message.set_argument(typed_value);
         invocation_response
@@ -229,16 +229,17 @@ where
 {
     for state_update in state_updates {
         match state_update {
-            StateUpdate::Delete(name) => {
+            // todo: fxiup
+            StateUpdate::Delete(value_spec) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
-                proto_state_update.set_state_name(name);
+                proto_state_update.set_state_name(value_spec.name);
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::DELETE);
                 invocation_response.state_mutations.push(proto_state_update);
             }
-            StateUpdate::Update(name, state) => {
+            StateUpdate::Update(value_spec, state) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
-                proto_state_update.set_state_name(name);
+                proto_state_update.set_state_name(value_spec.name);
                 // drey
                 proto_state_update.set_state_value(from_proto_any(state));
                 proto_state_update

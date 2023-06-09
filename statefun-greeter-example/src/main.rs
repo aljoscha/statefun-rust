@@ -11,14 +11,19 @@ use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Serialize, Deserialize};
 
+// why can't we just have CTFE like a capable language?
+fn SEEN_COUNT() -> ValueSpec {
+    ValueSpec::new("seen_count", "io.statefun.types/int")
+}
+
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
     // todo: need actual type here, either by doing `.withIntType()`, or by specifying our own namespace
     // todo: use namespaced type names here by making the namespace another parameter
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![ValueSpec::new("seen_count", "io.statefun.types/int")], user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![ValueSpec::new("seen_count", "io.statefun.types/int")], greet);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
@@ -44,7 +49,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
 
     log::info!("We should update user count {:?}", login.user_name);
 
-    let seen_count: Option<Int32Value> = context.get_state("seen_count");
+    let seen_count: Option<Int32Value> = context.get_state(SEEN_COUNT());
     let mut updated_seen_count = match seen_count {
         Some(count) => count,
         None => Int32Value::new(),
@@ -57,14 +62,15 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
         .expect("Time went backwards");
     let now_ms = since_the_epoch.as_millis() as i64;
 
-    let last_seen_timestamp_ms : Option<Int64Value> = context.get_state("seen_timestamp_ms");
-    let mut updated_last_seen_timestamp_ms = match last_seen_timestamp_ms {
-        Some(last_seen) => last_seen,
-        None => { let mut x = Int64Value::new(); x.set_value(now_ms); x },
-    };
+    // let last_seen_timestamp_ms : Option<Int64Value> = context.get_state("seen_timestamp_ms");
+    // let mut updated_last_seen_timestamp_ms = match last_seen_timestamp_ms {
+    //     Some(last_seen) => last_seen,
+    //     None => { let mut x = Int64Value::new(); x.set_value(now_ms); x },
+    // };
 
     let mut effects = Effects::new();
-    effects.update_state("seen_count", &updated_seen_count);
+    // todo: store ValueSpec here
+    effects.update_state(SEEN_COUNT(), &updated_seen_count);
     // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
 
     // log::info!(

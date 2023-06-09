@@ -76,14 +76,14 @@ pub mod transport;
 /// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
-    state: &'a HashMap<String, Any>,
+    state: &'a HashMap<ValueSpec, Any>,
     self_address: &'a ProtoAddress,
     caller_address: &'a ProtoAddress,
 }
 
 impl<'a> Context<'a> {
     fn new(
-        state: &'a HashMap<String, Any>,
+        state: &'a HashMap<ValueSpec, Any>,
         self_address: &'a ProtoAddress,
         caller_address: &'a ProtoAddress,
     ) -> Self {
@@ -108,21 +108,21 @@ impl<'a> Context<'a> {
 
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
-    pub fn get_state<T: Message>(&self, name: &str) -> Option<T> {
-        let state = self.state.get(name);
+    pub fn get_state<T: Message>(&self, value_spec: ValueSpec) -> Option<T> {
+        let state = self.state.get(&value_spec);
         state.and_then(|serialized_state| {
-            let unpacked_state: Option<T> = unpack_state(name, serialized_state);
+            let unpacked_state: Option<T> = unpack_state(value_spec, serialized_state);
             unpacked_state
         })
     }
 }
 
 /// Unpacks the given state, which is expected to be a serialized `Any<T>`.
-fn unpack_state<T: Message>(state_name: &str, packed_state: &Any) -> Option<T> {
+fn unpack_state<T: Message>(value_spec: ValueSpec, packed_state: &Any) -> Option<T> {
     // let packed_state: Any =
     //     protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
 
-    log::debug!("Packed state for {}: {:?}", state_name, packed_state);
+    log::debug!("Packed state for {:?}: {:?}", value_spec, packed_state);
 
     let unpacked_state: Option<T> = packed_state
         .unpack()
@@ -278,15 +278,15 @@ impl Effects {
     }
 
     /// Deletes the state kept under the given name.
-    pub fn delete_state(&mut self, name: &str) {
+    pub fn delete_state(&mut self, value_spec: ValueSpec) {
         self.state_updates
-            .push(StateUpdate::Delete(name.to_owned()));
+            .push(StateUpdate::Delete(value_spec));
     }
 
     /// Updates the state stored under the given name to the given value.
-    pub fn update_state<T: Message>(&mut self, name: &str, value: &T) {
+    pub fn update_state<T: Message>(&mut self, value_spec: ValueSpec, value: &T) {
         self.state_updates.push(StateUpdate::Update(
-            name.to_owned(),
+            value_spec,
             Any::pack(value).expect("Could not pack state update."),
         ));
     }
@@ -294,8 +294,8 @@ impl Effects {
 
 #[derive(Debug)]
 enum StateUpdate {
-    Update(String, Any),
-    Delete(String),
+    Update(ValueSpec, Any),
+    Delete(ValueSpec),
 }
 
 /// A reference to an _egress_, consisting of a namespace and a name.
