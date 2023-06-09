@@ -62,14 +62,14 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     };
 
     let mut effects = Effects::new();
-    effects.update_state("seen_count", &updated_seen_count);
-    effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
+    // effects.update_state("seen_count", &updated_seen_count);
+    // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
 
-    log::info!(
-        "We have seen {:?} {:?} times.",
-        login.user_name,
-        updated_seen_count
-    );
+    // log::info!(
+    //     "We have seen {:?} {:?} times.",
+    //     login.user_name,
+    //     updated_seen_count
+    // );
 
     let mut profile = UserProfile::new();
     profile.set_name(login.user_name.to_string());
@@ -86,7 +86,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
 }
 
 pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
-    log::info!("--greet: Received {:?}", typed_value);
+    log::info!("--drey called greet: Received {:?}", typed_value);
     // todo:
     // profile: UserProfile
 
