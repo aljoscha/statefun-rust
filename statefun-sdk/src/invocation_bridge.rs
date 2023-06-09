@@ -63,6 +63,8 @@ impl InvocationBridge for FunctionRegistry {
                 Err(e) => match &e {
                     // todo: here we should set_incomplete_invocation_context
                     InvocationError::MissingStates(state_collection) => {
+                        log::debug!("--drey: missing states: {:?}", &state_collection);
+
                         // let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
                         // serialize_state_updates(&mut invocation_response, state_values)?;
                         let mut incomplete_context = FromFunction_IncompleteInvocationContext::new();
@@ -76,7 +78,8 @@ impl InvocationBridge for FunctionRegistry {
                             let mut value_spec = FromFunction_PersistedValueSpec::new();
                             value_spec.state_name = name;
                             value_spec.expiration_spec = SingularPtrField::some(expiration_spec);
-                            value_spec.type_typename = "no_type".to_string();
+                            // todo: this should be figured out at runtime
+                            value_spec.type_typename = "greeter.fns/seen_count".to_string();
 
                             incomplete_context.missing_values.push(value_spec);
                         }
@@ -127,7 +130,8 @@ fn to_proto_any(value: TypedValue) -> Any {
 fn from_proto_any(value: Any) -> TypedValue {
     let mut res = TypedValue::new();
     // todo: store type name URL?
-    res.typename = "greeter.fns/int".to_string();
+    // todo: this needs to be the same as the variable path
+    res.typename = "greeter.fns/seen_count".to_string();
     res.has_value = true;
     res.value = value.value;
     res

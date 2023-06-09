@@ -80,7 +80,7 @@ impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFun
 
         let mut missing_states : Vec<String> = Vec::new();
         for name in self.state_names.clone().into_iter() {
-            if context.state.contains_key(&name) {
+            if !context.state.contains_key(&name) {
                 missing_states.push(name.to_string());
             }
         }
