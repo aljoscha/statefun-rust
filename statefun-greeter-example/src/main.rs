@@ -15,8 +15,8 @@ fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"), user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), greet);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"), vec!["seen_count".to_string()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec!["seen_count".to_string()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
