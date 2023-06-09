@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use protobuf::well_known_types::Any;
 use protobuf::{Message, ProtobufError};
+use protobuf::SingularPtrField;
 
 use statefun_proto::request_reply::FromFunction;
 use statefun_proto::request_reply::FromFunction_DelayedInvocation;
@@ -15,6 +16,10 @@ use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationT
 use statefun_proto::request_reply::ToFunction;
 use statefun_proto::request_reply::ToFunction_PersistedValue;
 use statefun_proto::request_reply::TypedValue;
+use statefun_proto::request_reply::FromFunction_IncompleteInvocationContext;
+use statefun_proto::request_reply::FromFunction_PersistedValueSpec;
+use statefun_proto::request_reply::FromFunction_ExpirationSpec;
+use statefun_proto::request_reply::FromFunction_ExpirationSpec_ExpireMode;
 
 use crate::function_registry::FunctionRegistry;
 use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate};
@@ -57,7 +62,30 @@ impl InvocationBridge for FunctionRegistry {
                 Ok(effects) => effects,
                 Err(e) => match &e {
                     // todo: here we should set_incomplete_invocation_context
-                    InvocationError::MissingStates(states) => return Err(e),
+                    InvocationError::MissingStates(state_collection) => {
+                        // let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
+                        // serialize_state_updates(&mut invocation_response, state_values)?;
+                        let mut incomplete_context = FromFunction_IncompleteInvocationContext::new();
+
+                        let mut missing_values : Vec<FromFunction_PersistedValueSpec> = Vec::new();
+                        for name in state_collection.states.clone().into_iter() {
+                            let mut expiration_spec = FromFunction_ExpirationSpec::new();
+                            expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
+                            expiration_spec.expire_after_millis = 0;
+
+                            let mut value_spec = FromFunction_PersistedValueSpec::new();
+                            value_spec.state_name = name;
+                            value_spec.expiration_spec = SingularPtrField::some(expiration_spec);
+                            value_spec.type_typename = "no_type".to_string();
+
+                            incomplete_context.missing_values.push(value_spec);
+                        }
+
+                        let mut from_function = FromFunction::new();
+                        from_function.set_incomplete_invocation_context(incomplete_context);
+
+                        return Ok(from_function);
+                    }
                     _ => return Err(e),
                 }
             };
