@@ -62,7 +62,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     };
 
     let mut effects = Effects::new();
-    // effects.update_state("seen_count", &updated_seen_count);
+    effects.update_state("seen_count", &updated_seen_count);
     // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
 
     // log::info!(
@@ -71,16 +71,16 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     //     updated_seen_count
     // );
 
-    let mut profile = UserProfile::new();
-    profile.set_name(login.user_name.to_string());
-    profile.set_last_seen_delta_ms(now_ms);
-    profile.set_login_location(format!("{:?}", login.login_type));
-    profile.set_seen_count(updated_seen_count.value);
+    // let mut profile = UserProfile::new();
+    // profile.set_name(login.user_name.to_string());
+    // profile.set_last_seen_delta_ms(now_ms);
+    // profile.set_login_location(format!("{:?}", login.login_type));
+    // profile.set_seen_count(updated_seen_count.value);
 
-    effects.send(
-        Address::new(FunctionType::new("greeter.fns", "greetings"), &login.user_name),
-        profile,
-    );
+    // effects.send(
+    //     Address::new(FunctionType::new("greeter.fns", "greetings"), &login.user_name),
+    //     profile,
+    // );
 
     effects
 }

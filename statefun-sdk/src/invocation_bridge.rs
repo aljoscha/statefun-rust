@@ -89,6 +89,8 @@ fn to_proto_any(value: TypedValue) -> Any {
 fn from_proto_any(value: Any) -> TypedValue {
     let mut res = TypedValue::new();
     // todo: store type name URL?
+    res.typename = "greeter.fns/int".to_string();
+    res.has_value = true;
     res.value = value.value;
     res
 }
@@ -195,6 +197,7 @@ where
             StateUpdate::Update(name, state) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(name);
+                // drey
                 proto_state_update.set_state_value(from_proto_any(state));
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
