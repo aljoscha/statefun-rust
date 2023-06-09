@@ -189,12 +189,12 @@ impl Address {
 /// blabla
 #[derive(Error, PartialEq, Eq, Hash, Debug)]
 pub struct MissingStateCollection {
-    states: Vec<String>,
+    states: Vec<ValueSpec>,
 }
 
 impl MissingStateCollection {
     /// blabla
-    pub fn new(states: Vec<String>) -> MissingStateCollection {
+    pub fn new(states: Vec<ValueSpec>) -> MissingStateCollection {
         MissingStateCollection {
             states: states,
         }
@@ -321,5 +321,22 @@ impl EgressIdentifier {
 impl Display for EgressIdentifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "EgressIdentifier {}/{}", self.namespace, self.name)
+    }
+}
+
+///
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+pub struct ValueSpec {
+    name : String,  // state name
+    typename : String,  // type typename
+}
+
+impl ValueSpec {
+    /// blabla
+    pub fn new(name: &str, typename: &str) -> ValueSpec {
+        ValueSpec {
+            name: name.to_string(),
+            typename: typename.to_string(),
+        }
     }
 }

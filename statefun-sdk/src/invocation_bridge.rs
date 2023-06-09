@@ -70,18 +70,18 @@ impl InvocationBridge for FunctionRegistry {
                         let mut incomplete_context = FromFunction_IncompleteInvocationContext::new();
 
                         let mut missing_values : Vec<FromFunction_PersistedValueSpec> = Vec::new();
-                        for name in state_collection.states.clone().into_iter() {
+                        for value_spec in (&state_collection.states).into_iter() {
                             let mut expiration_spec = FromFunction_ExpirationSpec::new();
                             expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
                             expiration_spec.expire_after_millis = 0;
 
-                            let mut value_spec = FromFunction_PersistedValueSpec::new();
-                            value_spec.state_name = name;
-                            value_spec.expiration_spec = SingularPtrField::some(expiration_spec);  // todo: this is always serialized as null
+                            let mut persisted_value_spec = FromFunction_PersistedValueSpec::new();
+                            persisted_value_spec.state_name = value_spec.name.clone();
+                            persisted_value_spec.expiration_spec = SingularPtrField::some(expiration_spec);  // todo: this is always serialized as null
                             // todo: this should be figured out at runtime
-                            value_spec.type_typename = "greeter.fns/int".to_string();
+                            persisted_value_spec.type_typename = value_spec.typename.clone();
 
-                            incomplete_context.missing_values.push(value_spec);
+                            incomplete_context.missing_values.push(persisted_value_spec);
                         }
 
                         let mut from_function = FromFunction::new();

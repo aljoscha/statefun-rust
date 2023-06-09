@@ -4,7 +4,7 @@ use protobuf::well_known_types::Int64Value;
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
+use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpec};
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
 use statefun_proto::request_reply::TypedValue;
@@ -15,8 +15,10 @@ fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"), vec!["seen_count".to_string()], user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec!["seen_count".to_string()], greet);
+    // todo: need actual type here, either by doing `.withIntType()`, or by specifying our own namespace
+    // todo: use namespaced type names here by making the namespace another parameter
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![ValueSpec::new("seen_count", "io.statefun.types/int")], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![ValueSpec::new("seen_count", "io.statefun.types/int")], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;

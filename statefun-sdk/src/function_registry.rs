@@ -8,6 +8,7 @@ use protobuf::Message;
 use crate::InvocationError::FunctionNotFound;
 use crate::{Context, Effects, FunctionType, InvocationError};
 use crate::MissingStateCollection;
+use crate::ValueSpec;
 
 use statefun_proto::request_reply::TypedValue;
 
@@ -33,13 +34,13 @@ impl FunctionRegistry {
     pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
-        state_names: Vec<String>,
+        value_specs: Vec<ValueSpec>,
         function: F,
     ) {
         let callable_function = FnInvokableFunction {
             function,
             marker: ::std::marker::PhantomData,
-            state_names
+            value_specs
         };
         self.functions
             .insert(function_type, Box::new(callable_function));
@@ -72,26 +73,22 @@ struct FnInvokableFunction<F: Fn(Context, TypedValue) -> Effects> {
     marker: ::std::marker::PhantomData<TypedValue>,
     // todo: these should be specc'ed out like TypeName in the Java SDK,
     // for now we're just storing plain strings w/o any validation.
-    state_names: Vec<String>,
+    value_specs: Vec<ValueSpec>,
 }
 
 impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFunction<F> {
     fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError> {
 
-        let mut missing_states : Vec<String> = Vec::new();
-        for name in self.state_names.clone().into_iter() {
-            if !context.state.contains_key(&name) {
-                missing_states.push(name.to_string());
+        let mut missing_states : Vec<ValueSpec> = Vec::new();
+        for value_spec in (&self.value_specs).into_iter() {
+            if !context.state.contains_key(&value_spec.name) {
+                missing_states.push(value_spec.clone());
             }
         }
 
         if missing_states.len() > 0 {
             return Err(InvocationError::MissingStates(MissingStateCollection { states: missing_states }));
         }
-
-        // todo: check if state values are here
-        // let missing_states = (&self.state_names).into_iter().filter(|state_name| (&context.state).contains_key(&state_name));
-        // range_iter.filter(|&x| x == 2);
 
         log::debug!("--drey: Trying to unpack message: {:?}", &message);
         let effects = (self.function)(context, message);
