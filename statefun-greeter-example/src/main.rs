@@ -38,51 +38,49 @@ struct UserLogin {
 }
 
 pub fn user(context: Context, typed_value: TypedValue) -> Effects {
-    log::info!("--user: received: {:?}", typed_value);
-    // todo: fixup
-    // login: UserLogin
+    let login: UserLogin = serde_json::from_slice(&typed_value.value).unwrap();
 
-    // log::info!("We should update user count {:?}", login.get_user_name());
+    log::info!("We should update user count {:?}", login.user_name);
 
-    // let seen_count: Option<Int32Value> = context.get_state("seen_count");
-    // let mut updated_seen_count = match seen_count {
-    //     Some(count) => count,
-    //     None => Int32Value::new(),
-    // };
-    // updated_seen_count.set_value(updated_seen_count.get_value() + 1);
+    let seen_count: Option<Int32Value> = context.get_state("seen_count");
+    let mut updated_seen_count = match seen_count {
+        Some(count) => count,
+        None => Int32Value::new(),
+    };
+    updated_seen_count.set_value(updated_seen_count.get_value() + 1);
 
-    // let start = SystemTime::now();
-    // let since_the_epoch = start
-    //     .duration_since(UNIX_EPOCH)
-    //     .expect("Time went backwards");
-    // let now_ms = since_the_epoch.as_millis() as i64;
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    let now_ms = since_the_epoch.as_millis() as i64;
 
-    // let last_seen_timestamp_ms : Option<Int64Value> = context.get_state("seen_timestamp_ms");
-    // let mut updated_last_seen_timestamp_ms = match last_seen_timestamp_ms {
-    //     Some(last_seen) => last_seen,
-    //     None => { let mut x = Int64Value::new(); x.set_value(now_ms); x },
-    // };
+    let last_seen_timestamp_ms : Option<Int64Value> = context.get_state("seen_timestamp_ms");
+    let mut updated_last_seen_timestamp_ms = match last_seen_timestamp_ms {
+        Some(last_seen) => last_seen,
+        None => { let mut x = Int64Value::new(); x.set_value(now_ms); x },
+    };
 
     let mut effects = Effects::new();
-    // effects.update_state("seen_count", &updated_seen_count);
-    // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
+    effects.update_state("seen_count", &updated_seen_count);
+    effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
 
-    // log::info!(
-    //     "We have seen {:?} {:?} times.",
-    //     login.get_user_name(),
-    //     updated_seen_count
-    // );
+    log::info!(
+        "We have seen {:?} {:?} times.",
+        login.user_name,
+        updated_seen_count
+    );
 
-    // let mut profile = UserProfile::new();
-    // profile.set_name(login.get_user_name().to_string());
-    // profile.set_last_seen_delta_ms(now_ms);
-    // profile.set_login_location(format!("{:?}", login.get_login_type()));
-    // profile.set_seen_count(updated_seen_count.value);
+    let mut profile = UserProfile::new();
+    profile.set_name(login.user_name.to_string());
+    profile.set_last_seen_delta_ms(now_ms);
+    profile.set_login_location(format!("{:?}", login.login_type));
+    profile.set_seen_count(updated_seen_count.value);
 
-    // effects.send(
-    //     Address::new(FunctionType::new("greeter.fns", "greetings"), login.get_user_name()),
-    //     profile,
-    // );
+    effects.send(
+        Address::new(FunctionType::new("greeter.fns", "greetings"), &login.user_name),
+        profile,
+    );
 
     effects
 }
@@ -107,17 +105,17 @@ pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
     effects
 }
 
-pub fn createGreetingsMessage(profile: UserProfile) -> String {
-    let GREETINGS_TEMPLATES =
-      ["Welcome", "Nice to see you again", "Third time is a charm"];
+// pub fn createGreetingsMessage(profile: UserProfile) -> String {
+//     let GREETINGS_TEMPLATES =
+//       ["Welcome", "Nice to see you again", "Third time is a charm"];
 
-    let seenCount = profile.get_seen_count() as usize;
+//     let seenCount = profile.get_seen_count() as usize;
 
-    if seenCount <= GREETINGS_TEMPLATES.len() {
-      return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
-    } else {
-      return format!(
-        "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
-          seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
-    }
-}
+//     if seenCount <= GREETINGS_TEMPLATES.len() {
+//       return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
+//     } else {
+//       return format!(
+//         "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
+//           seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
+//     }
+// }
