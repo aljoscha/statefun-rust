@@ -57,6 +57,7 @@ use std::time::Duration;
 
 use protobuf::well_known_types::Any;
 use protobuf::Message;
+use thiserror::Error;
 
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
@@ -65,7 +66,6 @@ use statefun_proto::request_reply::Address as ProtoAddress;
 mod error;
 mod function_registry;
 mod invocation_bridge;
-
 pub mod io;
 pub mod transport;
 
@@ -183,6 +183,27 @@ impl Address {
         result.set_field_type(self.function_type.name);
         result.set_id(self.id);
         result
+    }
+}
+
+/// blabla
+#[derive(Error, PartialEq, Eq, Hash, Debug)]
+pub struct MissingStateCollection {
+    states: Vec<String>,
+}
+
+impl MissingStateCollection {
+    /// blabla
+    pub fn new(states: Vec<String>) -> MissingStateCollection {
+        MissingStateCollection {
+            states: states,
+        }
+    }
+}
+
+impl Display for MissingStateCollection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "MissingStateCollection {:?}", self.states)
     }
 }
 

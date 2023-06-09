@@ -32,11 +32,13 @@ impl FunctionRegistry {
     pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
+        state_names: Vec<String>,
         function: F,
     ) {
         let callable_function = FnInvokableFunction {
             function,
             marker: ::std::marker::PhantomData,
+            state_names
         };
         self.functions
             .insert(function_type, Box::new(callable_function));
@@ -67,10 +69,25 @@ trait InvokableFunction {
 struct FnInvokableFunction<F: Fn(Context, TypedValue) -> Effects> {
     function: F,
     marker: ::std::marker::PhantomData<TypedValue>,
+    // todo: these should be specc'ed out like TypeName in the Java SDK,
+    // for now we're just storing plain strings w/o any validation.
+    state_names: Vec<String>,
 }
 
 impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFunction<F> {
     fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError> {
+
+        let mut missing_states : Vec<String> = Vec::new();
+        for name in self.state_names.clone().into_iter() {
+            if context.state.contains_key(&name) {
+                missing_states.push(name.to_string());
+            }
+        }
+
+        // todo: check if state values are here
+        // let missing_states = (&self.state_names).into_iter().filter(|state_name| (&context.state).contains_key(&state_name));
+        // range_iter.filter(|&x| x == 2);
+
         log::debug!("--drey: Trying to unpack message: {:?}", &message);
         let effects = (self.function)(context, message);
         Ok(effects)

@@ -55,6 +55,9 @@ impl InvocationBridge for FunctionRegistry {
             // this passes in TypedValue
             let effects = self.invoke(context.self_address().function_type, context, argument)?;
 
+            // todo: check if all the states are here
+            // todo: check what writes invocation_result (it's right below here)
+
             serialize_invocation_messages(&mut invocation_response, effects.invocations);
             serialize_delayed_invocation_messages(
                 &mut invocation_response,
