@@ -31,7 +31,7 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier};
+use crate::{Effects, EgressIdentifier, ValueSpec};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {
@@ -55,7 +55,8 @@ pub trait KafkaEgress {
 impl KafkaEgress for Effects {
     fn kafka_egress<M: Message>(&mut self, identifier: EgressIdentifier, topic: &str, message: M) {
         let kafka_record = egress_record(topic, message);
-        self.egress(identifier, kafka_record);
+        // todo: figure out the type name here, maybe just use a string??
+        self.egress(identifier, ValueSpec::new("kafka", "kafka"), kafka_record);
     }
 
     fn kafka_keyed_egress<M: Message>(
@@ -67,7 +68,7 @@ impl KafkaEgress for Effects {
     ) {
         let mut kafka_record = egress_record(topic, message);
         kafka_record.set_key(key.to_owned());
-        self.egress(identifier, kafka_record);
+        self.egress(identifier, ValueSpec::new("kafka", "kafka"), kafka_record);
     }
 }
 

@@ -241,9 +241,9 @@ impl Display for FunctionType {
 ///  - update the state of this stateful function, which will be available on future invocations
 #[derive(Default, Debug)]
 pub struct Effects {
-    invocations: Vec<(Address, Any)>,
-    delayed_invocations: Vec<(Address, Duration, Any)>,
-    egress_messages: Vec<(EgressIdentifier, Any)>,
+    invocations: Vec<(Address, String, Any)>,
+    delayed_invocations: Vec<(Address, Duration, String, Any)>,
+    egress_messages: Vec<(EgressIdentifier, String, Any)>,
     state_updates: Vec<StateUpdate>,
 }
 
@@ -259,22 +259,23 @@ impl Effects {
     }
 
     /// Sends a message to the stateful function identified by the address.
-    pub fn send<M: Message>(&mut self, address: Address, message: M) {
+    // todo: check if this needs to be valuespec in the java sdk
+    pub fn send<M: Message>(&mut self, address: Address, value_spec: ValueSpec, message: M) {
         let packed_message = Any::pack(&message).unwrap();
-        self.invocations.push((address, packed_message));
+        self.invocations.push((address, value_spec.typename, packed_message));
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
-    pub fn send_after<M: Message>(&mut self, address: Address, delay: Duration, message: M) {
+    pub fn send_after<M: Message>(&mut self, address: Address, delay: Duration, value_spec: ValueSpec, message: M) {
         let packed_message = Any::pack(&message).unwrap();
         self.delayed_invocations
-            .push((address, delay, packed_message));
+            .push((address, delay, value_spec.typename, packed_message));
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
-    pub fn egress<M: Message>(&mut self, identifier: EgressIdentifier, message: M) {
+    pub fn egress<M: Message>(&mut self, identifier: EgressIdentifier, value_spec: ValueSpec, message: M) {
         let packed_message = Any::pack(&message).unwrap();
-        self.egress_messages.push((identifier, packed_message));
+        self.egress_messages.push((identifier, value_spec.typename, packed_message));
     }
 
     /// Deletes the state kept under the given name.
