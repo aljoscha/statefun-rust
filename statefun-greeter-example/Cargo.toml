@@ -20,6 +20,9 @@ statefun = { path = "../statefun-sdk", version = "0.1.1" }
 statefun-proto = { path = "../statefun-proto", version = "0.1.1" }
 statefun-greeter-example-proto = { path = "../statefun-greeter-example-proto", version = "0.1.1" }
 protobuf = "2.15"
+serde = { version = "1.0.164", features = ["derive"] }
+serde_json = { version = "1.0.96" }
+
 
 # for reading/writing from/to Kafka in the data generator
 # todo: update this

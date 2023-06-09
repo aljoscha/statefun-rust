@@ -2,18 +2,6 @@ syntax = "proto3";
 
 package example;
 
-enum LoginType {
-    WEB = 0;
-    MOBILE = 1;
-}
-
-message UserLogin {
-    // The name of the user to greet
-    string user_id = 1;
-    string user_name = 2;
-    LoginType login_type = 3;
-}
-
 message UserProfile {
     string name = 1;
     int64 last_seen_delta_ms = 2;

@@ -5,11 +5,11 @@ use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
-use statefun_greeter_example_proto::example::UserLogin;
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
 use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
+use serde::{Serialize, Deserialize};
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
@@ -22,6 +22,19 @@ fn main() -> anyhow::Result<()> {
     hyper_transport.run(function_registry)?;
 
     Ok(())
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum LoginType {
+    WEB = 0,
+    MOBILE = 1,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UserLogin {
+    user_id: String,
+    user_name: String,
+    login_type: LoginType,
 }
 
 pub fn user(context: Context, typed_value: TypedValue) -> Effects {
