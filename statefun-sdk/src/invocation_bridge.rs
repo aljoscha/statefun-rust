@@ -53,7 +53,14 @@ impl InvocationBridge for FunctionRegistry {
             let context = Context::new(&persisted_values, &self_address, &caller_address);
 
             // this passes in TypedValue
-            let effects = self.invoke(context.self_address().function_type, context, argument)?;
+            let effects = match self.invoke(context.self_address().function_type, context, argument) {
+                Ok(effects) => effects,
+                Err(e) => match &e {
+                    // todo: here we should set_incomplete_invocation_context
+                    InvocationError::MissingStates(states) => return Err(e),
+                    _ => return Err(e),
+                }
+            };
 
             // todo: check if all the states are here
             // todo: check what writes invocation_result (it's right below here)
