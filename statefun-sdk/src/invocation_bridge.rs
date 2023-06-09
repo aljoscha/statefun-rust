@@ -77,7 +77,7 @@ impl InvocationBridge for FunctionRegistry {
 
                             let mut value_spec = FromFunction_PersistedValueSpec::new();
                             value_spec.state_name = name;
-                            value_spec.expiration_spec = SingularPtrField::some(expiration_spec);
+                            value_spec.expiration_spec = SingularPtrField::some(expiration_spec);  // todo: this is always serialized as null
                             // todo: this should be figured out at runtime
                             value_spec.type_typename = "greeter.fns/int".to_string();
 
