@@ -77,6 +77,8 @@ pub use address::Address;
 mod egress_identifier;
 pub use egress_identifier::EgressIdentifier;
 mod context;
+mod value_spec;
+pub use value_spec::ValueSpec;
 pub use context::Context;
 mod error;
 mod effects;
@@ -148,55 +150,6 @@ impl ValueSpecBase {
         ValueSpecBase {
             name: name.to_string(),
             typename: typename.to_string(),
-        }
-    }
-}
-
-///
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
-pub struct ValueSpec<T> {
-    name : &'static str,  // state name
-    typename : &'static str,  // type typename
-
-    // todo: should these implement Result?
-    serializer: fn(&T, String) -> Vec<u8>,
-    deserializer: fn(String, &Vec<u8>) -> T,
-}
-
-///
-impl<T> Into<ValueSpecBase> for ValueSpec<T> {
-    ///
-    fn into(self) -> ValueSpecBase {
-        ValueSpecBase::new(self.name.to_string().as_str(), self.typename.to_string().as_str())
-    }
-}
-
-impl<T: Serializable> ValueSpec<T> {
-    // todo: could make this a trait by implementing as_const_str() on a static str
-    ///
-    pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
-        ValueSpec {
-            name: name,
-            typename: built_in_type.as_const_str(),
-            serializer: serializer,
-            deserializer: deserializer,
-        }
-    }
-
-    ///
-    pub const fn custom(name: &'static str, typename: &'static str) -> ValueSpec<T> {
-        ValueSpec {
-            name: name,
-            typename: typename,
-            serializer: serializer,
-            deserializer: deserializer,
-        }
-    }
-
-    fn as_base(&self) -> ValueSpecBase {
-        ValueSpecBase {
-            name : self.name.to_string(),
-            typename : self.typename.to_string(),
         }
     }
 }
