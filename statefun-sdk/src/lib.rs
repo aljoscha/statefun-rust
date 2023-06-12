@@ -110,10 +110,11 @@ impl<'a> Context<'a> {
     /// might have persisted under the given name.
     pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<T> {
         let deserializer = value_spec.deserializer.clone();
+        let typename = value_spec.typename.to_string();
         let state = self.state.get(&value_spec.into());
         match state {
             Some(serialized) => {
-                let deserialized : T = deserializer(serialized);
+                let deserialized : T = deserializer(typename, serialized);
                 Some(deserialized)
             }
             None => None
@@ -303,7 +304,7 @@ impl Effects {
 
     /// Updates the state stored under the given name to the given value.
     pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
-        let serialized = (value_spec.serializer)(value);
+        let serialized = (value_spec.serializer)(value_spec.typename.to_string(), value);
         self.state_updates.push(StateUpdate::Update(
             value_spec.into(),
             serialized,
@@ -367,8 +368,8 @@ pub struct ValueSpec<T> {
     typename : String,  // type typename
 
     // todo: should these implement Result?
-    serializer: fn(&T) -> Vec<u8>,
-    deserializer: fn(&Vec<u8>) -> T,
+    serializer: fn(String, &T) -> Vec<u8>,
+    deserializer: fn(String, &Vec<u8>) -> T,
 }
 
 impl<T> Into<ValueSpecBase> for ValueSpec<T> {
@@ -378,12 +379,22 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
 }
 
 // todo
-fn builtin_serializer<T>(value: &T) -> Vec<u8> {
+fn builtin_serializer<T>(typename: String, value: &T) -> Vec<u8> {
+    let built_in_type = from_str(typename);
+    match built_in_type {
+        BuiltInTypes::Boolean => Vec::<u8>::new(),
+        BuiltInTypes::Integer => Vec::new(),
+        BuiltInTypes::Long => Vec::new(),
+        BuiltInTypes::Float => Vec::new(),
+        BuiltInTypes::Double => Vec::new(),
+        BuiltInTypes::String => Vec::new(),
+    };
+
     Vec::new()
 }
 
 // todo
-fn builtin_deserializer<T>(buffer: &Vec<u8>) -> T {
+fn builtin_deserializer<T>(typename: String, buffer: &Vec<u8>) -> T {
     // todo: how do we limit T here so T::new will work??
     // T::new()
     panic!("oops")
@@ -401,7 +412,7 @@ impl<T> ValueSpec<T> {
     }
 
     ///
-    fn custom(name: &str, typename: &str, serializer: fn(&T) -> Vec<u8>, deserializer: fn(&Vec<u8>) -> T) -> ValueSpec<T> {
+    fn custom(name: &str, typename: &str, serializer: fn(String, &T) -> Vec<u8>, deserializer: fn(String, &Vec<u8>) -> T) -> ValueSpec<T> {
         ValueSpec {
             name: name.to_string(),
             typename: typename.to_string(),
@@ -444,5 +455,17 @@ impl BuiltInTypes {
             BuiltInTypes::Double => "io.statefun.types/double".to_string(),
             BuiltInTypes::String => "io.statefun.types/string".to_string(),
         }
+    }
+}
+
+fn from_str(input: String) -> BuiltInTypes {
+    match input.as_str() {
+        "io.statefun.types/bool" => BuiltInTypes::Boolean,
+        "io.statefun.types/int" => BuiltInTypes::Integer,
+        "io.statefun.types/long" => BuiltInTypes::Long,
+        "io.statefun.types/float" => BuiltInTypes::Float,
+        "io.statefun.types/double" => BuiltInTypes::Double,
+        "io.statefun.types/string" => BuiltInTypes::String,
+        _ => panic!("Unexpected type")
     }
 }
