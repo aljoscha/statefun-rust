@@ -62,7 +62,7 @@ use thiserror::Error;
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
 use statefun_proto::request_reply::Address as ProtoAddress;
-use statefun_proto::types::BooleanWrapper;
+use statefun_proto::types::{BooleanWrapper, IntWrapper};
 
 mod error;
 mod function_registry;
@@ -305,7 +305,7 @@ impl Effects {
 
     /// Updates the state stored under the given name to the given value.
     pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
-        let serialized = (value_spec.serializer)(value_spec.typename.to_string(), value);
+        let serialized = (value_spec.serializer)(value, value_spec.typename.to_string());
         self.state_updates.push(StateUpdate::Update(
             value_spec.into(),
             serialized,
@@ -369,7 +369,7 @@ pub struct ValueSpec<T> {
     typename : String,  // type typename
 
     // todo: should these implement Result?
-    serializer: fn(String, &T) -> Vec<u8>,
+    serializer: fn(&T, String) -> Vec<u8>,
     deserializer: fn(String, &Vec<u8>) -> T,
 }
 
@@ -379,36 +379,40 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
     }
 }
 
-// todo
-fn builtin_serializer<T>(typename: String, value: &T) -> Vec<u8> {
-    log::debug!("Serializing type: {:?}", typename);
+trait Serializable {
+    fn serialize(&self, typename: String) -> Vec<u8>;
+}
 
-    let built_in_type = from_str(typename);
-    match built_in_type {
-        BuiltInTypes::Boolean => {
-            let mut wrapped = BooleanWrapper::new();
-            wrapped.set_value(*(&value as *mut bool));
-            wrapped
-        },
-        BuiltInTypes::Integer => Vec::new(),
-        BuiltInTypes::Long => Vec::new(),
-        BuiltInTypes::Float => Vec::new(),
-        BuiltInTypes::Double => Vec::new(),
-        BuiltInTypes::String => Vec::new(),
-    };
+impl Serializable for bool {
+    fn serialize(&self, typename: String) -> Vec<u8> {
+        let mut wrapped = BooleanWrapper::new();
+        wrapped.set_value(*self);
+        wrapped.write_to_bytes().unwrap()
+    }
+}
 
-    Vec::new()
+impl Serializable for i32 {
+    fn serialize(&self, typename: String) -> Vec<u8> {
+        let mut wrapped = IntWrapper::new();
+        wrapped.set_value(*self);
+        wrapped.write_to_bytes().unwrap()
+    }
+}
+
+fn builtin_serializer<T : Serializable>(value: &T, typename: String) -> Vec<u8> {
+    log::debug!("-- drey: serializing type: {:?}", typename);
+    (&value).serialize(typename)
 }
 
 // todo
 fn builtin_deserializer<T>(typename: String, buffer: &Vec<u8>) -> T {
-    log::debug!("Deserializing type: {:?}", typename);
+    log::debug!("-- drey: deserializing type: {:?}", typename);
     // todo: how do we limit T here so T::new will work??
     // T::new()
     panic!("oops")
 }
 
-impl<T> ValueSpec<T> {
+impl<T: Serializable> ValueSpec<T> {
     /// todo: there's no function overloading in Rust, what to do here to make this nicer?
     pub fn new(name: &str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {
@@ -420,7 +424,7 @@ impl<T> ValueSpec<T> {
     }
 
     ///
-    fn custom(name: &str, typename: &str, serializer: fn(String, &T) -> Vec<u8>, deserializer: fn(String, &Vec<u8>) -> T) -> ValueSpec<T> {
+    fn custom(name: &str, typename: &str, serializer: fn(&T, String) -> Vec<u8>, deserializer: fn(String, &Vec<u8>) -> T) -> ValueSpec<T> {
         ValueSpec {
             name: name.to_string(),
             typename: typename.to_string(),
