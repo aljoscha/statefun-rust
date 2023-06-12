@@ -11,7 +11,7 @@ pub struct MissingStateCollection {
 impl MissingStateCollection {
     /// blabla
     pub fn new(states: Vec<ValueSpecBase>) -> MissingStateCollection {
-        MissingStateCollection { states: states }
+        MissingStateCollection { states }
     }
 }
 

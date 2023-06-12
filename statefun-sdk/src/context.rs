@@ -45,7 +45,7 @@ impl<'a> Context<'a> {
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
     pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<T> {
-        let deserializer = value_spec.deserializer.clone();
+        let deserializer = value_spec.deserializer;
         let typename = value_spec.typename.to_string();
         let state = self.state.get(&value_spec.into());
         match state {

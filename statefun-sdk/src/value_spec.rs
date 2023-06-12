@@ -1,5 +1,5 @@
 use crate::{deserializer, serializer, BuiltInTypes, Serializable, ValueSpecBase};
-use std::fmt::{Display, Formatter};
+
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
@@ -17,20 +17,20 @@ impl<T: Serializable> ValueSpec<T> {
     ///
     pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {
-            name: name,
+            name,
             typename: built_in_type.as_const_str(),
-            serializer: serializer,
-            deserializer: deserializer,
+            serializer,
+            deserializer,
         }
     }
 
     ///
     pub const fn custom(name: &'static str, typename: &'static str) -> ValueSpec<T> {
         ValueSpec {
-            name: name,
-            typename: typename,
-            serializer: serializer,
-            deserializer: deserializer,
+            name,
+            typename,
+            serializer,
+            deserializer,
         }
     }
 
@@ -43,12 +43,12 @@ impl<T: Serializable> ValueSpec<T> {
 }
 
 ///
-impl<T> Into<ValueSpecBase> for ValueSpec<T> {
+impl<T> From<ValueSpec<T>> for ValueSpecBase {
     ///
-    fn into(self) -> ValueSpecBase {
+    fn from(val: ValueSpec<T>) -> Self {
         ValueSpecBase::new(
-            self.name.to_string().as_str(),
-            self.typename.to_string().as_str(),
+            val.name.to_string().as_str(),
+            val.typename.to_string().as_str(),
         )
     }
 }

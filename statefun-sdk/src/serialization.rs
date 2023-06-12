@@ -12,20 +12,20 @@ pub trait Serializable {
 }
 
 impl Serializable for bool {
-    fn serialize(&self, typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
         let mut wrapped = BooleanWrapper::new();
         wrapped.set_value(*self);
         wrapped.write_to_bytes().unwrap()
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> bool {
-        let wrapped = parse_from_bytes::<BooleanWrapper>(&buffer).unwrap();
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> bool {
+        let wrapped = parse_from_bytes::<BooleanWrapper>(buffer).unwrap();
         wrapped.get_value()
     }
 }
 
 impl Serializable for i32 {
-    fn serialize(&self, typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
         let mut wrapped = IntWrapper::new();
         log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
@@ -36,14 +36,14 @@ impl Serializable for i32 {
         res
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> i32 {
-        let wrapped = parse_from_bytes::<IntWrapper>(&buffer).unwrap();
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> i32 {
+        let wrapped = parse_from_bytes::<IntWrapper>(buffer).unwrap();
         wrapped.get_value()
     }
 }
 
 impl Serializable for i64 {
-    fn serialize(&self, typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
         let mut wrapped = LongWrapper::new();
         log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
@@ -54,15 +54,15 @@ impl Serializable for i64 {
         res
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> i64 {
-        let wrapped = parse_from_bytes::<LongWrapper>(&buffer).unwrap();
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> i64 {
+        let wrapped = parse_from_bytes::<LongWrapper>(buffer).unwrap();
         wrapped.get_value()
     }
 }
 
 pub(crate) fn serializer<T: Serializable>(value: &T, typename: String) -> Vec<u8> {
     // log::debug!("-- drey: serializing type: {:?}", typename);
-    (&value).serialize(typename)
+    value.serialize(typename)
     // log::debug!("-- drey: serialized to: {:?}", &res);
 }
 

@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use protobuf::well_known_types::Any;
+
 use protobuf::Message;
 
 use crate::InvocationError::FunctionNotFound;
@@ -107,12 +107,12 @@ impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableF
         // - Therefore we cannot check the typename consistently as it's only ever set after the
         //   first time we write to the state.
 
-        for value_spec in (&self.value_specs).into_iter() {
+        for value_spec in (&self.value_specs).iter() {
             log::debug!("--drey: checking value spec {:?}", &value_spec);
             log::debug!("--drey: context.state contains: {:?}", &context.state);
 
             let mut found: bool = false;
-            for context_spec in (&context.state).into_iter() {
+            for context_spec in context.state.iter() {
                 if value_spec.name.eq(&context_spec.0.name) {
                     found = true;
                     break;
@@ -127,7 +127,7 @@ impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableF
             }
         }
 
-        if missing_states.len() > 0 {
+        if !missing_states.is_empty() {
             return Err(InvocationError::MissingStates(MissingStateCollection {
                 states: missing_states,
             }));
