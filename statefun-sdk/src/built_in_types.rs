@@ -26,15 +26,3 @@ impl BuiltInTypes {
         }
     }
 }
-
-fn from_str(input: String) -> BuiltInTypes {
-    match input.as_str() {
-        "io.statefun.types/bool" => BuiltInTypes::Boolean,
-        "io.statefun.types/int" => BuiltInTypes::Integer,
-        "io.statefun.types/long" => BuiltInTypes::Long,
-        "io.statefun.types/float" => BuiltInTypes::Float,
-        "io.statefun.types/double" => BuiltInTypes::Double,
-        "io.statefun.types/string" => BuiltInTypes::String,
-        _ => panic!("Unexpected type"),
-    }
-}

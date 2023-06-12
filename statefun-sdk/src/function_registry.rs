@@ -2,9 +2,6 @@
 
 use std::collections::HashMap;
 
-
-use protobuf::Message;
-
 use crate::InvocationError::FunctionNotFound;
 use crate::MissingStateCollection;
 use crate::StateMessage;

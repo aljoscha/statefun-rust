@@ -33,13 +33,6 @@ impl<T: Serializable> ValueSpec<T> {
             deserializer,
         }
     }
-
-    fn as_base(&self) -> ValueSpecBase {
-        ValueSpecBase {
-            name: self.name.to_string(),
-            typename: self.typename.to_string(),
-        }
-    }
 }
 
 ///
