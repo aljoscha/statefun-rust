@@ -56,7 +56,11 @@ impl KafkaEgress for Effects {
     fn kafka_egress<M: Message>(&mut self, identifier: EgressIdentifier, topic: &str, message: M) {
         let kafka_record = egress_record(topic, message);
         // todo: figure out the type name here, maybe just use a string??
-        self.egress(identifier, ValueSpecBase::new("kafka", "kafka"), kafka_record);
+        self.egress(
+            identifier,
+            ValueSpecBase::new("kafka", "kafka"),
+            kafka_record,
+        );
     }
 
     fn kafka_keyed_egress<M: Message>(
@@ -68,7 +72,11 @@ impl KafkaEgress for Effects {
     ) {
         let mut kafka_record = egress_record(topic, message);
         kafka_record.set_key(key.to_owned());
-        self.egress(identifier, ValueSpecBase::new("kafka", "kafka"), kafka_record);
+        self.egress(
+            identifier,
+            ValueSpecBase::new("kafka", "kafka"),
+            kafka_record,
+        );
     }
 }
 

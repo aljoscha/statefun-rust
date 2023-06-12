@@ -1,15 +1,15 @@
+use crate::{deserializer, serializer, BuiltInTypes, Serializable, ValueSpecBase};
 use std::fmt::{Display, Formatter};
-use crate::{Serializable, BuiltInTypes, serializer, deserializer, ValueSpecBase};
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpec<T> {
-    name : &'static str,  // state name
-    pub (crate) typename : &'static str,  // type typename
+    name: &'static str,                // state name
+    pub(crate) typename: &'static str, // type typename
 
     // todo: should these implement Result?
-    pub (crate) serializer: fn(&T, String) -> Vec<u8>,
-    pub (crate) deserializer: fn(String, &Vec<u8>) -> T,
+    pub(crate) serializer: fn(&T, String) -> Vec<u8>,
+    pub(crate) deserializer: fn(String, &Vec<u8>) -> T,
 }
 
 impl<T: Serializable> ValueSpec<T> {
@@ -36,8 +36,8 @@ impl<T: Serializable> ValueSpec<T> {
 
     fn as_base(&self) -> ValueSpecBase {
         ValueSpecBase {
-            name : self.name.to_string(),
-            typename : self.typename.to_string(),
+            name: self.name.to_string(),
+            typename: self.typename.to_string(),
         }
     }
 }
@@ -46,6 +46,9 @@ impl<T: Serializable> ValueSpec<T> {
 impl<T> Into<ValueSpecBase> for ValueSpec<T> {
     ///
     fn into(self) -> ValueSpecBase {
-        ValueSpecBase::new(self.name.to_string().as_str(), self.typename.to_string().as_str())
+        ValueSpecBase::new(
+            self.name.to_string().as_str(),
+            self.typename.to_string().as_str(),
+        )
     }
 }

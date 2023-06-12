@@ -1,7 +1,7 @@
-use protobuf::ProtobufError;
-use thiserror::Error;
 use crate::FunctionType;
 use crate::MissingStateCollection;
+use protobuf::ProtobufError;
+use thiserror::Error;
 
 /// Errors that can occur during function invocation.
 ///
@@ -19,5 +19,5 @@ pub enum InvocationError {
 
     /// Missing state, ask Flink to prepare state storage and it will initiate the call again
     #[error(transparent)]
-    MissingStates(MissingStateCollection)
+    MissingStates(MissingStateCollection),
 }

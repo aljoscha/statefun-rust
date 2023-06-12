@@ -6,10 +6,10 @@ use protobuf::well_known_types::Any;
 use protobuf::Message;
 
 use crate::InvocationError::FunctionNotFound;
-use crate::{Context, Effects, FunctionType, InvocationError};
 use crate::MissingStateCollection;
-use crate::ValueSpecBase;
 use crate::StateMessage;
+use crate::ValueSpecBase;
+use crate::{Context, Effects, FunctionType, InvocationError};
 
 // use statefun_proto::request_reply::TypedValue;
 
@@ -41,7 +41,7 @@ impl FunctionRegistry {
         let callable_function = FnInvokableFunction {
             function,
             marker: ::std::marker::PhantomData,
-            value_specs
+            value_specs,
         };
         self.functions
             .insert(function_type, Box::new(callable_function));
@@ -79,8 +79,7 @@ struct FnInvokableFunction<F: Fn(Context, StateMessage) -> Effects> {
 
 impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableFunction<F> {
     fn invoke(&self, context: Context, message: StateMessage) -> Result<Effects, InvocationError> {
-
-        let mut missing_states : Vec<ValueSpecBase> = Vec::new();
+        let mut missing_states: Vec<ValueSpecBase> = Vec::new();
 
         // NOTE: The API is very tricky:
         //
@@ -112,7 +111,7 @@ impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableF
             log::debug!("--drey: checking value spec {:?}", &value_spec);
             log::debug!("--drey: context.state contains: {:?}", &context.state);
 
-            let mut found : bool = false;
+            let mut found: bool = false;
             for context_spec in (&context.state).into_iter() {
                 if value_spec.name.eq(&context_spec.0.name) {
                     found = true;
@@ -129,7 +128,9 @@ impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableF
         }
 
         if missing_states.len() > 0 {
-            return Err(InvocationError::MissingStates(MissingStateCollection { states: missing_states }));
+            return Err(InvocationError::MissingStates(MissingStateCollection {
+                states: missing_states,
+            }));
         }
 
         log::debug!("--drey: Trying to unpack message: {:?}", &message);

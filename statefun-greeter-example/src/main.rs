@@ -1,26 +1,40 @@
+use serde::{Deserialize, Serialize};
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes, Serializable, StateMessage};
-use statefun_greeter_example_proto::example::UserProfile;
+use statefun::{
+    Address, BuiltInTypes, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
+    Serializable, StateMessage, ValueSpec, ValueSpecBase,
+};
 use statefun_greeter_example_proto::example::EgressRecord;
+use statefun_greeter_example_proto::example::UserProfile;
 use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Serialize, Deserialize};
 
 // todo: rename to TypeName
 // todo: rename these BuiltInType values too, like Long => i64
-const SEEN_COUNT : ValueSpec::<i32> = ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer);
-const IS_FIRST_VISIT : ValueSpec::<bool> = ValueSpec::<bool>::new("is_first_visit", BuiltInTypes::Boolean);
-const LAST_SEEN_TIMESTAMP : ValueSpec::<i64> = ValueSpec::<i64>::new("last_seen_timestamp", BuiltInTypes::Long);
-const USER_LOGIN : ValueSpec::<UserLogin> = ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
+const SEEN_COUNT: ValueSpec<i32> = ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer);
+const IS_FIRST_VISIT: ValueSpec<bool> =
+    ValueSpec::<bool>::new("is_first_visit", BuiltInTypes::Boolean);
+const LAST_SEEN_TIMESTAMP: ValueSpec<i64> =
+    ValueSpec::<i64>::new("last_seen_timestamp", BuiltInTypes::Long);
+const USER_LOGIN: ValueSpec<UserLogin> =
+    ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),
-        vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into(), LAST_SEEN_TIMESTAMP.into(), USER_LOGIN.into()], user);
+    function_registry.register_fn(
+        FunctionType::new("greeter.fns", "user"),
+        vec![
+            SEEN_COUNT.into(),
+            IS_FIRST_VISIT.into(),
+            LAST_SEEN_TIMESTAMP.into(),
+            USER_LOGIN.into(),
+        ],
+        user,
+    );
     // function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
@@ -81,7 +95,7 @@ pub fn user(context: Context, message: StateMessage) -> Effects {
         Err(_) => panic!("SystemTime before UNIX EPOCH!"),
     };
 
-    let last_seen_timestamp_ms : Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP);
+    let last_seen_timestamp_ms: Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP);
     let last_seen_timestamp_ms = match last_seen_timestamp_ms {
         Some(_) => current_time as i64,
         None => current_time as i64,
@@ -102,8 +116,6 @@ pub fn user(context: Context, message: StateMessage) -> Effects {
         &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
 
     effects.update_state(USER_LOGIN, &state_user_login);
-
-
 
     // let mut profile = UserProfile::new();
     // profile.set_name(login.user_name.to_string());

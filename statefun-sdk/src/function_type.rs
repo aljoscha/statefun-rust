@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 
-
 /// A reference to a stateful function, consisting of a namespace and a name.
 ///
 /// A function's type is part of a function's [Address](Address) and serves as integral part of an

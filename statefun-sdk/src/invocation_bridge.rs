@@ -3,26 +3,26 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use protobuf::well_known_types::Any;
-use protobuf::{Message, ProtobufError};
 use protobuf::SingularPtrField;
+use protobuf::{Message, ProtobufError};
 
 use statefun_proto::request_reply::FromFunction;
 use statefun_proto::request_reply::FromFunction_DelayedInvocation;
 use statefun_proto::request_reply::FromFunction_EgressMessage;
+use statefun_proto::request_reply::FromFunction_ExpirationSpec;
+use statefun_proto::request_reply::FromFunction_ExpirationSpec_ExpireMode;
+use statefun_proto::request_reply::FromFunction_IncompleteInvocationContext;
 use statefun_proto::request_reply::FromFunction_Invocation;
 use statefun_proto::request_reply::FromFunction_InvocationResponse;
 use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
 use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
+use statefun_proto::request_reply::FromFunction_PersistedValueSpec;
 use statefun_proto::request_reply::ToFunction;
 use statefun_proto::request_reply::ToFunction_PersistedValue;
 use statefun_proto::request_reply::TypedValue;
-use statefun_proto::request_reply::FromFunction_IncompleteInvocationContext;
-use statefun_proto::request_reply::FromFunction_PersistedValueSpec;
-use statefun_proto::request_reply::FromFunction_ExpirationSpec;
-use statefun_proto::request_reply::FromFunction_ExpirationSpec_ExpireMode;
 
-use crate::StateMessage;
 use crate::function_registry::FunctionRegistry;
+use crate::StateMessage;
 use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
@@ -60,7 +60,8 @@ impl InvocationBridge for FunctionRegistry {
             let context = Context::new(&persisted_values, &self_address, &caller_address);
 
             // this passes in TypedValue
-            let effects = match self.invoke(context.self_address().function_type, context, argument) {
+            let effects = match self.invoke(context.self_address().function_type, context, argument)
+            {
                 Ok(effects) => effects,
                 Err(e) => match &e {
                     // todo: here we should set_incomplete_invocation_context
@@ -69,9 +70,10 @@ impl InvocationBridge for FunctionRegistry {
 
                         // let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
                         // serialize_state_updates(&mut invocation_response, state_values)?;
-                        let mut incomplete_context = FromFunction_IncompleteInvocationContext::new();
+                        let mut incomplete_context =
+                            FromFunction_IncompleteInvocationContext::new();
 
-                        let mut missing_values : Vec<FromFunction_PersistedValueSpec> = Vec::new();
+                        let mut missing_values: Vec<FromFunction_PersistedValueSpec> = Vec::new();
                         for value_spec in (&state_collection.states).into_iter() {
                             let mut expiration_spec = FromFunction_ExpirationSpec::new();
                             expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
@@ -79,8 +81,9 @@ impl InvocationBridge for FunctionRegistry {
 
                             let mut persisted_value_spec = FromFunction_PersistedValueSpec::new();
                             persisted_value_spec.state_name = value_spec.name.clone();
-                            persisted_value_spec.expiration_spec = SingularPtrField::some(expiration_spec);  // todo: this is always serialized as null
-                            // todo: this should be figured out at runtime
+                            persisted_value_spec.expiration_spec =
+                                SingularPtrField::some(expiration_spec); // todo: this is always serialized as null
+                                                                         // todo: this should be figured out at runtime
                             persisted_value_spec.type_typename = value_spec.typename.clone();
 
                             incomplete_context.missing_values.push(persisted_value_spec);
@@ -92,7 +95,7 @@ impl InvocationBridge for FunctionRegistry {
                         return Ok(from_function);
                     }
                     _ => return Err(e),
-                }
+                },
             };
 
             // todo: check if all the states are here
@@ -146,11 +149,18 @@ fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
     res
 }
 
-fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpecBase, Vec<u8>> {
+fn parse_persisted_values(
+    persisted_values: &[ToFunction_PersistedValue],
+) -> HashMap<ValueSpecBase, Vec<u8>> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        result.insert(ValueSpecBase::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()),
-            persisted_value.get_state_value().get_value().to_vec());
+        result.insert(
+            ValueSpecBase::new(
+                &persisted_value.get_state_name(),
+                persisted_value.get_state_value().get_typename(),
+            ),
+            persisted_value.get_state_value().get_value().to_vec(),
+        );
     }
     result
 }
@@ -253,13 +263,18 @@ where
                 log::debug!("--drey: StateUpdate::Update: {:?}", &state);
 
                 let typed_value = to_typed_value(value_spec.typename.to_string(), state.clone());
-                log::debug!("--drey: to_typed_value(value_spec.typename, state): {:?}", typed_value);
+                log::debug!(
+                    "--drey: to_typed_value(value_spec.typename, state): {:?}",
+                    typed_value
+                );
                 let myvec = typed_value.value.to_vec();
                 log::debug!("--drey: to_typed_value VEC: {:?}", myvec);
 
-
                 proto_state_update.set_state_value(to_typed_value(value_spec.typename, state));
-                log::debug!("--drey: StateUpdate::Update: proto_state_update: {:?}", &proto_state_update.get_state_value());
+                log::debug!(
+                    "--drey: StateUpdate::Update: proto_state_update: {:?}",
+                    &proto_state_update.get_state_value()
+                );
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
                 invocation_response.state_mutations.push(proto_state_update);

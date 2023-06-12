@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
-use statefun_proto::request_reply::Address as ProtoAddress;
 use crate::FunctionType;
+use statefun_proto::request_reply::Address as ProtoAddress;
+use std::fmt::{Display, Formatter};
 
 /// The unique identity of an individual stateful function.
 ///

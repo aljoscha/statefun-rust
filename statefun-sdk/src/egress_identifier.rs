@@ -6,8 +6,8 @@ use std::fmt::{Display, Formatter};
 /// [Effects](Effects).
 #[derive(Debug)]
 pub struct EgressIdentifier {
-    pub (crate) namespace: String,
-    pub (crate) name: String,
+    pub(crate) namespace: String,
+    pub(crate) name: String,
 }
 
 impl EgressIdentifier {

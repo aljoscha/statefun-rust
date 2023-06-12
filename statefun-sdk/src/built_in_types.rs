@@ -1,4 +1,3 @@
-
 ///
 pub enum BuiltInTypes {
     ///
@@ -16,7 +15,7 @@ pub enum BuiltInTypes {
 }
 
 impl BuiltInTypes {
-    pub (crate) const fn as_const_str(&self) -> &'static str {
+    pub(crate) const fn as_const_str(&self) -> &'static str {
         match self {
             BuiltInTypes::Boolean => "io.statefun.types/bool",
             BuiltInTypes::Integer => "io.statefun.types/int",
@@ -36,6 +35,6 @@ fn from_str(input: String) -> BuiltInTypes {
         "io.statefun.types/float" => BuiltInTypes::Float,
         "io.statefun.types/double" => BuiltInTypes::Double,
         "io.statefun.types/string" => BuiltInTypes::String,
-        _ => panic!("Unexpected type")
+        _ => panic!("Unexpected type"),
     }
 }

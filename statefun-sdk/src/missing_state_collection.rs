@@ -5,15 +5,13 @@ use thiserror::Error;
 /// blabla
 #[derive(Error, PartialEq, Eq, Hash, Debug)]
 pub struct MissingStateCollection {
-    pub (crate) states: Vec<ValueSpecBase>,
+    pub(crate) states: Vec<ValueSpecBase>,
 }
 
 impl MissingStateCollection {
     /// blabla
     pub fn new(states: Vec<ValueSpecBase>) -> MissingStateCollection {
-        MissingStateCollection {
-            states: states,
-        }
+        MissingStateCollection { states: states }
     }
 }
 

@@ -1,6 +1,6 @@
-use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
 use protobuf::parse_from_bytes;
 use protobuf::Message;
+use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
 
 ///
 pub trait Serializable {
@@ -60,14 +60,14 @@ impl Serializable for i64 {
     }
 }
 
-pub (crate) fn serializer<T : Serializable>(value: &T, typename: String) -> Vec<u8> {
+pub(crate) fn serializer<T: Serializable>(value: &T, typename: String) -> Vec<u8> {
     // log::debug!("-- drey: serializing type: {:?}", typename);
     (&value).serialize(typename)
     // log::debug!("-- drey: serialized to: {:?}", &res);
 }
 
 // todo
-pub (crate) fn deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> T {
+pub(crate) fn deserializer<T: Serializable>(typename: String, buffer: &Vec<u8>) -> T {
     // log::debug!("-- drey: deserializing type: {:?}", typename);
     // todo: how do we limit T here so T::new will work??
     // T::new()

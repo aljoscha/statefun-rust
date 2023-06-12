@@ -89,7 +89,10 @@ async fn handle_request(
         let function_registry = function_registry.lock().unwrap();
         function_registry.invoke_from_proto(to_function)?
     };
-    log::debug!("--drey: prepared from function message: {:?}", &from_function);
+    log::debug!(
+        "--drey: prepared from function message: {:?}",
+        &from_function
+    );
 
     log::debug!("Response: {:#?}", from_function);
 

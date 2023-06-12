@@ -1,7 +1,7 @@
-use statefun_proto::request_reply::Address as ProtoAddress;
-use crate::ValueSpecBase;
 use crate::Address;
 use crate::ValueSpec;
+use crate::ValueSpecBase;
+use statefun_proto::request_reply::Address as ProtoAddress;
 use std::collections::HashMap;
 
 /// Context for a single invocation of a stateful function.
@@ -11,14 +11,14 @@ use std::collections::HashMap;
 /// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
-    pub (crate) state: &'a HashMap<ValueSpecBase, Vec<u8>>,
+    pub(crate) state: &'a HashMap<ValueSpecBase, Vec<u8>>,
     self_address: &'a ProtoAddress,
     caller_address: &'a ProtoAddress,
 }
 
 impl<'a> Context<'a> {
     ///
-    pub (crate) fn new(
+    pub(crate) fn new(
         state: &'a HashMap<ValueSpecBase, Vec<u8>>,
         self_address: &'a ProtoAddress,
         caller_address: &'a ProtoAddress,
@@ -50,10 +50,10 @@ impl<'a> Context<'a> {
         let state = self.state.get(&value_spec.into());
         match state {
             Some(serialized) => {
-                let deserialized : T = deserializer(typename, serialized);
+                let deserialized: T = deserializer(typename, serialized);
                 Some(deserialized)
             }
-            None => None
+            None => None,
         }
     }
 }
