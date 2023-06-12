@@ -42,6 +42,7 @@ impl InvocationBridge for FunctionRegistry {
 
         let self_address = batch_request.take_target();
         let persisted_values = batch_request.take_state();
+        // todo: need to deserialize ints properly here
         let mut persisted_values = parse_persisted_values(&persisted_values);
 
         // we maintain a map of state updates that we update after every invocation. We maintain
@@ -138,6 +139,8 @@ fn from_proto_any(typename: String, value: Any) -> TypedValue {
 fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpec, Any> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
+        // todo: we should either not parse these values here and do them lazily in the context.get_state(),
+        // or parse them according to the ValueSpec type
         let packed_state: Any = deserialize_state(persisted_value.get_state_value().get_value());
         result.insert(ValueSpec::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()), packed_state);
     }
