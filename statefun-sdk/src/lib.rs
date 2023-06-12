@@ -70,6 +70,8 @@ mod built_in_types;
 pub use built_in_types::{BuiltInTypes};
 use serialization::{serializer, deserializer};
 pub use serialization::Serializable;
+mod state_message;
+pub use state_message::StateMessage;
 mod function_type;
 pub use function_type::FunctionType;
 mod address;
@@ -94,24 +96,3 @@ use missing_state_collection::MissingStateCollection;
 pub mod io;
 pub mod transport;
 use statefun_proto::request_reply::TypedValue;
-
-///
-#[derive(Debug)]
-pub struct StateMessage {
-    typed_value : TypedValue,
-}
-
-impl StateMessage {
-    ///
-    pub fn get<T : Serializable>(&self) -> Option<T> {
-        // todo: make deserializer return Option
-        Some(deserializer::<T>(self.typed_value.typename.to_string(), &self.typed_value.value))
-    }
-
-    ///
-    pub fn new(typed_value: TypedValue) -> Self {
-        StateMessage {
-            typed_value: typed_value
-        }
-    }
-}
