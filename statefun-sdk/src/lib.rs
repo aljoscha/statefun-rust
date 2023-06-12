@@ -440,8 +440,7 @@ impl<T: Serializable> ValueSpec<T> {
     pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {
             name: name,
-            typename: "foo",
-            // typename: built_in_type.as_str(),
+            typename: built_in_type.as_const_str(),
             serializer: builtin_serializer,
             deserializer: builtin_deserializer,
         }
@@ -482,14 +481,14 @@ pub enum BuiltInTypes {
 }
 
 impl BuiltInTypes {
-    fn as_str(&self) -> String {
+    const fn as_const_str(&self) -> &'static str {
         match self {
-            BuiltInTypes::Boolean => "io.statefun.types/bool".to_string(),
-            BuiltInTypes::Integer => "io.statefun.types/int".to_string(),
-            BuiltInTypes::Long => "io.statefun.types/long".to_string(),
-            BuiltInTypes::Float => "io.statefun.types/float".to_string(),
-            BuiltInTypes::Double => "io.statefun.types/double".to_string(),
-            BuiltInTypes::String => "io.statefun.types/string".to_string(),
+            BuiltInTypes::Boolean => "io.statefun.types/bool",
+            BuiltInTypes::Integer => "io.statefun.types/int",
+            BuiltInTypes::Long => "io.statefun.types/long",
+            BuiltInTypes::Float => "io.statefun.types/float",
+            BuiltInTypes::Double => "io.statefun.types/double",
+            BuiltInTypes::String => "io.statefun.types/string",
         }
     }
 }
