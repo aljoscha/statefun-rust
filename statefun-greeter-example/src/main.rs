@@ -13,6 +13,7 @@ use serde::{Serialize, Deserialize};
 const SEEN_COUNT : ValueSpec::<i32> = ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer);
 const IS_FIRST_VISIT : ValueSpec::<bool> = ValueSpec::<bool>::new("is_first_visit", BuiltInTypes::Boolean);
 const LAST_SEEN_TIMESTAMP : ValueSpec::<i64> = ValueSpec::<i64>::new("last_seen_timestamp", BuiltInTypes::Long);
+const USER_LOGIN : ValueSpec::<UserLogin> = ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();

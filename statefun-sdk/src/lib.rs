@@ -458,7 +458,7 @@ fn builtin_deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) ->
 }
 
 impl<T: Serializable> ValueSpec<T> {
-    /// todo: there's no function overloading in Rust, what to do here to make this nicer?
+    ///
     pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {
             name: name,
@@ -469,12 +469,12 @@ impl<T: Serializable> ValueSpec<T> {
     }
 
     ///
-    fn custom(name: &'static str, typename: &'static str, serializer: fn(&T, String) -> Vec<u8>, deserializer: fn(String, &Vec<u8>) -> T) -> ValueSpec<T> {
+    pub const fn custom(name: &'static str, typename: &'static str) -> ValueSpec<T> {
         ValueSpec {
             name: name,
             typename: typename,
-            serializer: serializer,
-            deserializer: deserializer,
+            serializer: builtin_serializer,
+            deserializer: builtin_deserializer,
         }
     }
 
