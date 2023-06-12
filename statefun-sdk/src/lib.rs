@@ -71,6 +71,8 @@ mod function_type;
 pub use function_type::FunctionType;
 mod address;
 pub use address::Address;
+mod egress_identifier;
+pub use egress_identifier::EgressIdentifier;
 mod context;
 pub use context::Context;
 mod error;
@@ -128,32 +130,6 @@ impl StateMessage {
 enum StateUpdate {
     Update(ValueSpecBase, Vec<u8>),
     Delete(ValueSpecBase),
-}
-
-/// A reference to an _egress_, consisting of a namespace and a name.
-///
-/// This has to be used when sending messages to an egress as part of the function
-/// [Effects](Effects).
-#[derive(Debug)]
-pub struct EgressIdentifier {
-    namespace: String,
-    name: String,
-}
-
-impl EgressIdentifier {
-    /// Creates a new `EgressIdentifier` from the given namespace and name.
-    pub fn new(namespace: &str, name: &str) -> EgressIdentifier {
-        EgressIdentifier {
-            namespace: namespace.to_string(),
-            name: name.to_string(),
-        }
-    }
-}
-
-impl Display for EgressIdentifier {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "EgressIdentifier {}/{}", self.namespace, self.name)
-    }
 }
 
 ///
