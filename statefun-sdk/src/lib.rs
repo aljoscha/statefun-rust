@@ -367,8 +367,8 @@ impl ValueSpecBase {
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpec<T> {
-    name : String,  // state name
-    typename : String,  // type typename
+    name : &'static str,  // state name
+    typename : &'static str,  // type typename
 
     // todo: should these implement Result?
     serializer: fn(&T, String) -> Vec<u8>,
@@ -437,20 +437,21 @@ fn builtin_deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) ->
 
 impl<T: Serializable> ValueSpec<T> {
     /// todo: there's no function overloading in Rust, what to do here to make this nicer?
-    pub fn new(name: &str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
+    pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {
-            name: name.to_string(),
-            typename: built_in_type.as_str(),
+            name: name,
+            typename: "foo",
+            // typename: built_in_type.as_str(),
             serializer: builtin_serializer,
             deserializer: builtin_deserializer,
         }
     }
 
     ///
-    fn custom(name: &str, typename: &str, serializer: fn(&T, String) -> Vec<u8>, deserializer: fn(String, &Vec<u8>) -> T) -> ValueSpec<T> {
+    fn custom(name: &'static str, typename: &'static str, serializer: fn(&T, String) -> Vec<u8>, deserializer: fn(String, &Vec<u8>) -> T) -> ValueSpec<T> {
         ValueSpec {
-            name: name.to_string(),
-            typename: typename.to_string(),
+            name: name,
+            typename: typename,
             serializer: serializer,
             deserializer: deserializer,
         }

@@ -8,22 +8,15 @@ use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Serialize, Deserialize};
 
-// todo: could we auto-convert here? E.g. to support u32 we could use i64 instead automatically?
-// and then the BuiltInTypes doesn't have to be an enum.
-fn SEEN_COUNT() -> ValueSpec<i32> {
-    ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer)
-}
-
-fn FIRST_VISIT() -> ValueSpec<bool> {
-    ValueSpec::<bool>::new("first_visit", BuiltInTypes::Boolean)
-}
+const SEEN_COUNT : ValueSpec::<i32> = ValueSpec::<i32>::new("foobar", BuiltInTypes::Integer);
+const FIRST_VISIT : ValueSpec::<bool> = ValueSpec::<bool>::new("foobar", BuiltInTypes::Boolean);
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT().into(), FIRST_VISIT().into()], user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT().into()], greet);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT.into(), FIRST_VISIT.into()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
@@ -49,7 +42,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
 
     log::info!("We should update user count {:?}", login.user_name);
 
-    let seen_count: Option<i32> = context.get_state(SEEN_COUNT());
+    let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
     let updated_seen_count = match seen_count {
         Some(count) => count + 1,
         None => 0,
@@ -69,7 +62,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
 
     let mut effects = Effects::new();
     // todo: store ValueSpec here
-    effects.update_state(SEEN_COUNT(), &updated_seen_count);
+    effects.update_state(SEEN_COUNT, &updated_seen_count);
     // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
 
     // log::info!(
