@@ -1,7 +1,7 @@
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes};
+use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes, Serializable};
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
 use statefun_proto::request_reply::TypedValue;
@@ -38,6 +38,17 @@ struct UserLogin {
     user_id: String,
     user_name: String,
     login_type: LoginType,
+}
+
+impl Serializable for UserLogin {
+    fn serialize(&self, typename: String) -> Vec<u8> {
+        serde_json::to_vec(self).unwrap()
+    }
+
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> UserLogin {
+        let login: UserLogin = serde_json::from_slice(&buffer).unwrap();
+        login
+    }
 }
 
 pub fn user(context: Context, typed_value: TypedValue) -> Effects {
