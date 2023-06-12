@@ -62,6 +62,7 @@ use thiserror::Error;
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
 use statefun_proto::request_reply::Address as ProtoAddress;
+use statefun_proto::types::BooleanWrapper;
 
 mod error;
 mod function_registry;
@@ -384,7 +385,11 @@ fn builtin_serializer<T>(typename: String, value: &T) -> Vec<u8> {
 
     let built_in_type = from_str(typename);
     match built_in_type {
-        BuiltInTypes::Boolean => Vec::<u8>::new(),
+        BuiltInTypes::Boolean => {
+            let mut wrapped = BooleanWrapper::new();
+            wrapped.set_value(*(&value as *mut bool));
+            wrapped
+        },
         BuiltInTypes::Integer => Vec::new(),
         BuiltInTypes::Long => Vec::new(),
         BuiltInTypes::Float => Vec::new(),
