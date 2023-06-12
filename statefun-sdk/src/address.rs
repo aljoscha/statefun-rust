@@ -50,8 +50,8 @@ impl Address {
     /// because we want to keep it out of the public API.
     pub fn into_proto(self) -> ProtoAddress {
         let mut result = ProtoAddress::new();
-        result.set_namespace(self.function_type.namespace);
-        result.set_field_type(self.function_type.name);
+        result.set_namespace(self.function_type.get_namespace());
+        result.set_field_type(self.function_type.get_name());
         result.set_id(self.id);
         result
     }
