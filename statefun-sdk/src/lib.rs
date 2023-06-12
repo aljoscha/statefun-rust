@@ -65,6 +65,8 @@ pub use function_registry::FunctionRegistry;
 use statefun_proto::request_reply::Address as ProtoAddress;
 use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
 
+mod serialization;
+pub use serialization::Serializable;
 mod error;
 mod function_registry;
 mod invocation_bridge;
@@ -403,15 +405,6 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
     fn into(self) -> ValueSpecBase {
         ValueSpecBase::new(self.name.to_string().as_str(), self.typename.to_string().as_str())
     }
-}
-
-///
-pub trait Serializable {
-    ///
-    fn serialize(&self, typename: String) -> Vec<u8>;
-
-    ///
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Self;
 }
 
 impl Serializable for bool {
