@@ -76,14 +76,14 @@ pub mod transport;
 /// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
-    state: &'a HashMap<ValueSpec, Vec<u8>>,
+    state: &'a HashMap<ValueSpecBase, Vec<u8>>,
     self_address: &'a ProtoAddress,
     caller_address: &'a ProtoAddress,
 }
 
 impl<'a> Context<'a> {
     fn new(
-        state: &'a HashMap<ValueSpec, Vec<u8>>,
+        state: &'a HashMap<ValueSpecBase, Vec<u8>>,
         self_address: &'a ProtoAddress,
         caller_address: &'a ProtoAddress,
     ) -> Self {
@@ -108,8 +108,8 @@ impl<'a> Context<'a> {
 
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
-    pub fn get_state<T: Message>(&self, value_spec: ValueSpec) -> Option<T> {
-        let state = self.state.get(&value_spec);
+    pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<T> {
+        let state = self.state.get(&value_spec.into());
         None
 
         // todo: deserialize with user-provided serializer
@@ -121,7 +121,7 @@ impl<'a> Context<'a> {
 }
 
 /// Unpacks the given state, which is expected to be a serialized `Any<T>`.
-fn unpack_state<T: Message>(value_spec: ValueSpec, packed_state: &Any) -> Option<T> {
+fn unpack_state<T: Message>(value_spec: ValueSpecBase, packed_state: &Any) -> Option<T> {
     // let packed_state: Any =
     //     protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
 
@@ -192,12 +192,12 @@ impl Address {
 /// blabla
 #[derive(Error, PartialEq, Eq, Hash, Debug)]
 pub struct MissingStateCollection {
-    states: Vec<ValueSpec>,
+    states: Vec<ValueSpecBase>,
 }
 
 impl MissingStateCollection {
     /// blabla
-    pub fn new(states: Vec<ValueSpec>) -> MissingStateCollection {
+    pub fn new(states: Vec<ValueSpecBase>) -> MissingStateCollection {
         MissingStateCollection {
             states: states,
         }
@@ -263,32 +263,32 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<M: Message>(&mut self, address: Address, value_spec: ValueSpec, message: M) {
+    pub fn send<M: Message>(&mut self, address: Address, value_spec: ValueSpecBase, message: M) {
         let packed_message = Any::pack(&message).unwrap();
         self.invocations.push((address, value_spec.typename, packed_message));
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
-    pub fn send_after<M: Message>(&mut self, address: Address, delay: Duration, value_spec: ValueSpec, message: M) {
+    pub fn send_after<M: Message>(&mut self, address: Address, delay: Duration, value_spec: ValueSpecBase, message: M) {
         let packed_message = Any::pack(&message).unwrap();
         self.delayed_invocations
             .push((address, delay, value_spec.typename, packed_message));
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
-    pub fn egress<M: Message>(&mut self, identifier: EgressIdentifier, value_spec: ValueSpec, message: M) {
+    pub fn egress<M: Message>(&mut self, identifier: EgressIdentifier, value_spec: ValueSpecBase, message: M) {
         let packed_message = Any::pack(&message).unwrap();
         self.egress_messages.push((identifier, value_spec.typename, packed_message));
     }
 
     /// Deletes the state kept under the given name.
-    pub fn delete_state(&mut self, value_spec: ValueSpec) {
+    pub fn delete_state(&mut self, value_spec: ValueSpecBase) {
         self.state_updates
             .push(StateUpdate::Delete(value_spec));
     }
 
     /// Updates the state stored under the given name to the given value.
-    pub fn update_state<T: Message>(&mut self, value_spec: ValueSpec, value: &T) {
+    pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
         // todo: use serializer here
         // self.state_updates.push(StateUpdate::Update(
         //     value_spec,
@@ -299,8 +299,8 @@ impl Effects {
 
 #[derive(Debug)]
 enum StateUpdate {
-    Update(ValueSpec, Vec<u8>),
-    Delete(ValueSpec),
+    Update(ValueSpecBase, Vec<u8>),
+    Delete(ValueSpecBase),
 }
 
 /// A reference to an _egress_, consisting of a namespace and a name.
@@ -331,25 +331,73 @@ impl Display for EgressIdentifier {
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
-pub struct ValueSpec {
+pub struct ValueSpecBase {
     name : String,  // state name
     typename : String,  // type typename
 }
 
-impl ValueSpec {
+impl ValueSpecBase {
+    ///
+    fn new(name: &str, typename: &str) -> ValueSpecBase {
+        ValueSpecBase {
+            name: name.to_string(),
+            typename: typename.to_string(),
+        }
+    }
+}
+
+///
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+pub struct ValueSpec<T> {
+    name : String,  // state name
+    typename : String,  // type typename
+    serializer: fn(T) -> Vec<u8>,
+    deserializer: fn(Vec<u8>) -> T,
+}
+
+impl<T> Into<ValueSpecBase> for ValueSpec<T> {
+    fn into(self) -> ValueSpecBase {
+        ValueSpecBase::new(self.name.to_string().as_str(), self.typename.to_string().as_str())
+    }
+}
+
+// todo
+fn builtin_serializer<T>(value: T) -> Vec<u8> {
+    Vec::new()
+}
+
+// todo
+fn builtin_deserializer<T>(buffer: Vec<u8>) -> T {
+    // todo: how do we limit T here so T::new will work??
+    // T::new()
+    panic!("oops")
+}
+
+impl<T> ValueSpec<T> {
     /// todo: there's no function overloading in Rust, what to do here to make this nicer?
-    pub fn new(name: &str, built_in_type: BuiltInTypes) -> ValueSpec {
+    pub fn new(name: &str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {
             name: name.to_string(),
             typename: built_in_type.as_str(),
+            serializer: builtin_serializer,
+            deserializer: builtin_deserializer,
         }
     }
 
     ///
-    pub fn custom(name: &str, typename: &str) -> ValueSpec {
+    fn custom(name: &str, typename: &str, serializer: fn(T) -> Vec<u8>, deserializer: fn(Vec<u8>) -> T) -> ValueSpec<T> {
         ValueSpec {
             name: name.to_string(),
             typename: typename.to_string(),
+            serializer: serializer,
+            deserializer: deserializer,
+        }
+    }
+
+    fn as_base(&self) -> ValueSpecBase {
+        ValueSpecBase {
+            name : self.name.to_string(),
+            typename : self.typename.to_string(),
         }
     }
 }

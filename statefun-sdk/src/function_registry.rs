@@ -8,7 +8,7 @@ use protobuf::Message;
 use crate::InvocationError::FunctionNotFound;
 use crate::{Context, Effects, FunctionType, InvocationError};
 use crate::MissingStateCollection;
-use crate::ValueSpec;
+use crate::ValueSpecBase;
 
 use statefun_proto::request_reply::TypedValue;
 
@@ -34,7 +34,7 @@ impl FunctionRegistry {
     pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
-        value_specs: Vec<ValueSpec>,
+        value_specs: Vec<ValueSpecBase>,
         function: F,
     ) {
         let callable_function = FnInvokableFunction {
@@ -73,16 +73,16 @@ struct FnInvokableFunction<F: Fn(Context, TypedValue) -> Effects> {
     marker: ::std::marker::PhantomData<TypedValue>,
     // todo: these should be specc'ed out like TypeName in the Java SDK,
     // for now we're just storing plain strings w/o any validation.
-    value_specs: Vec<ValueSpec>,
+    value_specs: Vec<ValueSpecBase>,
 }
 
 impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFunction<F> {
     fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError> {
 
-        let mut missing_states : Vec<ValueSpec> = Vec::new();
+        let mut missing_states : Vec<ValueSpecBase> = Vec::new();
         for value_spec in (&self.value_specs).into_iter() {
             // todo: when we receive states we don't seem to get the keyed name???
-            if !context.state.contains_key(&ValueSpec::custom(value_spec.name.as_str(), String::new().as_str())) {
+            if !context.state.contains_key(&ValueSpecBase::new(value_spec.name.as_str(), String::new().as_str())) {
                 missing_states.push(value_spec.clone());
             }
         }

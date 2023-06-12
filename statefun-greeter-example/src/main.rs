@@ -1,19 +1,17 @@
-use protobuf::well_known_types::Int32Value;
-use protobuf::well_known_types::Int64Value;
-
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpec, BuiltInTypes};
+use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes};
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
 use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Serialize, Deserialize};
 
-// why can't we just have CTFE like a capable language?
-fn SEEN_COUNT() -> ValueSpec {
-    ValueSpec::new("seen_count", BuiltInTypes::Integer)
+// todo: could we auto-convert here? E.g. to support u32 we could use i64 instead automatically?
+// and then the BuiltInTypes doesn't have to be an enum.
+fn SEEN_COUNT() -> ValueSpec<i32> {
+    ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -22,8 +20,8 @@ fn main() -> anyhow::Result<()> {
     let mut function_registry = FunctionRegistry::new();
     // todo: need actual type here, either by doing `.withIntType()`, or by specifying our own namespace
     // todo: use namespaced type names here by making the namespace another parameter
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT()], user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT()], greet);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT().into()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT().into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
@@ -49,12 +47,11 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
 
     log::info!("We should update user count {:?}", login.user_name);
 
-    let seen_count: Option<Int32Value> = context.get_state(SEEN_COUNT());
-    let mut updated_seen_count = match seen_count {
-        Some(count) => count,
-        None => Int32Value::new(),
+    let seen_count: Option<i32> = context.get_state(SEEN_COUNT());
+    let updated_seen_count = match seen_count {
+        Some(count) => count + 1,
+        None => 0,
     };
-    updated_seen_count.set_value(updated_seen_count.get_value() + 1);
 
     let start = SystemTime::now();
     let since_the_epoch = start

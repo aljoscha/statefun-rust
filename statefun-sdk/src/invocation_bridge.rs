@@ -22,7 +22,7 @@ use statefun_proto::request_reply::FromFunction_ExpirationSpec;
 use statefun_proto::request_reply::FromFunction_ExpirationSpec_ExpireMode;
 
 use crate::function_registry::FunctionRegistry;
-use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpec};
+use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
 pub trait InvocationBridge {
@@ -49,7 +49,7 @@ impl InvocationBridge for FunctionRegistry {
         // this to be able to send back coalesced state updates to the statefun runtime but we
         // also need to update persisted_values so that subsequent invocations also "see" state
         // updates
-        let mut coalesced_state_updates: HashMap<ValueSpec, StateUpdate> = HashMap::new();
+        let mut coalesced_state_updates: HashMap<ValueSpecBase, StateUpdate> = HashMap::new();
 
         let mut invocation_response = FromFunction_InvocationResponse::new();
 
@@ -145,10 +145,10 @@ fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
     res
 }
 
-fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpec, Vec<u8>> {
+fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpecBase, Vec<u8>> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        result.insert(ValueSpec::custom(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()),
+        result.insert(ValueSpecBase::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()),
             persisted_value.get_state_value().get_value().to_vec());
     }
     result
@@ -159,8 +159,8 @@ fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> Has
 // }
 
 fn update_state(
-    persisted_state: &mut HashMap<ValueSpec, Vec<u8>>,
-    coalesced_state: &mut HashMap<ValueSpec, StateUpdate>,
+    persisted_state: &mut HashMap<ValueSpecBase, Vec<u8>>,
+    coalesced_state: &mut HashMap<ValueSpecBase, StateUpdate>,
     state_updates: Vec<StateUpdate>,
 ) {
     for state_update in state_updates {
