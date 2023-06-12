@@ -11,7 +11,7 @@ use std::collections::HashMap;
 /// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
-    state: &'a HashMap<ValueSpecBase, Vec<u8>>,
+    pub (crate) state: &'a HashMap<ValueSpecBase, Vec<u8>>,
     self_address: &'a ProtoAddress,
     caller_address: &'a ProtoAddress,
 }
@@ -40,11 +40,6 @@ impl<'a> Context<'a> {
     /// invocation, that is, the caller.
     pub fn caller_address(&self) -> Address {
         Address::from_proto(self.caller_address)
-    }
-
-    /// internal only (why can't we make this private to the package?)
-    pub fn get_all_states(&self) -> &'a HashMap<ValueSpecBase, Vec<u8>> {
-        self.state
     }
 
     /// Returns the state (or persisted) value that previous invocations of this stateful function
