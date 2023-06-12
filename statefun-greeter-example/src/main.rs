@@ -81,9 +81,6 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
         None => current_time as i64,
     };
 
-    log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}",
-        login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms);
-
     let mut effects = Effects::new();
     effects.update_state(SEEN_COUNT, &seen_count);
     effects.update_state(IS_FIRST_VISIT, &is_first_visit);
@@ -94,6 +91,9 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
         Some(existing_login) => existing_login,
         None => login,
     };
+
+    log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
+        &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
 
     effects.update_state(USER_LOGIN, &state_user_login);
 
