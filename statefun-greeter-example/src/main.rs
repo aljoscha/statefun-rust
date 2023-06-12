@@ -63,7 +63,7 @@ impl Serializable for UserLogin {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> UserLogin {
-        let login: UserLogin = serde_json::from_slice(&buffer).unwrap();
+        let login: UserLogin = serde_json::from_slice(buffer).unwrap();
         login
     }
 }

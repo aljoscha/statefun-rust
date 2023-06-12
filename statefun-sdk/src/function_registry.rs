@@ -104,7 +104,7 @@ impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableF
         // - Therefore we cannot check the typename consistently as it's only ever set after the
         //   first time we write to the state.
 
-        for value_spec in (&self.value_specs).iter() {
+        for value_spec in self.value_specs.iter() {
             log::debug!("--drey: checking value spec {:?}", &value_spec);
             log::debug!("--drey: context.state contains: {:?}", &context.state);
 

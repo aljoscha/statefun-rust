@@ -74,7 +74,7 @@ impl InvocationBridge for FunctionRegistry {
                             FromFunction_IncompleteInvocationContext::new();
 
                         let _missing_values: Vec<FromFunction_PersistedValueSpec> = Vec::new();
-                        for value_spec in (&state_collection.states).iter() {
+                        for value_spec in state_collection.states.iter() {
                             let mut expiration_spec = FromFunction_ExpirationSpec::new();
                             expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
                             expiration_spec.expire_after_millis = 0;
