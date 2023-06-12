@@ -42,6 +42,7 @@ struct UserLogin {
     login_type: LoginType,
 }
 
+// actual routines called by statefun SDK
 impl Serializable for UserLogin {
     fn serialize(&self, typename: String) -> Vec<u8> {
         serde_json::to_vec(self).unwrap()
