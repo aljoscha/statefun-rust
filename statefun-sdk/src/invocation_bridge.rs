@@ -21,6 +21,7 @@ use statefun_proto::request_reply::FromFunction_PersistedValueSpec;
 use statefun_proto::request_reply::FromFunction_ExpirationSpec;
 use statefun_proto::request_reply::FromFunction_ExpirationSpec_ExpireMode;
 
+use crate::StateMessage;
 use crate::function_registry::FunctionRegistry;
 use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
 
@@ -55,7 +56,7 @@ impl InvocationBridge for FunctionRegistry {
 
         for mut invocation in batch_request.take_invocations().into_iter() {
             let caller_address = invocation.take_caller();
-            let argument = invocation.take_argument();
+            let argument = StateMessage::new(invocation.take_argument());
             let context = Context::new(&persisted_values, &self_address, &caller_address);
 
             // this passes in TypedValue

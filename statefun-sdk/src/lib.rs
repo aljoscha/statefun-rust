@@ -70,6 +70,7 @@ mod function_registry;
 mod invocation_bridge;
 pub mod io;
 pub mod transport;
+use statefun_proto::request_reply::TypedValue;
 
 /// Context for a single invocation of a stateful function.
 ///
@@ -315,6 +316,27 @@ impl Effects {
     }
 }
 
+///
+#[derive(Debug)]
+pub struct StateMessage {
+    typed_value : TypedValue,
+}
+
+impl StateMessage {
+    ///
+    pub fn get<T : Serializable>(&self) -> Option<T> {
+        // todo: make deserializer return Option
+        Some(deserializer::<T>(self.typed_value.typename.to_string(), &self.typed_value.value))
+    }
+
+    ///
+    pub fn new(typed_value: TypedValue) -> Self {
+        StateMessage {
+            typed_value: typed_value
+        }
+    }
+}
+
 #[derive(Debug)]
 enum StateUpdate {
     Update(ValueSpecBase, Vec<u8>),
@@ -458,6 +480,7 @@ fn deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> T {
 }
 
 impl<T: Serializable> ValueSpec<T> {
+    // todo: could make this a trait by implementing as_const_str() on a static str
     ///
     pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
         ValueSpec {

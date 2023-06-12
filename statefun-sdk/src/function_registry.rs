@@ -9,8 +9,9 @@ use crate::InvocationError::FunctionNotFound;
 use crate::{Context, Effects, FunctionType, InvocationError};
 use crate::MissingStateCollection;
 use crate::ValueSpecBase;
+use crate::StateMessage;
 
-use statefun_proto::request_reply::TypedValue;
+// use statefun_proto::request_reply::TypedValue;
 
 /// Keeps a mapping from `FunctionType` to stateful functions. Use this together with a
 /// [Transport](crate::transport::Transport) to serve stateful functions.
@@ -31,7 +32,7 @@ impl FunctionRegistry {
     }
 
     /// Registers the given function under the `function_type`.
-    pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static>(
+    pub fn register_fn<F: Fn(Context, StateMessage) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
         value_specs: Vec<ValueSpecBase>,
@@ -52,7 +53,7 @@ impl FunctionRegistry {
         &self,
         target_function: FunctionType,
         context: Context,
-        message: TypedValue,
+        message: StateMessage,
     ) -> Result<Effects, InvocationError> {
         let function = self.functions.get(&target_function);
         match function {
@@ -64,20 +65,20 @@ impl FunctionRegistry {
 
 /// A function that can be invoked. This is used as trait objects in the `FunctionRegistry`.
 trait InvokableFunction {
-    fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError>;
+    fn invoke(&self, context: Context, message: StateMessage) -> Result<Effects, InvocationError>;
 }
 
 /// An `InvokableFunction` that is backed by a `Fn`.
-struct FnInvokableFunction<F: Fn(Context, TypedValue) -> Effects> {
+struct FnInvokableFunction<F: Fn(Context, StateMessage) -> Effects> {
     function: F,
-    marker: ::std::marker::PhantomData<TypedValue>,
+    marker: ::std::marker::PhantomData<StateMessage>,
     // todo: these should be specc'ed out like TypeName in the Java SDK,
     // for now we're just storing plain strings w/o any validation.
     value_specs: Vec<ValueSpecBase>,
 }
 
-impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFunction<F> {
-    fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError> {
+impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableFunction<F> {
+    fn invoke(&self, context: Context, message: StateMessage) -> Result<Effects, InvocationError> {
 
         let mut missing_states : Vec<ValueSpecBase> = Vec::new();
 

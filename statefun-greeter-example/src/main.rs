@@ -1,7 +1,7 @@
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes, Serializable};
+use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes, Serializable, StateMessage};
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
 use statefun_proto::request_reply::TypedValue;
@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     let mut function_registry = FunctionRegistry::new();
     function_registry.register_fn(FunctionType::new("greeter.fns", "user"),
         vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into(), LAST_SEEN_TIMESTAMP.into(), USER_LOGIN.into()], user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
+    // function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
@@ -53,10 +53,15 @@ impl Serializable for UserLogin {
     }
 }
 
-pub fn user(context: Context, typed_value: TypedValue) -> Effects {
-    let login: UserLogin = serde_json::from_slice(&typed_value.value).unwrap();
+pub fn user(context: Context, message: StateMessage) -> Effects {
+    let user_login = match message.get::<UserLogin>() {
+        Some(user_login) => user_login,
+        None => return Effects::new(),
+    };
 
-    log::info!("We should update user count {:?}", login.user_name);
+    // let login: UserLogin = serde_json::from_slice(&typed_value.value).unwrap();
+
+    log::info!("We should update user count {:?}", user_login.user_name);
 
     let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
     let seen_count = match seen_count {
@@ -89,7 +94,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     let state_user_login: Option<UserLogin> = context.get_state(USER_LOGIN);
     let state_user_login = match state_user_login {
         Some(existing_login) => existing_login,
-        None => login,
+        None => user_login,
     };
 
     log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
@@ -113,26 +118,26 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     effects
 }
 
-// todo: don't use TypedValue directly here
-pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
-    log::info!("--drey called greet: Received {:?}", typed_value);
-    // todo:
-    // profile: UserProfile
+// // todo: don't use TypedValue directly here
+// pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
+//     log::info!("--drey called greet: Received {:?}", typed_value);
+//     // todo:
+//     // profile: UserProfile
 
-    // log::info!("We should greet {:?}", profile.get_name());
+//     // log::info!("We should greet {:?}", profile.get_name());
 
-    let mut effects = Effects::new();
-    // let greetings = createGreetingsMessage(profile);
+//     let mut effects = Effects::new();
+//     // let greetings = createGreetingsMessage(profile);
 
-    // let mut egressRecord = EgressRecord::new();
-    // egressRecord.set_topic("greetings".to_string());
-    // egressRecord.set_payload(greetings);
+//     // let mut egressRecord = EgressRecord::new();
+//     // egressRecord.set_topic("greetings".to_string());
+//     // egressRecord.set_payload(greetings);
 
-    // effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
-    //                egressRecord);
+//     // effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
+//     //                egressRecord);
 
-    effects
-}
+//     effects
+// }
 
 // pub fn createGreetingsMessage(profile: UserProfile) -> String {
 //     let GREETINGS_TEMPLATES =
