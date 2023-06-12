@@ -380,6 +380,8 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
 
 // todo
 fn builtin_serializer<T>(typename: String, value: &T) -> Vec<u8> {
+    log::debug!("Serializing type: {:?}", typename);
+
     let built_in_type = from_str(typename);
     match built_in_type {
         BuiltInTypes::Boolean => Vec::<u8>::new(),
@@ -395,6 +397,7 @@ fn builtin_serializer<T>(typename: String, value: &T) -> Vec<u8> {
 
 // todo
 fn builtin_deserializer<T>(typename: String, buffer: &Vec<u8>) -> T {
+    log::debug!("Deserializing type: {:?}", typename);
     // todo: how do we limit T here so T::new will work??
     // T::new()
     panic!("oops")
