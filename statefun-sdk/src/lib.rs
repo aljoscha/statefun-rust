@@ -441,14 +441,14 @@ impl Serializable for i64 {
     }
 }
 
-fn builtin_serializer<T : Serializable>(value: &T, typename: String) -> Vec<u8> {
+fn serializer<T : Serializable>(value: &T, typename: String) -> Vec<u8> {
     // log::debug!("-- drey: serializing type: {:?}", typename);
     (&value).serialize(typename)
     // log::debug!("-- drey: serialized to: {:?}", &res);
 }
 
 // todo
-fn builtin_deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> T {
+fn deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> T {
     // log::debug!("-- drey: deserializing type: {:?}", typename);
     // todo: how do we limit T here so T::new will work??
     // T::new()
@@ -463,8 +463,8 @@ impl<T: Serializable> ValueSpec<T> {
         ValueSpec {
             name: name,
             typename: built_in_type.as_const_str(),
-            serializer: builtin_serializer,
-            deserializer: builtin_deserializer,
+            serializer: serializer,
+            deserializer: deserializer,
         }
     }
 
@@ -473,8 +473,8 @@ impl<T: Serializable> ValueSpec<T> {
         ValueSpec {
             name: name,
             typename: typename,
-            serializer: builtin_serializer,
-            deserializer: builtin_deserializer,
+            serializer: serializer,
+            deserializer: deserializer,
         }
     }
 
