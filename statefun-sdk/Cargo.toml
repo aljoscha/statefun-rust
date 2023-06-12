@@ -13,6 +13,7 @@ homepage = "https://github.com/aljoscha/statefun-rust"
 repository = "https://github.com/aljoscha/statefun-rust.git"
 
 [dependencies]
+serde = { version = "1.0.164", features = ["derive"] }
 thiserror = "1.0"
 log = "0.4.8"
 tokio = { version = "0.2", features = ["full"] }
