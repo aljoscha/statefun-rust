@@ -8,7 +8,7 @@ use protobuf::Message;
 use crate::InvocationError::FunctionNotFound;
 use crate::{Context, Effects, FunctionType, InvocationError};
 use crate::MissingStateCollection;
-use crate::{ValueSpec, ValueSpecBase, Serializable};
+use crate::ValueSpecBase;
 
 use statefun_proto::request_reply::TypedValue;
 
@@ -31,18 +31,16 @@ impl FunctionRegistry {
     }
 
     /// Registers the given function under the `function_type`.
-    pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static, T : Serializable>(
+    pub fn register_fn<F: Fn(Context, TypedValue) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
-        value_specs: Vec<ValueSpec<T>>,
+        value_specs: Vec<ValueSpecBase>,
         function: F,
     ) {
-        let base_specs = value_specs.into_iter().map(|spec| spec.into()).collect();
-
         let callable_function = FnInvokableFunction {
             function,
             marker: ::std::marker::PhantomData,
-            value_specs: base_specs
+            value_specs
         };
         self.functions
             .insert(function_type, Box::new(callable_function));

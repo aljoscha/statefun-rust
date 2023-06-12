@@ -20,8 +20,8 @@ fn main() -> anyhow::Result<()> {
     let mut function_registry = FunctionRegistry::new();
     // todo: need actual type here, either by doing `.withIntType()`, or by specifying our own namespace
     // todo: use namespaced type names here by making the namespace another parameter
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT()], user);
-    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT()], greet);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT().into()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT().into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
@@ -52,8 +52,6 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
         Some(count) => count + 1,
         None => 0,
     };
-
-    log::info!("Updated user count for {:?}: {:?}", login.user_name, updated_seen_count);
 
     let start = SystemTime::now();
     let since_the_epoch = start
