@@ -109,8 +109,22 @@ impl<'a> Context<'a> {
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
     pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<T> {
+        let deserializer = value_spec.deserializer.clone();
         let state = self.state.get(&value_spec.into());
-        None
+        match state {
+            Some(serialized) => {
+                let deserialized : T = deserializer(serialized);
+                Some(deserialized)
+            }
+            None => None
+        }
+
+        // let deserialized = (value_spec.deserializer)(state);
+        // self.state_updates.push(StateUpdate::Update(
+        //     value_spec.into(),
+        //     serialized,
+        // ));
+        // None
 
         // todo: deserialize with user-provided serializer
         // state.and_then(|serialized_state| {
@@ -354,7 +368,7 @@ pub struct ValueSpec<T> {
 
     // todo: should these implement Result?
     serializer: fn(&T) -> Vec<u8>,
-    deserializer: fn(Vec<u8>) -> T,
+    deserializer: fn(&Vec<u8>) -> T,
 }
 
 impl<T> Into<ValueSpecBase> for ValueSpec<T> {
@@ -369,7 +383,7 @@ fn builtin_serializer<T>(value: &T) -> Vec<u8> {
 }
 
 // todo
-fn builtin_deserializer<T>(buffer: Vec<u8>) -> T {
+fn builtin_deserializer<T>(buffer: &Vec<u8>) -> T {
     // todo: how do we limit T here so T::new will work??
     // T::new()
     panic!("oops")
@@ -387,7 +401,7 @@ impl<T> ValueSpec<T> {
     }
 
     ///
-    fn custom(name: &str, typename: &str, serializer: fn(&T) -> Vec<u8>, deserializer: fn(Vec<u8>) -> T) -> ValueSpec<T> {
+    fn custom(name: &str, typename: &str, serializer: fn(&T) -> Vec<u8>, deserializer: fn(&Vec<u8>) -> T) -> ValueSpec<T> {
         ValueSpec {
             name: name.to_string(),
             typename: typename.to_string(),
