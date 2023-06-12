@@ -18,8 +18,6 @@ fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    // todo: need actual type here, either by doing `.withIntType()`, or by specifying our own namespace
-    // todo: use namespaced type names here by making the namespace another parameter
     function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT().into()], user);
     function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT().into()], greet);
 
