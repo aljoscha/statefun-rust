@@ -61,8 +61,6 @@ use protobuf::parse_from_bytes;
 use thiserror::Error;
 
 pub use error::InvocationError;
-pub use error::SerializationError;
-pub use error::SomeError;
 pub use function_registry::FunctionRegistry;
 use statefun_proto::request_reply::Address as ProtoAddress;
 use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
@@ -113,16 +111,14 @@ impl<'a> Context<'a> {
 
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
-    pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<&T> {
+    pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<T> {
         let deserializer = value_spec.deserializer.clone();
         let typename = value_spec.typename.to_string();
         let state = self.state.get(&value_spec.into());
         match state {
             Some(serialized) => {
-                match deserializer(typename, serialized) {
-                    Ok(deserialized) => Some(deserialized),
-                    Err(reason) => None,  // todo: log this here
-                }
+                let deserialized : T = deserializer(typename, serialized);
+                Some(deserialized)
             }
             None => None
         }
@@ -313,18 +309,10 @@ impl Effects {
     pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
         let serialized = (value_spec.serializer)(value, value_spec.typename.to_string());
         log::debug!("-- drey: updated state: {:?}", serialized);
-
-        match serialized {
-            Ok(serialized) => {
-                self.state_updates.push(StateUpdate::Update(
-                    value_spec.into(),
-                    serialized,
-                ));
-            },
-            Err(error) => {
-                panic!("Couldn't serialize: {:?}", error);
-            }
-        }
+        self.state_updates.push(StateUpdate::Update(
+            value_spec.into(),
+            serialized,
+        ));
     }
 }
 
@@ -336,12 +324,9 @@ pub struct StateMessage {
 
 impl StateMessage {
     ///
-    pub fn get<T : Serializable>(&self) -> Option<&T> {
+    pub fn get<T : Serializable>(&self) -> Option<T> {
         // todo: make deserializer return Option
-        match deserializer::<T>(self.typed_value.typename.to_string(), &self.typed_value.value) {
-            Ok(result) => Some(result),
-            Err(error) => None,  // todo: log
-        }
+        Some(deserializer::<T>(self.typed_value.typename.to_string(), &self.typed_value.value))
     }
 
     ///
@@ -407,8 +392,9 @@ pub struct ValueSpec<T> {
     name : &'static str,  // state name
     typename : &'static str,  // type typename
 
-    serializer: fn(&T, String) -> Result<Vec<u8>, SerializationError>,
-    deserializer: fn(String, &Vec<u8>) -> Result<&T, SerializationError>,
+    // todo: should these implement Result?
+    serializer: fn(&T, String) -> Vec<u8>,
+    deserializer: fn(String, &Vec<u8>) -> T,
 }
 
 ///
@@ -422,80 +408,69 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
 ///
 pub trait Serializable {
     ///
-    fn serialize(&self, typename: String) -> Result<Vec<u8>, SerializationError>;
+    fn serialize(&self, typename: String) -> Vec<u8>;
 
     ///
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<&Self, SerializationError>;
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> Self;
 }
 
 impl Serializable for bool {
-    fn serialize(&self, typename: String) -> Result<Vec<u8>, SerializationError> {
+    fn serialize(&self, typename: String) -> Vec<u8> {
         let mut wrapped = BooleanWrapper::new();
         wrapped.set_value(*self);
-        let result = wrapped.write_to_bytes();
-        match result {
-            Ok(value) => Ok(value),
-            Err(protobuf_error) => Err(SerializationError::SerializationError(SomeError::new())),
-        }
+        wrapped.write_to_bytes().unwrap()
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<&bool, SerializationError> {
-        match parse_from_bytes::<BooleanWrapper>(&buffer) {
-            Ok(value) => Ok(&value.get_value()),
-            Err(error) => Err(SerializationError::SerializationError(SomeError::new())),
-        }
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> bool {
+        let wrapped = parse_from_bytes::<BooleanWrapper>(&buffer).unwrap();
+        wrapped.get_value()
     }
 }
 
 impl Serializable for i32 {
-    fn serialize(&self, typename: String) -> Result<Vec<u8>, SerializationError> {
+    fn serialize(&self, typename: String) -> Vec<u8> {
         let mut wrapped = IntWrapper::new();
         log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
         log::debug!("-- drey: wrapped {:?}", wrapped);
-        match wrapped.write_to_bytes() {
-            Ok(result) => Ok(result),
-            Err(error) => Err(SerializationError::SerializationError(SomeError::new())),
-        }
+        let res = wrapped.write_to_bytes().unwrap();
+        log::debug!("-- drey: res {:?}", res);
+
+        res
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<&i32, SerializationError> {
-        match parse_from_bytes::<IntWrapper>(&buffer) {
-            Ok(value) => Ok(&value.get_value()),
-            Err(error) => Err(SerializationError::SerializationError(SomeError::new())),
-        }
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> i32 {
+        let wrapped = parse_from_bytes::<IntWrapper>(&buffer).unwrap();
+        wrapped.get_value()
     }
 }
 
 impl Serializable for i64 {
-    fn serialize(&self, typename: String) -> Result<Vec<u8>, SerializationError> {
+    fn serialize(&self, typename: String) -> Vec<u8> {
         let mut wrapped = LongWrapper::new();
         log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
         log::debug!("-- drey: wrapped {:?}", wrapped);
+        let res = wrapped.write_to_bytes().unwrap();
+        log::debug!("-- drey: res {:?}", res);
 
-        match wrapped.write_to_bytes() {
-            Ok(result) => Ok(result),
-            Err(error) => Err(SerializationError::SerializationError(SomeError::new())),
-        }
+        res
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<&i64, SerializationError> {
-        match parse_from_bytes::<LongWrapper>(&buffer) {
-            Ok(value) => Ok(&value.get_value()),
-            Err(error) => Err(SerializationError::SerializationError(SomeError::new())),
-        }
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> i64 {
+        let wrapped = parse_from_bytes::<LongWrapper>(&buffer).unwrap();
+        wrapped.get_value()
     }
 }
 
-fn serializer<T : Serializable>(value: &T, typename: String) -> Result<Vec<u8>, SerializationError> {
+fn serializer<T : Serializable>(value: &T, typename: String) -> Vec<u8> {
     // log::debug!("-- drey: serializing type: {:?}", typename);
     (&value).serialize(typename)
     // log::debug!("-- drey: serialized to: {:?}", &res);
 }
 
 // todo
-fn deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> Result<&T, SerializationError> {
+fn deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> T {
     // log::debug!("-- drey: deserializing type: {:?}", typename);
     // todo: how do we limit T here so T::new will work??
     // T::new()

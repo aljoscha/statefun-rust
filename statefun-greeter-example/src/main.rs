@@ -1,7 +1,6 @@
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::error::SerializationError;
 use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpecBase, ValueSpec, BuiltInTypes, Serializable, StateMessage};
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
@@ -44,11 +43,11 @@ struct UserLogin {
 }
 
 impl Serializable for UserLogin {
-    fn serialize(&self, typename: String) -> Result<Vec<u8>, SerializationError> {
+    fn serialize(&self, typename: String) -> Vec<u8> {
         serde_json::to_vec(self).unwrap()
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<&UserLogin, SerializationError> {
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> UserLogin {
         let login: UserLogin = serde_json::from_slice(&buffer).unwrap();
         login
     }
