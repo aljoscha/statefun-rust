@@ -55,18 +55,5 @@ impl<'a> Context<'a> {
             }
             None => None
         }
-
-        // let deserialized = (value_spec.deserializer)(state);
-        // self.state_updates.push(StateUpdate::Update(
-        //     value_spec.into(),
-        //     serialized,
-        // ));
-        // None
-
-        // todo: deserialize with user-provided serializer
-        // state.and_then(|serialized_state| {
-        //     let unpacked_state: Option<T> = unpack_state(value_spec, serialized_state);
-        //     unpacked_state
-        // })
     }
 }
