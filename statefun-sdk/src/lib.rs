@@ -78,6 +78,8 @@ mod egress_identifier;
 pub use egress_identifier::EgressIdentifier;
 mod context;
 mod value_spec;
+mod state_update;
+use state_update::StateUpdate;
 mod value_spec_base;
 pub use value_spec_base::ValueSpecBase;
 pub use value_spec::ValueSpec;
@@ -131,10 +133,4 @@ impl StateMessage {
             typed_value: typed_value
         }
     }
-}
-
-#[derive(Debug)]
-enum StateUpdate {
-    Update(ValueSpecBase, Vec<u8>),
-    Delete(ValueSpecBase),
 }
