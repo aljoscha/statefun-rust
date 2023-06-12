@@ -148,7 +148,7 @@ fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
 fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpec, Vec<u8>> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        result.insert(ValueSpec::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()),
+        result.insert(ValueSpec::custom(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()),
             persisted_value.get_state_value().get_value().to_vec());
     }
     result

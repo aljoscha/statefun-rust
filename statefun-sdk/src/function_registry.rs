@@ -82,7 +82,7 @@ impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFun
         let mut missing_states : Vec<ValueSpec> = Vec::new();
         for value_spec in (&self.value_specs).into_iter() {
             // todo: when we receive states we don't seem to get the keyed name???
-            if !context.state.contains_key(&ValueSpec::new(value_spec.name.as_str(), String::new().as_str())) {
+            if !context.state.contains_key(&ValueSpec::custom(value_spec.name.as_str(), String::new().as_str())) {
                 missing_states.push(value_spec.clone());
             }
         }

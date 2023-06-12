@@ -337,19 +337,19 @@ pub struct ValueSpec {
 }
 
 impl ValueSpec {
-    ///
-    pub fn new(name: &str, typename: &str) -> ValueSpec {
-        ValueSpec {
-            name: name.to_string(),
-            typename: typename.to_string(),
-        }
-    }
-
     /// todo: there's no function overloading in Rust, what to do here to make this nicer?
-    pub fn new_builtin(name: &str, built_in_type: BuiltInTypes) -> ValueSpec {
+    pub fn new(name: &str, built_in_type: BuiltInTypes) -> ValueSpec {
         ValueSpec {
             name: name.to_string(),
             typename: built_in_type.as_str(),
+        }
+    }
+
+    ///
+    pub fn custom(name: &str, typename: &str) -> ValueSpec {
+        ValueSpec {
+            name: name.to_string(),
+            typename: typename.to_string(),
         }
     }
 }

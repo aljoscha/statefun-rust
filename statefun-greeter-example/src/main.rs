@@ -4,7 +4,7 @@ use protobuf::well_known_types::Int64Value;
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpec};
+use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, ValueSpec, BuiltInTypes};
 use statefun_greeter_example_proto::example::UserProfile;
 use statefun_greeter_example_proto::example::EgressRecord;
 use statefun_proto::request_reply::TypedValue;
@@ -13,7 +13,7 @@ use serde::{Serialize, Deserialize};
 
 // why can't we just have CTFE like a capable language?
 fn SEEN_COUNT() -> ValueSpec {
-    ValueSpec::new("seen_count", "io.statefun.types/int")
+    ValueSpec::new("seen_count", BuiltInTypes::Integer)
 }
 
 fn main() -> anyhow::Result<()> {
