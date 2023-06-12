@@ -18,7 +18,7 @@ pub struct Context<'a> {
 
 impl<'a> Context<'a> {
     ///
-    pub fn new(
+    pub (crate) fn new(
         state: &'a HashMap<ValueSpecBase, Vec<u8>>,
         self_address: &'a ProtoAddress,
         caller_address: &'a ProtoAddress,

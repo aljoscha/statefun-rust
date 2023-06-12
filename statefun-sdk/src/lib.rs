@@ -82,20 +82,6 @@ pub mod io;
 pub mod transport;
 use statefun_proto::request_reply::TypedValue;
 
-/// Unpacks the given state, which is expected to be a serialized `Any<T>`.
-fn unpack_state<T: Message>(value_spec: ValueSpecBase, packed_state: &Any) -> Option<T> {
-    // let packed_state: Any =
-    //     protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.");
-
-    log::debug!("Packed state for {:?}: {:?}", value_spec, packed_state);
-
-    let unpacked_state: Option<T> = packed_state
-        .unpack()
-        .expect("Could not unpack state from Any.");
-
-    unpacked_state
-}
-
 /// blabla
 #[derive(Error, PartialEq, Eq, Hash, Debug)]
 pub struct MissingStateCollection {
