@@ -66,6 +66,8 @@ use statefun_proto::request_reply::Address as ProtoAddress;
 use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
 
 mod serialization;
+mod built_in_types;
+pub use built_in_types::{BuiltInTypes};
 use serialization::{serializer, deserializer};
 pub use serialization::Serializable;
 mod function_type;
@@ -196,46 +198,5 @@ impl<T: Serializable> ValueSpec<T> {
             name : self.name.to_string(),
             typename : self.typename.to_string(),
         }
-    }
-}
-
-///
-pub enum BuiltInTypes {
-    ///
-    Boolean,
-    ///
-    Integer,
-    ///
-    Long,
-    ///
-    Float,
-    ///
-    Double,
-    ///
-    String,
-}
-
-impl BuiltInTypes {
-    const fn as_const_str(&self) -> &'static str {
-        match self {
-            BuiltInTypes::Boolean => "io.statefun.types/bool",
-            BuiltInTypes::Integer => "io.statefun.types/int",
-            BuiltInTypes::Long => "io.statefun.types/long",
-            BuiltInTypes::Float => "io.statefun.types/float",
-            BuiltInTypes::Double => "io.statefun.types/double",
-            BuiltInTypes::String => "io.statefun.types/string",
-        }
-    }
-}
-
-fn from_str(input: String) -> BuiltInTypes {
-    match input.as_str() {
-        "io.statefun.types/bool" => BuiltInTypes::Boolean,
-        "io.statefun.types/int" => BuiltInTypes::Integer,
-        "io.statefun.types/long" => BuiltInTypes::Long,
-        "io.statefun.types/float" => BuiltInTypes::Float,
-        "io.statefun.types/double" => BuiltInTypes::Double,
-        "io.statefun.types/string" => BuiltInTypes::String,
-        _ => panic!("Unexpected type")
     }
 }
