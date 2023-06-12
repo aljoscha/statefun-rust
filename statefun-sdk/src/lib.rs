@@ -63,7 +63,7 @@ use thiserror::Error;
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
 use statefun_proto::request_reply::Address as ProtoAddress;
-use statefun_proto::types::{BooleanWrapper, IntWrapper};
+use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
 
 mod error;
 mod function_registry;
@@ -415,6 +415,24 @@ impl Serializable for i32 {
 
     fn deserialize(typename: String, buffer: &Vec<u8>) -> i32 {
         let wrapped = parse_from_bytes::<IntWrapper>(&buffer).unwrap();
+        wrapped.get_value()
+    }
+}
+
+impl Serializable for i64 {
+    fn serialize(&self, typename: String) -> Vec<u8> {
+        let mut wrapped = LongWrapper::new();
+        log::debug!("-- drey: i32 serializing {:?}", self);
+        wrapped.set_value(*self);
+        log::debug!("-- drey: wrapped {:?}", wrapped);
+        let res = wrapped.write_to_bytes().unwrap();
+        log::debug!("-- drey: res {:?}", res);
+
+        res
+    }
+
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> i64 {
+        let wrapped = parse_from_bytes::<LongWrapper>(&buffer).unwrap();
         wrapped.get_value()
     }
 }

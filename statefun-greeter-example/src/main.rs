@@ -8,14 +8,17 @@ use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Serialize, Deserialize};
 
+// todo: rename to TypeName
+// todo: rename these BuiltInType values too, like Long => i64
 const SEEN_COUNT : ValueSpec::<i32> = ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer);
 const IS_FIRST_VISIT : ValueSpec::<bool> = ValueSpec::<bool>::new("is_first_visit", BuiltInTypes::Boolean);
+const LAST_SEEN_TIMESTAMP : ValueSpec::<i64> = ValueSpec::<i64>::new("last_seen_timestamp", BuiltInTypes::Long);
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into(), LAST_SEEN_TIMESTAMP.into()], user);
     function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
@@ -54,32 +57,24 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
         None => true,
     };
 
-    log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}",
-        login.user_name, &seen_count, &is_first_visit);
+    let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_secs(),
+        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+    };
 
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    let now_ms = since_the_epoch.as_millis() as i64;
+    let last_seen_timestamp_ms : Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP);
+    let last_seen_timestamp_ms = match last_seen_timestamp_ms {
+        Some(_) => current_time as i64,
+        None => current_time as i64,
+    };
 
-    // let last_seen_timestamp_ms : Option<Int64Value> = context.get_state("seen_timestamp_ms");
-    // let mut updated_last_seen_timestamp_ms = match last_seen_timestamp_ms {
-    //     Some(last_seen) => last_seen,
-    //     None => { let mut x = Int64Value::new(); x.set_value(now_ms); x },
-    // };
+    log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}",
+        login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms);
 
     let mut effects = Effects::new();
-    // todo: store ValueSpec here
     effects.update_state(SEEN_COUNT, &seen_count);
     effects.update_state(IS_FIRST_VISIT, &is_first_visit);
-    // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
-
-    // log::info!(
-    //     "We have seen {:?} {:?} times.",
-    //     login.user_name,
-    //     seen_count
-    // );
+    effects.update_state(LAST_SEEN_TIMESTAMP, &last_seen_timestamp_ms);
 
     // let mut profile = UserProfile::new();
     // profile.set_name(login.user_name.to_string());
