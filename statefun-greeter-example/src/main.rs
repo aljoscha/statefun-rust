@@ -19,7 +19,8 @@ fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into(), LAST_SEEN_TIMESTAMP.into()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),
+        vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into(), LAST_SEEN_TIMESTAMP.into(), USER_LOGIN.into()], user);
     function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
@@ -87,6 +88,16 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     effects.update_state(SEEN_COUNT, &seen_count);
     effects.update_state(IS_FIRST_VISIT, &is_first_visit);
     effects.update_state(LAST_SEEN_TIMESTAMP, &last_seen_timestamp_ms);
+
+    let state_user_login: Option<UserLogin> = context.get_state(USER_LOGIN);
+    let state_user_login = match state_user_login {
+        Some(existing_login) => existing_login,
+        None => login,
+    };
+
+    effects.update_state(USER_LOGIN, &state_user_login);
+
+
 
     // let mut profile = UserProfile::new();
     // profile.set_name(login.user_name.to_string());
