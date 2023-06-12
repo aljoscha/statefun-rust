@@ -80,13 +80,50 @@ impl<F: Fn(Context, TypedValue) -> Effects> InvokableFunction for FnInvokableFun
     fn invoke(&self, context: Context, message: TypedValue) -> Result<Effects, InvocationError> {
 
         let mut missing_states : Vec<ValueSpecBase> = Vec::new();
+
+        // NOTE: The API is very tricky:
+        //
+        // Context for a function's state can be in one of three states:
+        // A) Missing, for example when this is a brand new state variable Flink doesn't know about.
+        // B) Allocated but uninitialized, when Flink allocates storage for this state variable
+        //    but doesn't have any value stored in it yet.
+        // C) Allocated and initialized, when a function has stored a value in a state variable
+        //    successfully (this means Flink received the response for a state mutation).
+        //
+        // In each of these three cases Flink sends wildly different `ToFunction.PersistedValue`
+        // in the request.
+        //
+        // - Assume a new state value called `my_state` that stores an `i32`
+        // - When a state value is first introduced in a function, in the first call the context
+        //   will not contain this state value. We return `incomplete_invocation_context` to let
+        //   Flink allocate storage for this state.
+        // - Flink then prepares storage for `my_state` and calls the function again.
+        //   The context will contain `ValueSpecBase { name: "my_state", typename: "" }: []`
+        //   Note how the `typename` is still empty here despite it being set in the previous
+        //   `incomplete_invocation_context` response. This could be a Flink Statefun bug..
+        // - Afterwards when we initialize this state to a value, e.g. 42, context will contain:
+        //   `ValueSpecBase { name: "my_state", typename: "io.statefun.types/int" }: [0x42]`
+        //
+        // - Therefore we cannot check the typename consistently as it's only ever set after the
+        //   first time we write to the state.
+
         for value_spec in (&self.value_specs).into_iter() {
             log::debug!("--drey: checking value spec {:?}", &value_spec);
             log::debug!("--drey: context.state contains: {:?}", context.state);
 
-            // todo: when we receive states we don't seem to get the keyed name???
-            if !context.state.contains_key(&ValueSpecBase::new(value_spec.name.as_str(), String::new().as_str())) {
+            let mut found : bool = false;
+            for context_spec in (&context.state).into_iter() {
+                if value_spec.name.eq(&context_spec.0.name) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if !found {
+                log::debug!("--drey: NOT FOUND: {:?}", &value_spec.name);
                 missing_states.push(value_spec.clone());
+            } else {
+                log::debug!("--drey: DID FIND: {:?}", &value_spec.name);
             }
         }
 
