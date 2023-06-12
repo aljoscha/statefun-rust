@@ -8,14 +8,14 @@ use statefun_proto::request_reply::TypedValue;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Serialize, Deserialize};
 
-const SEEN_COUNT : ValueSpec::<i32> = ValueSpec::<i32>::new("foobar", BuiltInTypes::Integer);
-const FIRST_VISIT : ValueSpec::<bool> = ValueSpec::<bool>::new("foobar", BuiltInTypes::Boolean);
+const SEEN_COUNT : ValueSpec::<i32> = ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer);
+const IS_FIRST_VISIT : ValueSpec::<bool> = ValueSpec::<bool>::new("is_first_visit", BuiltInTypes::Boolean);
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT.into(), FIRST_VISIT.into()], user);
+    function_registry.register_fn(FunctionType::new("greeter.fns", "user"),      vec![SEEN_COUNT.into(), IS_FIRST_VISIT.into()], user);
     function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
@@ -43,10 +43,19 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     log::info!("We should update user count {:?}", login.user_name);
 
     let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
-    let updated_seen_count = match seen_count {
+    let seen_count = match seen_count {
         Some(count) => count + 1,
         None => 0,
     };
+
+    let is_first_visit: Option<bool> = context.get_state(IS_FIRST_VISIT);
+    let is_first_visit = match is_first_visit {
+        Some(_) => false,
+        None => true,
+    };
+
+    log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}",
+        login.user_name, &seen_count, &is_first_visit);
 
     let start = SystemTime::now();
     let since_the_epoch = start
@@ -62,13 +71,14 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
 
     let mut effects = Effects::new();
     // todo: store ValueSpec here
-    effects.update_state(SEEN_COUNT, &updated_seen_count);
+    effects.update_state(SEEN_COUNT, &seen_count);
+    effects.update_state(IS_FIRST_VISIT, &is_first_visit);
     // effects.update_state("seen_timestamp_ms", &updated_last_seen_timestamp_ms);
 
     // log::info!(
     //     "We have seen {:?} {:?} times.",
     //     login.user_name,
-    //     updated_seen_count
+    //     seen_count
     // );
 
     // let mut profile = UserProfile::new();
