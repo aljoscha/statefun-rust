@@ -110,10 +110,10 @@ impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableF
 
         for value_spec in (&self.value_specs).into_iter() {
             log::debug!("--drey: checking value spec {:?}", &value_spec);
-            log::debug!("--drey: context.state contains: {:?}", context.state);
+            log::debug!("--drey: context.state contains: {:?}", context.get_all_states());
 
             let mut found : bool = false;
-            for context_spec in (&context.state).into_iter() {
+            for context_spec in context.get_all_states().into_iter() {
                 if value_spec.name.eq(&context_spec.0.name) {
                     found = true;
                     break;
