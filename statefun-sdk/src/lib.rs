@@ -57,6 +57,7 @@ use std::time::Duration;
 
 use protobuf::well_known_types::Any;
 use protobuf::Message;
+use protobuf::parse_from_bytes;
 use thiserror::Error;
 
 pub use error::InvocationError;
@@ -306,6 +307,7 @@ impl Effects {
     /// Updates the state stored under the given name to the given value.
     pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
         let serialized = (value_spec.serializer)(value, value_spec.typename.to_string());
+        log::debug!("-- drey: updated state: {:?}", serialized);
         self.state_updates.push(StateUpdate::Update(
             value_spec.into(),
             serialized,
@@ -381,6 +383,7 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
 
 trait Serializable {
     fn serialize(&self, typename: String) -> Vec<u8>;
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> Self;
 }
 
 impl Serializable for bool {
@@ -389,27 +392,45 @@ impl Serializable for bool {
         wrapped.set_value(*self);
         wrapped.write_to_bytes().unwrap()
     }
+
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> bool {
+        let wrapped = parse_from_bytes::<BooleanWrapper>(&buffer).unwrap();
+        wrapped.get_value()
+    }
 }
 
 impl Serializable for i32 {
     fn serialize(&self, typename: String) -> Vec<u8> {
         let mut wrapped = IntWrapper::new();
+        log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
-        wrapped.write_to_bytes().unwrap()
+        log::debug!("-- drey: wrapped {:?}", wrapped);
+        let res = wrapped.write_to_bytes().unwrap();
+        log::debug!("-- drey: res {:?}", res);
+
+        res
+    }
+
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> i32 {
+        let wrapped = parse_from_bytes::<IntWrapper>(&buffer).unwrap();
+        wrapped.get_value()
     }
 }
 
 fn builtin_serializer<T : Serializable>(value: &T, typename: String) -> Vec<u8> {
-    log::debug!("-- drey: serializing type: {:?}", typename);
+    // log::debug!("-- drey: serializing type: {:?}", typename);
     (&value).serialize(typename)
+    // log::debug!("-- drey: serialized to: {:?}", &res);
 }
 
 // todo
-fn builtin_deserializer<T>(typename: String, buffer: &Vec<u8>) -> T {
-    log::debug!("-- drey: deserializing type: {:?}", typename);
+fn builtin_deserializer<T : Serializable>(typename: String, buffer: &Vec<u8>) -> T {
+    // log::debug!("-- drey: deserializing type: {:?}", typename);
     // todo: how do we limit T here so T::new will work??
     // T::new()
-    panic!("oops")
+    // panic!("oops")
+
+    T::deserialize(typename, buffer)
 }
 
 impl<T: Serializable> ValueSpec<T> {

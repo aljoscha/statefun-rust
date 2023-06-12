@@ -139,9 +139,9 @@ fn from_proto_any(typename: String, value: Any) -> TypedValue {
 /// ditto
 fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
     let mut res = TypedValue::new();
-    res.typename = typename;
-    res.has_value = true;
-    res.value = value;
+    res.set_typename(typename);
+    res.set_has_value(true);
+    res.set_value(value);
     res
 }
 
@@ -249,7 +249,16 @@ where
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(value_spec.name);
                 // drey
+                log::debug!("--drey: StateUpdate::Update: {:?}", &state);
+
+                let typed_value = to_typed_value(value_spec.typename.to_string(), state.clone());
+                log::debug!("--drey: to_typed_value(value_spec.typename, state): {:?}", typed_value);
+                let myvec = typed_value.value.to_vec();
+                log::debug!("--drey: to_typed_value VEC: {:?}", myvec);
+
+
                 proto_state_update.set_state_value(to_typed_value(value_spec.typename, state));
+                log::debug!("--drey: StateUpdate::Update: proto_state_update: {:?}", &proto_state_update.get_state_value());
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
                 invocation_response.state_mutations.push(proto_state_update);

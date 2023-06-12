@@ -50,7 +50,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     let seen_count: Option<i32> = context.get_state(SEEN_COUNT());
     let updated_seen_count = match seen_count {
         Some(count) => count + 1,
-        None => 0,
+        None => 32, //
     };
 
     let start = SystemTime::now();
