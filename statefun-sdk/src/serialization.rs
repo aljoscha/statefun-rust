@@ -1,4 +1,4 @@
-use protobuf::parse_from_bytes;
+// use protobuf::parse_from_bytes;
 use protobuf::Message;
 use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper};
 
@@ -19,7 +19,7 @@ impl Serializable for bool {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> bool {
-        let wrapped = parse_from_bytes::<BooleanWrapper>(buffer).unwrap();
+        let wrapped = BooleanWrapper::parse_from_bytes(buffer).unwrap();
         wrapped.get_value()
     }
 }
@@ -37,7 +37,7 @@ impl Serializable for i32 {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> i32 {
-        let wrapped = parse_from_bytes::<IntWrapper>(buffer).unwrap();
+        let wrapped = IntWrapper::parse_from_bytes(buffer).unwrap();
         wrapped.get_value()
     }
 }
@@ -55,7 +55,7 @@ impl Serializable for i64 {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> i64 {
-        let wrapped = parse_from_bytes::<LongWrapper>(buffer).unwrap();
+        let wrapped = LongWrapper::parse_from_bytes(buffer).unwrap();
         wrapped.get_value()
     }
 }
