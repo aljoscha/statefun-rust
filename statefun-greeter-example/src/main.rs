@@ -93,6 +93,7 @@ pub fn user(context: Context, typed_value: TypedValue) -> Effects {
     effects
 }
 
+// todo: don't use TypedValue directly here
 pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
     log::info!("--drey called greet: Received {:?}", typed_value);
     // todo:
