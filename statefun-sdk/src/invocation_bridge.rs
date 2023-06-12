@@ -136,23 +136,30 @@ fn from_proto_any(typename: String, value: Any) -> TypedValue {
     res
 }
 
-fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpec, Any> {
+/// ditto
+fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
+    let mut res = TypedValue::new();
+    res.typename = typename;
+    res.has_value = true;
+    res.value = value;
+    res
+}
+
+fn parse_persisted_values(persisted_values: &[ToFunction_PersistedValue]) -> HashMap<ValueSpec, Vec<u8>> {
     let mut result = HashMap::new();
     for persisted_value in persisted_values {
-        // todo: we should either not parse these values here and do them lazily in the context.get_state(),
-        // or parse them according to the ValueSpec type
-        let packed_state: Any = deserialize_state(persisted_value.get_state_value().get_value());
-        result.insert(ValueSpec::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()), packed_state);
+        result.insert(ValueSpec::new(&persisted_value.get_state_name(), persisted_value.get_state_value().get_typename()),
+            persisted_value.get_state_value().get_value().to_vec());
     }
     result
 }
 
-fn deserialize_state(serialized_state: &[u8]) -> Any {
-    protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.")
-}
+// fn deserialize_state(serialized_state: &[u8]) -> Any {
+//     protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.")
+// }
 
 fn update_state(
-    persisted_state: &mut HashMap<ValueSpec, Any>,
+    persisted_state: &mut HashMap<ValueSpec, Vec<u8>>,
     coalesced_state: &mut HashMap<ValueSpec, StateUpdate>,
     state_updates: Vec<StateUpdate>,
 ) {
@@ -242,7 +249,7 @@ where
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(value_spec.name);
                 // drey
-                proto_state_update.set_state_value(from_proto_any(value_spec.typename, state));
+                proto_state_update.set_state_value(to_typed_value(value_spec.typename, state));
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
                 invocation_response.state_mutations.push(proto_state_update);

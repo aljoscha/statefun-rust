@@ -76,14 +76,14 @@ pub mod transport;
 /// access state.
 #[derive(Debug)]
 pub struct Context<'a> {
-    state: &'a HashMap<ValueSpec, Any>,
+    state: &'a HashMap<ValueSpec, Vec<u8>>,
     self_address: &'a ProtoAddress,
     caller_address: &'a ProtoAddress,
 }
 
 impl<'a> Context<'a> {
     fn new(
-        state: &'a HashMap<ValueSpec, Any>,
+        state: &'a HashMap<ValueSpec, Vec<u8>>,
         self_address: &'a ProtoAddress,
         caller_address: &'a ProtoAddress,
     ) -> Self {
@@ -110,10 +110,13 @@ impl<'a> Context<'a> {
     /// might have persisted under the given name.
     pub fn get_state<T: Message>(&self, value_spec: ValueSpec) -> Option<T> {
         let state = self.state.get(&value_spec);
-        state.and_then(|serialized_state| {
-            let unpacked_state: Option<T> = unpack_state(value_spec, serialized_state);
-            unpacked_state
-        })
+        None
+
+        // todo: deserialize with user-provided serializer
+        // state.and_then(|serialized_state| {
+        //     let unpacked_state: Option<T> = unpack_state(value_spec, serialized_state);
+        //     unpacked_state
+        // })
     }
 }
 
@@ -286,16 +289,17 @@ impl Effects {
 
     /// Updates the state stored under the given name to the given value.
     pub fn update_state<T: Message>(&mut self, value_spec: ValueSpec, value: &T) {
-        self.state_updates.push(StateUpdate::Update(
-            value_spec,
-            Any::pack(value).expect("Could not pack state update."),
-        ));
+        // todo: use serializer here
+        // self.state_updates.push(StateUpdate::Update(
+        //     value_spec,
+        //     Any::pack(value).expect("Could not pack state update."),
+        // ));
     }
 }
 
 #[derive(Debug)]
 enum StateUpdate {
-    Update(ValueSpec, Any),
+    Update(ValueSpec, Vec<u8>),
     Delete(ValueSpec),
 }
 
