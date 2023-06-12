@@ -289,11 +289,11 @@ impl Effects {
 
     /// Updates the state stored under the given name to the given value.
     pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
-        // todo: use serializer here
-        // self.state_updates.push(StateUpdate::Update(
-        //     value_spec,
-        //     Any::pack(value).expect("Could not pack state update."),
-        // ));
+        let serialized = (value_spec.serializer)(value);
+        self.state_updates.push(StateUpdate::Update(
+            value_spec.into(),
+            serialized,
+        ));
     }
 }
 
@@ -351,7 +351,9 @@ impl ValueSpecBase {
 pub struct ValueSpec<T> {
     name : String,  // state name
     typename : String,  // type typename
-    serializer: fn(T) -> Vec<u8>,
+
+    // todo: should these implement Result?
+    serializer: fn(&T) -> Vec<u8>,
     deserializer: fn(Vec<u8>) -> T,
 }
 
@@ -362,7 +364,7 @@ impl<T> Into<ValueSpecBase> for ValueSpec<T> {
 }
 
 // todo
-fn builtin_serializer<T>(value: T) -> Vec<u8> {
+fn builtin_serializer<T>(value: &T) -> Vec<u8> {
     Vec::new()
 }
 
@@ -385,7 +387,7 @@ impl<T> ValueSpec<T> {
     }
 
     ///
-    fn custom(name: &str, typename: &str, serializer: fn(T) -> Vec<u8>, deserializer: fn(Vec<u8>) -> T) -> ValueSpec<T> {
+    fn custom(name: &str, typename: &str, serializer: fn(&T) -> Vec<u8>, deserializer: fn(Vec<u8>) -> T) -> ValueSpec<T> {
         ValueSpec {
             name: name.to_string(),
             typename: typename.to_string(),
