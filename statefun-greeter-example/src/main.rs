@@ -1,15 +1,15 @@
 use serde::{Deserialize, Serialize};
-use statefun::io::kafka::KafkaEgress;
+
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, BuiltInTypes, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-    Serializable, StateMessage, ValueSpec, ValueSpecBase,
+    BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType,
+    Serializable, StateMessage, ValueSpec,
 };
-use statefun_greeter_example_proto::example::EgressRecord;
-use statefun_greeter_example_proto::example::UserProfile;
-use statefun_proto::request_reply::TypedValue;
-use std::time::{SystemTime, UNIX_EPOCH};
+
+
+
+use std::time::{SystemTime};
 
 // todo: rename to TypeName
 // todo: rename these BuiltInType values too, like Long => i64
@@ -58,11 +58,11 @@ struct UserLogin {
 
 // actual routines called by statefun SDK
 impl Serializable for UserLogin {
-    fn serialize(&self, typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
         serde_json::to_vec(self).unwrap()
     }
 
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> UserLogin {
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> UserLogin {
         let login: UserLogin = serde_json::from_slice(&buffer).unwrap();
         login
     }
