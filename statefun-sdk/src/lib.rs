@@ -337,11 +337,48 @@ pub struct ValueSpec {
 }
 
 impl ValueSpec {
-    /// blabla
+    ///
     pub fn new(name: &str, typename: &str) -> ValueSpec {
         ValueSpec {
             name: name.to_string(),
             typename: typename.to_string(),
+        }
+    }
+
+    /// todo: there's no function overloading in Rust, what to do here to make this nicer?
+    pub fn new_builtin(name: &str, built_in_type: BuiltInTypes) -> ValueSpec {
+        ValueSpec {
+            name: name.to_string(),
+            typename: built_in_type.as_str(),
+        }
+    }
+}
+
+///
+pub enum BuiltInTypes {
+    ///
+    Boolean,
+    ///
+    Integer,
+    ///
+    Long,
+    ///
+    Float,
+    ///
+    Double,
+    ///
+    String,
+}
+
+impl BuiltInTypes {
+    fn as_str(&self) -> String {
+        match self {
+            BuiltInTypes::Boolean => "io.statefun.types/bool".to_string(),
+            BuiltInTypes::Integer => "io.statefun.types/int".to_string(),
+            BuiltInTypes::Long => "io.statefun.types/long".to_string(),
+            BuiltInTypes::Float => "io.statefun.types/float".to_string(),
+            BuiltInTypes::Double => "io.statefun.types/double".to_string(),
+            BuiltInTypes::String => "io.statefun.types/string".to_string(),
         }
     }
 }
