@@ -78,6 +78,8 @@ mod egress_identifier;
 pub use egress_identifier::EgressIdentifier;
 mod context;
 mod value_spec;
+mod value_spec_base;
+pub use value_spec_base::ValueSpecBase;
 pub use value_spec::ValueSpec;
 pub use context::Context;
 mod error;
@@ -135,21 +137,4 @@ impl StateMessage {
 enum StateUpdate {
     Update(ValueSpecBase, Vec<u8>),
     Delete(ValueSpecBase),
-}
-
-///
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
-pub struct ValueSpecBase {
-    name : String,  // state name
-    typename : String,  // type typename
-}
-
-impl ValueSpecBase {
-    ///
-    fn new(name: &str, typename: &str) -> ValueSpecBase {
-        ValueSpecBase {
-            name: name.to_string(),
-            typename: typename.to_string(),
-        }
-    }
 }
