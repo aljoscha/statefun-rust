@@ -375,7 +375,9 @@ pub struct ValueSpec<T> {
     deserializer: fn(String, &Vec<u8>) -> T,
 }
 
+///
 impl<T> Into<ValueSpecBase> for ValueSpec<T> {
+    ///
     fn into(self) -> ValueSpecBase {
         ValueSpecBase::new(self.name.to_string().as_str(), self.typename.to_string().as_str())
     }
