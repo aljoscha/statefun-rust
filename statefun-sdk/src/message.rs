@@ -2,11 +2,11 @@ use crate::{Serializable, TypedValue};
 
 /// todo: rename this
 #[derive(Debug)]
-pub struct StateMessage {
+pub struct Message {
     typed_value: TypedValue,
 }
 
-impl StateMessage {
+impl Message {
     ///
     pub fn get<T: Serializable>(&self) -> Option<T> {
         // todo: make deserializer return Option
@@ -18,6 +18,6 @@ impl StateMessage {
 
     ///
     pub fn new(typed_value: TypedValue) -> Self {
-        StateMessage { typed_value }
+        Message { typed_value }
     }
 }

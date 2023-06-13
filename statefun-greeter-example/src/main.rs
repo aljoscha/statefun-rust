@@ -4,10 +4,10 @@ use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
     Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-    Serializable, StateMessage, TypeSpec, ValueSpec, GetTypename,
+    Serializable, Message, TypeSpec, ValueSpec, GetTypename,
 };
 
-use protobuf::Message;
+use protobuf::Message as ProtoMessage;
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
 
@@ -69,7 +69,7 @@ impl StatefulFunctions {
         );
     }
 
-    pub fn user(context: Context, message: StateMessage) -> Effects {
+    pub fn user(context: Context, message: Message) -> Effects {
         let user_login = match message.get::<UserLogin>() {
             Some(user_login) => user_login,
             None => return Effects::new(),
@@ -129,7 +129,7 @@ impl StatefulFunctions {
         effects
     }
 
-    pub fn greet(_context: Context, message: StateMessage) -> Effects {
+    pub fn greet(_context: Context, message: Message) -> Effects {
         log::info!("--drey called greet: Received {:?}", &message);
 
         let user_profile: UserProfile = match message.get::<MyUserProfile>() {

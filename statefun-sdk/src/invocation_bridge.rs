@@ -21,7 +21,7 @@ use statefun_proto::request_reply::ToFunction_PersistedValue;
 use statefun_proto::request_reply::TypedValue;
 
 use crate::function_registry::FunctionRegistry;
-use crate::StateMessage;
+use crate::Message;
 use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
@@ -55,7 +55,7 @@ impl InvocationBridge for FunctionRegistry {
 
         for mut invocation in batch_request.take_invocations().into_iter() {
             let caller_address = invocation.take_caller();
-            let argument = StateMessage::new(invocation.take_argument());
+            let argument = Message::new(invocation.take_argument());
             let context = Context::new(&persisted_values, &self_address, &caller_address);
 
             // this passes in TypedValue

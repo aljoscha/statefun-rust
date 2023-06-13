@@ -56,8 +56,8 @@ pub use function_registry::FunctionRegistry;
 
 mod serialization;
 pub use serialization::Serializable;
-mod state_message;
-pub use state_message::StateMessage;
+mod message;
+pub use message::Message;
 mod function_type;
 pub use function_type::FunctionType;
 mod address;

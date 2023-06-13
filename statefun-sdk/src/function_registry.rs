@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::InvocationError::FunctionNotFound;
 use crate::MissingStateCollection;
-use crate::StateMessage;
+use crate::Message;
 use crate::ValueSpecBase;
 use crate::{Context, Effects, FunctionType, InvocationError};
 
@@ -29,7 +29,7 @@ impl FunctionRegistry {
     }
 
     /// Registers the given function under the `function_type`.
-    pub fn register_fn<F: Fn(Context, StateMessage) -> Effects + Send + 'static>(
+    pub fn register_fn<F: Fn(Context, Message) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,
         value_specs: Vec<ValueSpecBase>,
@@ -50,7 +50,7 @@ impl FunctionRegistry {
         &self,
         target_function: FunctionType,
         context: Context,
-        message: StateMessage,
+        message: Message,
     ) -> Result<Effects, InvocationError> {
         let function = self.functions.get(&target_function);
         match function {
@@ -62,20 +62,20 @@ impl FunctionRegistry {
 
 /// A function that can be invoked. This is used as trait objects in the `FunctionRegistry`.
 trait InvokableFunction {
-    fn invoke(&self, context: Context, message: StateMessage) -> Result<Effects, InvocationError>;
+    fn invoke(&self, context: Context, message: Message) -> Result<Effects, InvocationError>;
 }
 
 /// An `InvokableFunction` that is backed by a `Fn`.
-struct FnInvokableFunction<F: Fn(Context, StateMessage) -> Effects> {
+struct FnInvokableFunction<F: Fn(Context, Message) -> Effects> {
     function: F,
-    marker: ::std::marker::PhantomData<StateMessage>,
+    marker: ::std::marker::PhantomData<Message>,
     // todo: these should be specc'ed out like TypeSpec in the Java SDK,
     // for now we're just storing plain strings w/o any validation.
     value_specs: Vec<ValueSpecBase>,
 }
 
-impl<F: Fn(Context, StateMessage) -> Effects> InvokableFunction for FnInvokableFunction<F> {
-    fn invoke(&self, context: Context, message: StateMessage) -> Result<Effects, InvocationError> {
+impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFunction<F> {
+    fn invoke(&self, context: Context, message: Message) -> Result<Effects, InvocationError> {
         let mut missing_states: Vec<ValueSpecBase> = Vec::new();
 
         // NOTE: The API is very tricky:
