@@ -51,19 +51,8 @@
 
 #![deny(missing_docs)]
 
-
-
-
-
-
-
-
-
-
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
-
-
 
 mod built_in_types;
 mod serialization;

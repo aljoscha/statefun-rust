@@ -18,8 +18,6 @@ impl StateMessage {
 
     ///
     pub fn new(typed_value: TypedValue) -> Self {
-        StateMessage {
-            typed_value,
-        }
+        StateMessage { typed_value }
     }
 }

@@ -1,6 +1,5 @@
 use crate::{deserializer, serializer, BuiltInTypes, Serializable, ValueSpecBase};
 
-
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpec<T> {

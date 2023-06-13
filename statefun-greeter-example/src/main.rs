@@ -3,13 +3,11 @@ use serde::{Deserialize, Serialize};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType,
-    Serializable, StateMessage, ValueSpec,
+    BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable, StateMessage,
+    ValueSpec,
 };
 
-
-
-use std::time::{SystemTime};
+use std::time::SystemTime;
 
 // todo: rename to TypeName
 // todo: rename these BuiltInType values too, like Long => i64

@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use protobuf::well_known_types::Any;
+use protobuf::ProtobufError;
 use protobuf::SingularPtrField;
-use protobuf::{ProtobufError};
 
 use statefun_proto::request_reply::FromFunction;
 use statefun_proto::request_reply::FromFunction_DelayedInvocation;
