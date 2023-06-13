@@ -51,13 +51,7 @@ impl StatefulFunctions {
 
         function_registry.register_fn(
             greet_function().clone(),
-            vec![
-                // todo: allow no state here too?
-                // SEEN_COUNT.into(),
-                // IS_FIRST_VISIT.into(),
-                // LAST_SEEN_TIMESTAMP.into(),
-                // USER_LOGIN.into(),
-            ],
+            vec![],  // no state
             StatefulFunctions::greet,
         );
     }

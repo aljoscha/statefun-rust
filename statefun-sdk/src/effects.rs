@@ -4,7 +4,6 @@ use crate::StateUpdate;
 use crate::TypeName;
 use crate::ValueSpec;
 use crate::ValueSpecBase;
-use protobuf::Message;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -41,16 +40,16 @@ impl Effects {
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
-    pub fn send_after<M: Message>(
+    pub fn send_after<T>(
         &mut self,
         address: Address,
         delay: Duration,
-        value_spec: ValueSpecBase,
-        message: M,
+        type_name: TypeName<T>,
+        value: &T,
     ) {
-        // let packed_message = Any::pack(&message).unwrap();
-        // self.delayed_invocations
-        //     .push((address, delay, value_spec.typename, packed_message));
+        let serialized = (type_name.serializer)(value, type_name.typename.to_string());
+        self.delayed_invocations
+            .push((address, delay, type_name.typename.to_string(), serialized));
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
