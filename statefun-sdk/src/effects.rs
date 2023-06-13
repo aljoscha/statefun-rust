@@ -1,9 +1,9 @@
 use crate::Address;
 use crate::EgressIdentifier;
+use crate::Serializable;
 use crate::StateUpdate;
 use crate::TypeSpec;
 use crate::ValueSpec;
-use crate::Serializable;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -54,7 +54,12 @@ impl Effects {
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
     // todo: constrain it with Serializable
-    pub fn egress<T: Serializable>(&mut self, identifier: EgressIdentifier, type_name: TypeSpec<T>, value: &T) {
+    pub fn egress<T: Serializable>(
+        &mut self,
+        identifier: EgressIdentifier,
+        type_name: TypeSpec<T>,
+        value: &T,
+    ) {
         let serialized = value.serialize(type_name.typename.to_string());
         self.egress_messages
             .push((identifier, type_name.typename.to_string(), serialized));

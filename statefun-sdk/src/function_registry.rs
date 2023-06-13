@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use crate::InvocationError::FunctionNotFound;
-use crate::MissingStates;
 use crate::Message;
+use crate::MissingStates;
 use crate::ValueSpecBase;
 use crate::{Context, Effects, FunctionType, InvocationError};
 

@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-    Serializable, Message, TypeSpec, ValueSpec, GetTypename,
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, GetTypename,
+    Message, Serializable, TypeSpec, ValueSpec,
 };
 
 use protobuf::Message as ProtoMessage;

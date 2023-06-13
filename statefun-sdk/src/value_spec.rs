@@ -1,4 +1,4 @@
-use crate::{Serializable, GetTypename, ValueSpecBase};
+use crate::{GetTypename, Serializable, ValueSpecBase};
 use std::marker::PhantomData;
 
 ///
