@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable,
-    StateMessage, ValueSpec, TypeName, EgressIdentifier
+    Address, BuiltInTypes, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
+    Serializable, StateMessage, TypeName, ValueSpec,
 };
 
+use protobuf::Message;
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
-use protobuf::Message;
 
 // todo: rename to TypeName
 // todo: rename these BuiltInType values too, like Long => i64
@@ -22,26 +22,24 @@ const USER_LOGIN: ValueSpec<UserLogin> =
     ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
 
 // only other way is to use lazy_static..
-fn USER_FUNCTION() -> FunctionType {
+fn user_function() -> FunctionType {
     FunctionType::new("greeter.fns", "user")
 }
 
-fn GREET_FUNCTION() -> FunctionType {
+fn greet_function() -> FunctionType {
     FunctionType::new("greeter.fns", "greet")
 }
 
-struct StatefulFunctions {
-}
+struct StatefulFunctions {}
 
 impl StatefulFunctions {
     pub fn new() -> StatefulFunctions {
-        StatefulFunctions {
-        }
+        StatefulFunctions {}
     }
 
     pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
         function_registry.register_fn(
-            USER_FUNCTION().clone(),
+            user_function().clone(),
             vec![
                 SEEN_COUNT.into(),
                 IS_FIRST_VISIT.into(),
@@ -52,7 +50,7 @@ impl StatefulFunctions {
         );
 
         function_registry.register_fn(
-            GREET_FUNCTION().clone(),
+            greet_function().clone(),
             vec![
                 // todo: allow no state here too?
                 // SEEN_COUNT.into(),
@@ -120,7 +118,10 @@ impl StatefulFunctions {
         let profile = MyUserProfile(profile);
 
         effects.send(
-            Address::new(GREET_FUNCTION().clone(), &state_user_login.user_name.to_string()),
+            Address::new(
+                greet_function().clone(),
+                &state_user_login.user_name.to_string(),
+            ),
             USER_PROFILE_TYPE,
             &profile,
         );
@@ -128,40 +129,48 @@ impl StatefulFunctions {
         effects
     }
 
-    pub fn greet(context: Context, message: StateMessage) -> Effects {
+    pub fn greet(_context: Context, message: StateMessage) -> Effects {
         log::info!("--drey called greet: Received {:?}", &message);
 
-        let user_profile : UserProfile = match message.get::<MyUserProfile>() {
+        let user_profile: UserProfile = match message.get::<MyUserProfile>() {
             Some(user_profile) => user_profile.0,
-            None => return Effects::new(),  // todo: log
+            None => return Effects::new(), // todo: log
         };
 
         log::info!("We should greet {:?}", user_profile.get_name());
 
         let mut effects = Effects::new();
-        let greetings = Self::createGreetingsMessage(user_profile);
+        let greetings = Self::create_greetings_message(user_profile);
 
-        let egress_record = EgressRecord { topic : "greetings".to_string(), payload: greetings };
+        let egress_record = EgressRecord {
+            topic: "greetings".to_string(),
+            payload: greetings,
+        };
 
-        effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
-                       EGRESS_RECORD_TYPE,
-                       &egress_record);
+        effects.egress(
+            EgressIdentifier::new("io.statefun.playground", "egress"),
+            EGRESS_RECORD_TYPE,
+            &egress_record,
+        );
 
         effects
     }
 
-    pub fn createGreetingsMessage(profile: UserProfile) -> String {
-        let GREETINGS_TEMPLATES =
-          ["Welcome", "Nice to see you again", "Third time is a charm"];
+    pub fn create_greetings_message(profile: UserProfile) -> String {
+        let greetings_template = ["Welcome", "Nice to see you again", "Third time is a charm"];
 
-        let seenCount = profile.get_seen_count() as usize;
+        let seen_count = profile.get_seen_count() as usize;
 
-        if seenCount <= GREETINGS_TEMPLATES.len() {
-          return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
+        if seen_count <= greetings_template.len() {
+            return format!(
+                "{:?} {:?}.",
+                greetings_template[seen_count],
+                profile.get_name()
+            );
         } else {
-          return format!(
+            return format!(
             "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
-              seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
+              seen_count, profile.get_name(), profile.get_last_seen_delta_ms());
         }
     }
 }
@@ -218,7 +227,6 @@ impl Serializable for MyUserProfile {
     }
 }
 
-
 // A customized response sent to the user
 #[derive(Serialize, Deserialize, Debug)]
 struct EgressRecord {
@@ -240,10 +248,10 @@ impl Serializable for EgressRecord {
     }
 }
 
-const USER_PROFILE_TYPE : TypeName::<MyUserProfile> =
+const USER_PROFILE_TYPE: TypeName<MyUserProfile> =
     TypeName::<MyUserProfile>::custom("my-user-type/user-profile");
 
 // note: the playground image actually hardcodes this check so we have to match it for now,
 // until we configure our own playground
-const EGRESS_RECORD_TYPE : TypeName::<EgressRecord> =
+const EGRESS_RECORD_TYPE: TypeName<EgressRecord> =
     TypeName::<EgressRecord>::custom("io.statefun.playground/EgressRecord");
