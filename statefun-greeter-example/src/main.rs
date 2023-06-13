@@ -138,14 +138,12 @@ impl StatefulFunctions {
         log::info!("We should greet {:?}", user_profile.get_name());
 
         let mut effects = Effects::new();
-        // let greetings = createGreetingsMessage(user_profile);
+        let greetings = Self::createGreetingsMessage(user_profile);
 
         let mut egress_record = EgressRecord::new();
         egress_record.set_topic("greetings".to_string());
-        // egress_record.set_payload(greetings);
+        egress_record.set_payload(greetings);
         let egress_record = MyEgressRecord(egress_record);
-
-        // let type_name : TypeName::<EgressRecord> = TypeName::<String>::new(BuiltInTypes::String);
 
         effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
                        EGRESS_RECORD_TYPE,
@@ -154,21 +152,20 @@ impl StatefulFunctions {
         effects
     }
 
-    // pub fn createGreetingsMessage(profile: UserProfile) -> String {
-    //     let GREETINGS_TEMPLATES =
-    //       ["Welcome", "Nice to see you again", "Third time is a charm"];
+    pub fn createGreetingsMessage(profile: UserProfile) -> String {
+        let GREETINGS_TEMPLATES =
+          ["Welcome", "Nice to see you again", "Third time is a charm"];
 
-    //     let seenCount = profile.get_seen_count() as usize;
+        let seenCount = profile.get_seen_count() as usize;
 
-    //     if seenCount <= GREETINGS_TEMPLATES.len() {
-    //       return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
-    //     } else {
-    //       return format!(
-    //         "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
-    //           seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
-    //     }
-    // }
-
+        if seenCount <= GREETINGS_TEMPLATES.len() {
+          return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
+        } else {
+          return format!(
+            "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
+              seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
+        }
+    }
 }
 
 fn main() -> anyhow::Result<()> {
