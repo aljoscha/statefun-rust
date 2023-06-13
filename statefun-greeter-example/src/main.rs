@@ -77,7 +77,7 @@ impl Serializable for MyUserProfile {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyUserProfile {
-        let user_profile: UserProfile = protobuf::parse_from_bytes(&buffer).unwrap();
+        let user_profile: UserProfile = UserProfile::parse_from_bytes(&buffer).unwrap();
         MyUserProfile(user_profile)
     }
 }
