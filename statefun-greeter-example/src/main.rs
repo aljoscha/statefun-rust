@@ -237,5 +237,7 @@ impl Serializable for MyEgressRecord {
 const USER_PROFILE_TYPE : TypeName::<MyUserProfile> =
     TypeName::<MyUserProfile>::custom("my-user-type/user-profile");
 
+// note: the playground image actually hardcodes this check so we have to match it for now,
+// until we configure our own playground
 const EGRESS_RECORD_TYPE : TypeName::<MyEgressRecord> =
-    TypeName::<MyEgressRecord>::custom("my-egress-type/egress-record");
+    TypeName::<MyEgressRecord>::custom("io.statefun.playground/EgressRecord");
