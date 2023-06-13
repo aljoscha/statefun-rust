@@ -1,9 +1,9 @@
 use crate::Address;
 use crate::EgressIdentifier;
 use crate::StateUpdate;
+use crate::TypeName;
 use crate::ValueSpec;
 use crate::ValueSpecBase;
-use crate::TypeName;
 use protobuf::Message;
 use std::time::Duration;
 
@@ -55,12 +55,7 @@ impl Effects {
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
     // todo: constrain it with Serializable
-    pub fn egress<T>(
-        &mut self,
-        identifier: EgressIdentifier,
-        type_name: TypeName<T>,
-        value: &T,
-    ) {
+    pub fn egress<T>(&mut self, identifier: EgressIdentifier, type_name: TypeName<T>, value: &T) {
         let serialized = (type_name.serializer)(value, type_name.typename.to_string());
         self.egress_messages
             .push((identifier, type_name.typename.to_string(), serialized));

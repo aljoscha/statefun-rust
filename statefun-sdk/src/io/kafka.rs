@@ -31,13 +31,19 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier, TypeName, Serializable};
+use crate::{Effects, EgressIdentifier, Serializable, TypeName};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
-    fn kafka_egress<T>(&mut self, type_name: TypeName<T>, identifier: EgressIdentifier, topic: &str, value: &T);
+    fn kafka_egress<T>(
+        &mut self,
+        type_name: TypeName<T>,
+        identifier: EgressIdentifier,
+        topic: &str,
+        value: &T,
+    );
 
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
@@ -54,17 +60,20 @@ pub trait KafkaEgress {
 }
 
 impl KafkaEgress for Effects {
-    fn kafka_egress<T>(&mut self, type_name: TypeName<T>, identifier: EgressIdentifier, topic: &str, value: &T) {
+    fn kafka_egress<T>(
+        &mut self,
+        type_name: TypeName<T>,
+        identifier: EgressIdentifier,
+        topic: &str,
+        value: &T,
+    ) {
         let kafka_record = egress_record(topic, type_name, value);
 
         // todo: what do we set this as? see Java SDK
-        let type_name : TypeName<KafkaProducerRecord> = TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
+        let type_name: TypeName<KafkaProducerRecord> =
+            TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
 
-        self.egress(
-            identifier,
-            type_name,
-            &kafka_record,
-        );
+        self.egress(identifier, type_name, &kafka_record);
     }
 
     fn kafka_keyed_egress<T>(
@@ -78,14 +87,11 @@ impl KafkaEgress for Effects {
         let mut kafka_record = egress_record(topic, type_name, value);
 
         // todo: what do we set this as? see Java SDK
-        let type_name : TypeName<KafkaProducerRecord> = TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
+        let type_name: TypeName<KafkaProducerRecord> =
+            TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
 
         kafka_record.set_key(key.to_owned());
-        self.egress(
-            identifier,
-            type_name,
-            &kafka_record,
-        );
+        self.egress(identifier, type_name, &kafka_record);
     }
 }
 
