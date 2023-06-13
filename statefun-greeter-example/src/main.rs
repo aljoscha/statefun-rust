@@ -20,22 +20,27 @@ const LAST_SEEN_TIMESTAMP: ValueSpec<i64> =
 const USER_LOGIN: ValueSpec<UserLogin> =
     ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
 
+// only other way is to use lazy_static..
+fn USER_FUNCTION() -> FunctionType {
+    FunctionType::new("greeter.fns", "user")
+}
+
+fn GREET_FUNCTION() -> FunctionType {
+    FunctionType::new("greeter.fns", "greet")
+}
+
 struct StatefulFunctions {
-    user_function: FunctionType,
-    greet_function: FunctionType,
 }
 
 impl StatefulFunctions {
     pub fn new() -> StatefulFunctions {
         StatefulFunctions {
-            user_function : FunctionType::new("greeter.fns", "user"),
-            greet_function : FunctionType::new("greeter.fns", "greet"),
         }
     }
 
     pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
         function_registry.register_fn(
-            self.user_function.clone(),
+            USER_FUNCTION().clone(),
             vec![
                 SEEN_COUNT.into(),
                 IS_FIRST_VISIT.into(),
@@ -46,7 +51,7 @@ impl StatefulFunctions {
         );
 
         function_registry.register_fn(
-            self.greet_function.clone(),
+            GREET_FUNCTION().clone(),
             vec![
                 // todo: allow no state here too?
                 // SEEN_COUNT.into(),
@@ -114,9 +119,7 @@ impl StatefulFunctions {
         let profile = MyUserProfile(profile);
 
         effects.send(
-            // todo: need to use &self here
-            Address::new(FunctionType::new("greeter.fns", "greet"), &state_user_login.user_name.to_string()),
-            // Address::new(self.greet_function.clone(), &state_user_login.user_name.to_string()),
+            Address::new(GREET_FUNCTION().clone(), &state_user_login.user_name.to_string()),
             USER_PROFILE_TYPE,
             &profile,
         );
