@@ -21,19 +21,21 @@ const USER_LOGIN: ValueSpec<UserLogin> =
     ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
 
 struct StatefulFunctions {
-    greeter_function: FunctionType,
+    user_function: FunctionType,
+    greet_function: FunctionType,
 }
 
 impl StatefulFunctions {
     pub fn new() -> StatefulFunctions {
         StatefulFunctions {
-            greeter_function : FunctionType::new("greeter.fns", "user")
+            user_function : FunctionType::new("greeter.fns", "user"),
+            greet_function : FunctionType::new("greeter.fns", "greet"),
         }
     }
 
     pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
         function_registry.register_fn(
-            self.greeter_function.clone(),
+            self.user_function.clone(),
             vec![
                 SEEN_COUNT.into(),
                 IS_FIRST_VISIT.into(),
@@ -41,6 +43,18 @@ impl StatefulFunctions {
                 USER_LOGIN.into(),
             ],
             StatefulFunctions::user,
+        );
+
+        function_registry.register_fn(
+            self.greet_function.clone(),
+            vec![
+                // todo: allow no state here too?
+                // SEEN_COUNT.into(),
+                // IS_FIRST_VISIT.into(),
+                // LAST_SEEN_TIMESTAMP.into(),
+                // USER_LOGIN.into(),
+            ],
+            StatefulFunctions::greet,
         );
     }
 
@@ -100,8 +114,9 @@ impl StatefulFunctions {
         let profile = MyUserProfile(profile);
 
         effects.send(
-            Address::new(FunctionType::new("greeter.fns", "greetings"),
-            &state_user_login.user_name.to_string()),
+            // todo: need to use &self here
+            Address::new(FunctionType::new("greeter.fns", "greet"), &state_user_login.user_name.to_string()),
+            // Address::new(self.greet_function.clone(), &state_user_login.user_name.to_string()),
             USER_PROFILE_TYPE,
             &profile,
         );
@@ -109,15 +124,14 @@ impl StatefulFunctions {
         effects
     }
 
-    // // todo: don't use TypedValue directly here
-    // pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
-    //     log::info!("--drey called greet: Received {:?}", typed_value);
+    pub fn greet(context: Context, message: StateMessage) -> Effects {
+        log::info!("--drey called greet: Received {:?}", &message);
     //     // todo:
     //     // profile: UserProfile
 
     //     // log::info!("We should greet {:?}", profile.get_name());
 
-    //     let mut effects = Effects::new();
+        let mut effects = Effects::new();
     //     // let greetings = createGreetingsMessage(profile);
 
     //     // let mut egressRecord = EgressRecord::new();
@@ -127,8 +141,8 @@ impl StatefulFunctions {
     //     // effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
     //     //                egressRecord);
 
-    //     effects
-    // }
+        effects
+    }
 
     // pub fn createGreetingsMessage(profile: UserProfile) -> String {
     //     let GREETINGS_TEMPLATES =
