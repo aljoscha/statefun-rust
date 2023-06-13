@@ -73,7 +73,7 @@ impl Effects {
 
     /// Updates the state stored under the given name to the given value.
     pub fn update_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>, value: &T) {
-        let serialized = value.serialize(value_spec.typename.to_string());
+        let serialized = value.serialize(value_spec.spec.typename.to_string());
         log::debug!("-- drey: updated state: {:?}", serialized);
         self.state_updates
             .push(StateUpdate::Update(value_spec.into(), serialized));
