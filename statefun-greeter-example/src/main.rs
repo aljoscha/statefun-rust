@@ -3,11 +3,13 @@ use serde::{Deserialize, Serialize};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable, StateMessage,
-    ValueSpec,
+    Address, BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable,
+    StateMessage, ValueSpec,
 };
-
+use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
+use protobuf::well_known_types::Any;
+use protobuf::Message;
 
 // todo: rename to TypeName
 // todo: rename these BuiltInType values too, like Long => i64
@@ -66,13 +68,28 @@ impl Serializable for UserLogin {
     }
 }
 
+// Have to wrap the struct to implement Serializable
+struct MyUserProfile(UserProfile);
+
+impl Serializable for MyUserProfile {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
+        self.0.write_to_bytes().unwrap()
+    }
+
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyUserProfile {
+        let user_profile: UserProfile = protobuf::parse_from_bytes(&buffer).unwrap();
+        MyUserProfile(user_profile)
+    }
+}
+
+// const USER_PROFILE_TYPE = TypeName<UserProfile> =
+//     TypeName::<UserProfile>::new("user_profile", "my-user-type/user-profile");
+
 pub fn user(context: Context, message: StateMessage) -> Effects {
     let user_login = match message.get::<UserLogin>() {
         Some(user_login) => user_login,
         None => return Effects::new(),
     };
-
-    // let login: UserLogin = serde_json::from_slice(&typed_value.value).unwrap();
 
     log::info!("We should update user count {:?}", user_login.user_name);
 
@@ -116,13 +133,13 @@ pub fn user(context: Context, message: StateMessage) -> Effects {
     effects.update_state(USER_LOGIN, &state_user_login);
 
     // let mut profile = UserProfile::new();
-    // profile.set_name(login.user_name.to_string());
-    // profile.set_last_seen_delta_ms(now_ms);
-    // profile.set_login_location(format!("{:?}", login.login_type));
-    // profile.set_seen_count(updated_seen_count.value);
+    // profile.set_name(user_login.user_name.to_string());
+    // profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
+    // profile.set_login_location(format!("{:?}", user_login.login_type));
+    // profile.set_seen_count(seen_count);
 
     // effects.send(
-    //     Address::new(FunctionType::new("greeter.fns", "greetings"), &login.user_name),
+    //     Address::new(FunctionType::new("greeter.fns", "greetings"), &user_login.user_name),
     //     profile,
     // );
 
