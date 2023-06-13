@@ -3,7 +3,6 @@ use crate::EgressIdentifier;
 use crate::StateUpdate;
 use crate::TypeName;
 use crate::ValueSpec;
-use crate::ValueSpecBase;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -61,8 +60,8 @@ impl Effects {
     }
 
     /// Deletes the state kept under the given name.
-    pub fn delete_state(&mut self, value_spec: ValueSpecBase) {
-        self.state_updates.push(StateUpdate::Delete(value_spec));
+    pub fn delete_state<T>(&mut self, value_spec: ValueSpec<T>) {
+        self.state_updates.push(StateUpdate::Delete(value_spec.into()));
     }
 
     /// Updates the state stored under the given name to the given value.
