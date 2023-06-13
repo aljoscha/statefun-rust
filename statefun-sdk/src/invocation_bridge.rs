@@ -42,7 +42,6 @@ impl InvocationBridge for FunctionRegistry {
 
         let self_address = batch_request.take_target();
         let persisted_values = batch_request.take_state();
-        // todo: need to deserialize ints properly here
         let mut persisted_values = parse_persisted_values(&persisted_values);
 
         // we maintain a map of state updates that we update after every invocation. We maintain
@@ -63,12 +62,9 @@ impl InvocationBridge for FunctionRegistry {
             {
                 Ok(effects) => effects,
                 Err(e) => match &e {
-                    // todo: here we should set_incomplete_invocation_context
                     InvocationError::MissingStates(state_collection) => {
                         log::debug!("--drey: missing states: {:?}", &state_collection);
 
-                        // let state_values = coalesced_state_updates.drain().map(|(_key, value)| value);
-                        // serialize_state_updates(&mut invocation_response, state_values)?;
                         let mut incomplete_context =
                             FromFunction_IncompleteInvocationContext::new();
 
@@ -97,9 +93,6 @@ impl InvocationBridge for FunctionRegistry {
                 },
             };
 
-            // todo: check if all the states are here
-            // todo: check what writes invocation_result (it's right below here)
-
             serialize_invocation_messages(&mut invocation_response, effects.invocations);
             serialize_delayed_invocation_messages(
                 &mut invocation_response,
@@ -123,7 +116,6 @@ impl InvocationBridge for FunctionRegistry {
     }
 }
 
-/// ditto
 fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
     let mut res = TypedValue::new();
     res.set_typename(typename);
@@ -147,10 +139,6 @@ fn parse_persisted_values(
     }
     result
 }
-
-// fn deserialize_state(serialized_state: &[u8]) -> Any {
-//     protobuf::parse_from_bytes(serialized_state).expect("Could not deserialize state.")
-// }
 
 fn update_state(
     persisted_state: &mut HashMap<ValueSpecBase, Vec<u8>>,
@@ -181,7 +169,6 @@ fn serialize_invocation_messages(
     for invocation_message in invocation_messages {
         let mut proto_invocation_message = FromFunction_Invocation::new();
         proto_invocation_message.set_target(invocation_message.0.into_proto());
-        // todo: need real type here
         let typed_value = to_typed_value(invocation_message.1, invocation_message.2);
         proto_invocation_message.set_argument(typed_value);
         invocation_response
@@ -231,7 +218,6 @@ where
 {
     for state_update in state_updates {
         match state_update {
-            // todo: fxiup
             StateUpdate::Delete(value_spec) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(value_spec.name);
