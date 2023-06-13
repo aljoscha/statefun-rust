@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 ///
 /// A function's type is part of a function's [Address](Address) and serves as integral part of an
 /// individual function's identity.
-#[derive(PartialEq, Eq, Hash, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct FunctionType {
     namespace: String,
     name: String,

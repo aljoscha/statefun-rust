@@ -20,22 +20,140 @@ const LAST_SEEN_TIMESTAMP: ValueSpec<i64> =
 const USER_LOGIN: ValueSpec<UserLogin> =
     ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
 
+struct StatefulFunctions {
+    greeter_function: FunctionType,
+}
+
+impl StatefulFunctions {
+    pub fn new() -> StatefulFunctions {
+        StatefulFunctions {
+            greeter_function : FunctionType::new("greeter.fns", "user")
+        }
+    }
+
+    pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
+        function_registry.register_fn(
+            self.greeter_function.clone(),
+            vec![
+                SEEN_COUNT.into(),
+                IS_FIRST_VISIT.into(),
+                LAST_SEEN_TIMESTAMP.into(),
+                USER_LOGIN.into(),
+            ],
+            StatefulFunctions::user,
+        );
+    }
+
+    // function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
+    pub fn user(context: Context, message: StateMessage) -> Effects {
+        let user_login = match message.get::<UserLogin>() {
+            Some(user_login) => user_login,
+            None => return Effects::new(),
+        };
+
+        log::info!("We should update user count {:?}", &user_login.user_name);
+
+        let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
+        let seen_count = match seen_count {
+            Some(count) => count + 1,
+            None => 0,
+        };
+
+        let is_first_visit: Option<bool> = context.get_state(IS_FIRST_VISIT);
+        let is_first_visit = match is_first_visit {
+            Some(_) => false,
+            None => true,
+        };
+
+        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(n) => n.as_secs(),
+            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+        };
+
+        let last_seen_timestamp_ms: Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP);
+        let last_seen_timestamp_ms = match last_seen_timestamp_ms {
+            Some(_) => current_time as i64,
+            None => current_time as i64,
+        };
+
+        let mut effects = Effects::new();
+        effects.update_state(SEEN_COUNT, &seen_count);
+        effects.update_state(IS_FIRST_VISIT, &is_first_visit);
+        effects.update_state(LAST_SEEN_TIMESTAMP, &last_seen_timestamp_ms);
+
+        let state_user_login: Option<UserLogin> = context.get_state(USER_LOGIN);
+        let state_user_login = match state_user_login {
+            Some(existing_login) => existing_login,
+            None => user_login,
+        };
+
+        log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
+            &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
+
+        effects.update_state(USER_LOGIN, &state_user_login);
+
+        let mut profile = UserProfile::new();
+        profile.set_name(state_user_login.user_name.to_string());
+        profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
+        profile.set_login_location(format!("{:?}", state_user_login.login_type));
+        profile.set_seen_count(seen_count);
+        let profile = MyUserProfile(profile);
+
+        effects.send(
+            Address::new(FunctionType::new("greeter.fns", "greetings"),
+            &state_user_login.user_name.to_string()),
+            USER_PROFILE_TYPE,
+            &profile,
+        );
+
+        effects
+    }
+
+    // // todo: don't use TypedValue directly here
+    // pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
+    //     log::info!("--drey called greet: Received {:?}", typed_value);
+    //     // todo:
+    //     // profile: UserProfile
+
+    //     // log::info!("We should greet {:?}", profile.get_name());
+
+    //     let mut effects = Effects::new();
+    //     // let greetings = createGreetingsMessage(profile);
+
+    //     // let mut egressRecord = EgressRecord::new();
+    //     // egressRecord.set_topic("greetings".to_string());
+    //     // egressRecord.set_payload(greetings);
+
+    //     // effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
+    //     //                egressRecord);
+
+    //     effects
+    // }
+
+    // pub fn createGreetingsMessage(profile: UserProfile) -> String {
+    //     let GREETINGS_TEMPLATES =
+    //       ["Welcome", "Nice to see you again", "Third time is a charm"];
+
+    //     let seenCount = profile.get_seen_count() as usize;
+
+    //     if seenCount <= GREETINGS_TEMPLATES.len() {
+    //       return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
+    //     } else {
+    //       return format!(
+    //         "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
+    //           seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
+    //     }
+    // }
+
+}
+
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    let mut function_registry = FunctionRegistry::new();
-    function_registry.register_fn(
-        FunctionType::new("greeter.fns", "user"),
-        vec![
-            SEEN_COUNT.into(),
-            IS_FIRST_VISIT.into(),
-            LAST_SEEN_TIMESTAMP.into(),
-            USER_LOGIN.into(),
-        ],
-        user,
-    );
-    // function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
+    let functions = StatefulFunctions::new();
 
+    let mut function_registry = FunctionRegistry::new();
+    functions.register_functions(&mut function_registry);
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
     hyper_transport.run(function_registry)?;
 
@@ -83,103 +201,3 @@ impl Serializable for MyUserProfile {
 
 const USER_PROFILE_TYPE : TypeName::<MyUserProfile> =
     TypeName::<MyUserProfile>::custom("my-user-type/user-profile");
-
-pub fn user(context: Context, message: StateMessage) -> Effects {
-    let user_login = match message.get::<UserLogin>() {
-        Some(user_login) => user_login,
-        None => return Effects::new(),
-    };
-
-    log::info!("We should update user count {:?}", &user_login.user_name);
-
-    let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
-    let seen_count = match seen_count {
-        Some(count) => count + 1,
-        None => 0,
-    };
-
-    let is_first_visit: Option<bool> = context.get_state(IS_FIRST_VISIT);
-    let is_first_visit = match is_first_visit {
-        Some(_) => false,
-        None => true,
-    };
-
-    let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n) => n.as_secs(),
-        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
-    };
-
-    let last_seen_timestamp_ms: Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP);
-    let last_seen_timestamp_ms = match last_seen_timestamp_ms {
-        Some(_) => current_time as i64,
-        None => current_time as i64,
-    };
-
-    let mut effects = Effects::new();
-    effects.update_state(SEEN_COUNT, &seen_count);
-    effects.update_state(IS_FIRST_VISIT, &is_first_visit);
-    effects.update_state(LAST_SEEN_TIMESTAMP, &last_seen_timestamp_ms);
-
-    let state_user_login: Option<UserLogin> = context.get_state(USER_LOGIN);
-    let state_user_login = match state_user_login {
-        Some(existing_login) => existing_login,
-        None => user_login,
-    };
-
-    log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
-        &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
-
-    effects.update_state(USER_LOGIN, &state_user_login);
-
-    let mut profile = UserProfile::new();
-    profile.set_name(state_user_login.user_name.to_string());
-    profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
-    profile.set_login_location(format!("{:?}", state_user_login.login_type));
-    profile.set_seen_count(seen_count);
-    let profile = MyUserProfile(profile);
-
-    effects.send(
-        Address::new(FunctionType::new("greeter.fns", "greetings"),
-        &state_user_login.user_name.to_string()),
-        USER_PROFILE_TYPE,
-        &profile,
-    );
-
-    effects
-}
-
-// // todo: don't use TypedValue directly here
-// pub fn greet(_context: Context, typed_value: TypedValue) -> Effects {
-//     log::info!("--drey called greet: Received {:?}", typed_value);
-//     // todo:
-//     // profile: UserProfile
-
-//     // log::info!("We should greet {:?}", profile.get_name());
-
-//     let mut effects = Effects::new();
-//     // let greetings = createGreetingsMessage(profile);
-
-//     // let mut egressRecord = EgressRecord::new();
-//     // egressRecord.set_topic("greetings".to_string());
-//     // egressRecord.set_payload(greetings);
-
-//     // effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
-//     //                egressRecord);
-
-//     effects
-// }
-
-// pub fn createGreetingsMessage(profile: UserProfile) -> String {
-//     let GREETINGS_TEMPLATES =
-//       ["Welcome", "Nice to see you again", "Third time is a charm"];
-
-//     let seenCount = profile.get_seen_count() as usize;
-
-//     if seenCount <= GREETINGS_TEMPLATES.len() {
-//       return format!("{:?} {:?}.", GREETINGS_TEMPLATES[seenCount], profile.get_name());
-//     } else {
-//       return format!(
-//         "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
-//           seenCount, profile.get_name(), profile.get_last_seen_delta_ms());
-//     }
-// }
