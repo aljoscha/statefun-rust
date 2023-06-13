@@ -1,6 +1,7 @@
 use crate::Address;
 use crate::ValueSpec;
 use crate::ValueSpecBase;
+use crate::Serializable;
 use statefun_proto::request_reply::Address as ProtoAddress;
 use std::collections::HashMap;
 
@@ -44,13 +45,12 @@ impl<'a> Context<'a> {
 
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
-    pub fn get_state<T>(&self, value_spec: ValueSpec<T>) -> Option<T> {
-        let deserializer = value_spec.deserializer;
+    pub fn get_state<T : Serializable>(&self, value_spec: ValueSpec<T>) -> Option<T> {
         let typename = value_spec.typename.to_string();
         let state = self.state.get(&value_spec.into());
         match state {
             Some(serialized) => {
-                let deserialized: T = deserializer(typename, serialized);
+                let deserialized: T = T::deserialize(typename, serialized);
                 Some(deserialized)
             }
             None => None,

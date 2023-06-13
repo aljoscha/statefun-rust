@@ -77,13 +77,3 @@ impl Serializable for String {
         wrapped.get_value().to_string()
     }
 }
-
-// todo
-pub(crate) fn deserializer<T: Serializable>(typename: String, buffer: &Vec<u8>) -> T {
-    // log::debug!("-- drey: deserializing type: {:?}", typename);
-    // todo: how do we limit T here so T::new will work??
-    // T::new()
-    // panic!("oops")
-
-    T::deserialize(typename, buffer)
-}

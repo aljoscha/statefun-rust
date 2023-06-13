@@ -1,4 +1,5 @@
-use crate::{deserializer, Serializable /*, ValueSpecBase*/};
+use crate::Serializable;
+use std::marker::PhantomData;
 
 ///
 pub trait GetTypename {
@@ -52,10 +53,7 @@ impl GetTypename for String {
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct TypeSpec<T> {
     pub(crate) typename: &'static str, // typename
-
-    // todo: should these implement Result?
-    // pub(crate) serializer: fn(&T, String) -> Vec<u8>,
-    pub(crate) deserializer: fn(String, &Vec<u8>) -> T,
+    phantom: PhantomData<T>,
 }
 
 impl<T: Serializable + GetTypename> TypeSpec<T> {
@@ -63,8 +61,7 @@ impl<T: Serializable + GetTypename> TypeSpec<T> {
     pub fn new() -> TypeSpec<T> {
         TypeSpec {
             typename: T::get_typename(),
-            // serializer,
-            deserializer,
+            phantom: PhantomData,
         }
     }
 }
