@@ -4,11 +4,10 @@ use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
     Address, BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable,
-    StateMessage, ValueSpec,
+    StateMessage, ValueSpec, TypeName
 };
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
-use protobuf::well_known_types::Any;
 use protobuf::Message;
 
 // todo: rename to TypeName
@@ -82,8 +81,8 @@ impl Serializable for MyUserProfile {
     }
 }
 
-// const USER_PROFILE_TYPE = TypeName<UserProfile> =
-//     TypeName::<UserProfile>::new("user_profile", "my-user-type/user-profile");
+const USER_PROFILE_TYPE : TypeName::<MyUserProfile> =
+    TypeName::<MyUserProfile>::custom("my-user-type/user-profile");
 
 pub fn user(context: Context, message: StateMessage) -> Effects {
     let user_login = match message.get::<UserLogin>() {
@@ -91,7 +90,7 @@ pub fn user(context: Context, message: StateMessage) -> Effects {
         None => return Effects::new(),
     };
 
-    log::info!("We should update user count {:?}", user_login.user_name);
+    log::info!("We should update user count {:?}", &user_login.user_name);
 
     let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
     let seen_count = match seen_count {
@@ -132,16 +131,19 @@ pub fn user(context: Context, message: StateMessage) -> Effects {
 
     effects.update_state(USER_LOGIN, &state_user_login);
 
-    // let mut profile = UserProfile::new();
-    // profile.set_name(user_login.user_name.to_string());
-    // profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
-    // profile.set_login_location(format!("{:?}", user_login.login_type));
-    // profile.set_seen_count(seen_count);
+    let mut profile = UserProfile::new();
+    profile.set_name(state_user_login.user_name.to_string());
+    profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
+    profile.set_login_location(format!("{:?}", state_user_login.login_type));
+    profile.set_seen_count(seen_count);
+    let profile = MyUserProfile(profile);
 
-    // effects.send(
-    //     Address::new(FunctionType::new("greeter.fns", "greetings"), &user_login.user_name),
-    //     profile,
-    // );
+    effects.send(
+        Address::new(FunctionType::new("greeter.fns", "greetings"),
+        &state_user_login.user_name.to_string()),
+        USER_PROFILE_TYPE,
+        &profile,
+    );
 
     effects
 }

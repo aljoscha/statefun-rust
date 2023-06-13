@@ -3,7 +3,7 @@ use crate::EgressIdentifier;
 use crate::StateUpdate;
 use crate::ValueSpec;
 use crate::ValueSpecBase;
-use protobuf::well_known_types::Any;
+use crate::TypeName;
 use protobuf::Message;
 use std::time::Duration;
 
@@ -15,9 +15,9 @@ use std::time::Duration;
 ///  - update the state of this stateful function, which will be available on future invocations
 #[derive(Default, Debug)]
 pub struct Effects {
-    pub(crate) invocations: Vec<(Address, String, Any)>,
-    pub(crate) delayed_invocations: Vec<(Address, Duration, String, Any)>,
-    pub(crate) egress_messages: Vec<(EgressIdentifier, String, Any)>,
+    pub(crate) invocations: Vec<(Address, String, Vec<u8>)>,
+    pub(crate) delayed_invocations: Vec<(Address, Duration, String, Vec<u8>)>,
+    pub(crate) egress_messages: Vec<(EgressIdentifier, String, Vec<u8>)>,
     pub(crate) state_updates: Vec<StateUpdate>,
 }
 
@@ -34,10 +34,10 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<M: Message>(&mut self, address: Address, value_spec: ValueSpecBase, message: M) {
-        let packed_message = Any::pack(&message).unwrap();
+    pub fn send<T>(&mut self, address: Address, type_name: TypeName<T>, value: &T) {
+        let serialized = (type_name.serializer)(value, type_name.typename.to_string());
         self.invocations
-            .push((address, value_spec.typename, packed_message));
+            .push((address, type_name.typename.to_string(), serialized));
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
@@ -48,9 +48,9 @@ impl Effects {
         value_spec: ValueSpecBase,
         message: M,
     ) {
-        let packed_message = Any::pack(&message).unwrap();
-        self.delayed_invocations
-            .push((address, delay, value_spec.typename, packed_message));
+        // let packed_message = Any::pack(&message).unwrap();
+        // self.delayed_invocations
+        //     .push((address, delay, value_spec.typename, packed_message));
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
@@ -60,9 +60,9 @@ impl Effects {
         value_spec: ValueSpecBase,
         message: M,
     ) {
-        let packed_message = Any::pack(&message).unwrap();
-        self.egress_messages
-            .push((identifier, value_spec.typename, packed_message));
+        // let packed_message = Any::pack(&message).unwrap();
+        // self.egress_messages
+        //     .push((identifier, value_spec.typename, packed_message));
     }
 
     /// Deletes the state kept under the given name.

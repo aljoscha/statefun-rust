@@ -64,6 +64,8 @@ pub use state_message::StateMessage;
 mod function_type;
 pub use function_type::FunctionType;
 mod address;
+mod type_name;
+pub use type_name::TypeName;
 pub use address::Address;
 mod egress_identifier;
 pub use egress_identifier::EgressIdentifier;

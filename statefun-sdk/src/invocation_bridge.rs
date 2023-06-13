@@ -2,7 +2,6 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use protobuf::well_known_types::Any;
 use protobuf::ProtobufError;
 use protobuf::SingularPtrField;
 
@@ -125,15 +124,6 @@ impl InvocationBridge for FunctionRegistry {
 }
 
 /// ditto
-fn from_proto_any(typename: String, value: Any) -> TypedValue {
-    let mut res = TypedValue::new();
-    res.typename = typename;
-    res.has_value = true;
-    res.value = value.value;
-    res
-}
-
-/// ditto
 fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
     let mut res = TypedValue::new();
     res.set_typename(typename);
@@ -186,13 +176,13 @@ fn update_state(
 
 fn serialize_invocation_messages(
     invocation_response: &mut FromFunction_InvocationResponse,
-    invocation_messages: Vec<(Address, String, Any)>,
+    invocation_messages: Vec<(Address, String, Vec<u8>)>,
 ) {
     for invocation_message in invocation_messages {
         let mut proto_invocation_message = FromFunction_Invocation::new();
         proto_invocation_message.set_target(invocation_message.0.into_proto());
         // todo: need real type here
-        let typed_value = from_proto_any(invocation_message.1, invocation_message.2);
+        let typed_value = to_typed_value(invocation_message.1, invocation_message.2);
         proto_invocation_message.set_argument(typed_value);
         invocation_response
             .outgoing_messages
@@ -202,13 +192,13 @@ fn serialize_invocation_messages(
 
 fn serialize_delayed_invocation_messages(
     invocation_response: &mut FromFunction_InvocationResponse,
-    delayed_invocation_messages: Vec<(Address, Duration, String, Any)>,
+    delayed_invocation_messages: Vec<(Address, Duration, String, Vec<u8>)>,
 ) {
     for invocation_message in delayed_invocation_messages {
         let mut proto_invocation_message = FromFunction_DelayedInvocation::new();
         proto_invocation_message.set_target(invocation_message.0.into_proto());
         proto_invocation_message.set_delay_in_ms(invocation_message.1.as_millis() as i64);
-        let typed_value = from_proto_any(invocation_message.2, invocation_message.3);
+        let typed_value = to_typed_value(invocation_message.2, invocation_message.3);
         proto_invocation_message.set_argument(typed_value);
         invocation_response
             .delayed_invocations
@@ -218,13 +208,13 @@ fn serialize_delayed_invocation_messages(
 
 fn serialize_egress_messages(
     invocation_response: &mut FromFunction_InvocationResponse,
-    egress_messages: Vec<(EgressIdentifier, String, Any)>,
+    egress_messages: Vec<(EgressIdentifier, String, Vec<u8>)>,
 ) {
     for egress_message in egress_messages {
         let mut proto_egress_message = FromFunction_EgressMessage::new();
         proto_egress_message.set_egress_namespace(egress_message.0.namespace);
         proto_egress_message.set_egress_type(egress_message.0.name);
-        let typed_value = from_proto_any(egress_message.1, egress_message.2);
+        let typed_value = to_typed_value(egress_message.1, egress_message.2);
         proto_egress_message.set_argument(typed_value);
         invocation_response
             .outgoing_egresses
