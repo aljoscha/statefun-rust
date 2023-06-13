@@ -1,4 +1,4 @@
-use crate::{deserializer, serializer, BuiltInTypes, Serializable, ValueSpecBase};
+use crate::{deserializer, serializer, Serializable, GetTypename, ValueSpecBase};
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
@@ -11,23 +11,12 @@ pub struct ValueSpec<T> {
     pub(crate) deserializer: fn(String, &Vec<u8>) -> T,
 }
 
-impl<T: Serializable> ValueSpec<T> {
-    // todo: could make this a trait by implementing as_const_str() on a static str
+impl<T: Serializable + GetTypename> ValueSpec<T> {
     ///
-    pub const fn new(name: &'static str, built_in_type: BuiltInTypes) -> ValueSpec<T> {
+    pub fn new(name: &'static str) -> ValueSpec<T> {
         ValueSpec {
             name,
-            typename: built_in_type.as_const_str(),
-            serializer,
-            deserializer,
-        }
-    }
-
-    ///
-    pub const fn custom(name: &'static str, typename: &'static str) -> ValueSpec<T> {
-        ValueSpec {
-            name,
-            typename,
+            typename: T::get_typename(),
             serializer,
             deserializer,
         }

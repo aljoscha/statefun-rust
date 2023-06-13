@@ -1,4 +1,52 @@
-use crate::{deserializer, serializer, BuiltInTypes, Serializable /*, ValueSpecBase*/};
+use crate::{deserializer, serializer, Serializable /*, ValueSpecBase*/};
+
+///
+pub trait GetTypename {
+    ///
+    fn get_typename() -> &'static str;
+}
+
+impl GetTypename for bool {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.types/bool"
+    }
+}
+
+impl GetTypename for i32 {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.types/int"
+    }
+}
+
+impl GetTypename for i64 {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.types/long"
+    }
+}
+
+impl GetTypename for f32 {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.types/float"
+    }
+}
+
+impl GetTypename for f64 {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.types/double"
+    }
+}
+
+impl GetTypename for String {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.types/string"
+    }
+}
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
@@ -10,34 +58,13 @@ pub struct TypeName<T> {
     pub(crate) deserializer: fn(String, &Vec<u8>) -> T,
 }
 
-impl<T: Serializable> TypeName<T> {
-    // todo: could make this a trait by implementing as_const_str() on a static str
+impl<T: Serializable + GetTypename> TypeName<T> {
     ///
-    pub const fn new(built_in_type: BuiltInTypes) -> TypeName<T> {
+    pub fn new() -> TypeName<T> {
         TypeName {
-            typename: built_in_type.as_const_str(),
-            serializer,
-            deserializer,
-        }
-    }
-
-    ///
-    pub const fn custom(typename: &'static str) -> TypeName<T> {
-        TypeName {
-            typename,
+            typename: T::get_typename(),
             serializer,
             deserializer,
         }
     }
 }
-
-// ///
-// impl<T> From<TypeName<T>> for ValueSpecBase {
-//     ///
-//     fn from(val: TypeName<T>) -> Self {
-//         ValueSpecBase::new(
-//             val.name.to_string().as_str(),
-//             val.typename.to_string().as_str(),
-//         )
-//     }
-// }

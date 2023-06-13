@@ -3,23 +3,36 @@ use serde::{Deserialize, Serialize};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, BuiltInTypes, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-    Serializable, StateMessage, TypeName, ValueSpec,
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
+    Serializable, StateMessage, TypeName, ValueSpec, GetTypename,
 };
 
 use protobuf::Message;
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
 
-// todo: rename to TypeName
-// todo: rename these BuiltInType values too, like Long => i64
-const SEEN_COUNT: ValueSpec<i32> = ValueSpec::<i32>::new("seen_count", BuiltInTypes::Integer);
-const IS_FIRST_VISIT: ValueSpec<bool> =
-    ValueSpec::<bool>::new("is_first_visit", BuiltInTypes::Boolean);
-const LAST_SEEN_TIMESTAMP: ValueSpec<i64> =
-    ValueSpec::<i64>::new("last_seen_timestamp", BuiltInTypes::Long);
-const USER_LOGIN: ValueSpec<UserLogin> =
-    ValueSpec::<UserLogin>::custom("user_login", "my-user-type/user-login");
+fn SEEN_COUNT() -> ValueSpec<i32> {
+    ValueSpec::<i32>::new("seen_count")
+}
+
+fn IS_FIRST_VISIT() -> ValueSpec<bool> {
+    ValueSpec::<bool>::new("is_first_visit")
+}
+
+fn LAST_SEEN_TIMESTAMP() -> ValueSpec<i64> {
+    ValueSpec::<i64>::new("last_seen_timestamp")
+}
+
+fn USER_LOGIN() -> ValueSpec<UserLogin> {
+    ValueSpec::<UserLogin>::new("user_login")
+}
+
+impl GetTypename for UserLogin {
+    ///
+    fn get_typename() -> &'static str {
+        "my-user-type/user-login"
+    }
+}
 
 // only other way is to use lazy_static..
 fn user_function() -> FunctionType {
@@ -41,10 +54,10 @@ impl StatefulFunctions {
         function_registry.register_fn(
             user_function(),
             vec![
-                SEEN_COUNT.into(),
-                IS_FIRST_VISIT.into(),
-                LAST_SEEN_TIMESTAMP.into(),
-                USER_LOGIN.into(),
+                SEEN_COUNT().into(),
+                IS_FIRST_VISIT().into(),
+                LAST_SEEN_TIMESTAMP().into(),
+                USER_LOGIN().into(),
             ],
             StatefulFunctions::user,
         );
@@ -64,13 +77,13 @@ impl StatefulFunctions {
 
         log::info!("We should update user count {:?}", &user_login.user_name);
 
-        let seen_count: Option<i32> = context.get_state(SEEN_COUNT);
+        let seen_count: Option<i32> = context.get_state(SEEN_COUNT());
         let seen_count = match seen_count {
             Some(count) => count + 1,
             None => 0,
         };
 
-        let is_first_visit: Option<bool> = context.get_state(IS_FIRST_VISIT);
+        let is_first_visit: Option<bool> = context.get_state(IS_FIRST_VISIT());
         let is_first_visit = is_first_visit.is_none();
 
         let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -78,18 +91,18 @@ impl StatefulFunctions {
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
 
-        let last_seen_timestamp_ms: Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP);
+        let last_seen_timestamp_ms: Option<i64> = context.get_state(LAST_SEEN_TIMESTAMP());
         let last_seen_timestamp_ms = match last_seen_timestamp_ms {
             Some(_) => current_time as i64,
             None => current_time as i64,
         };
 
         let mut effects = Effects::new();
-        effects.update_state(SEEN_COUNT, &seen_count);
-        effects.update_state(IS_FIRST_VISIT, &is_first_visit);
-        effects.update_state(LAST_SEEN_TIMESTAMP, &last_seen_timestamp_ms);
+        effects.update_state(SEEN_COUNT(), &seen_count);
+        effects.update_state(IS_FIRST_VISIT(), &is_first_visit);
+        effects.update_state(LAST_SEEN_TIMESTAMP(), &last_seen_timestamp_ms);
 
-        let state_user_login: Option<UserLogin> = context.get_state(USER_LOGIN);
+        let state_user_login: Option<UserLogin> = context.get_state(USER_LOGIN());
         let state_user_login = match state_user_login {
             Some(existing_login) => existing_login,
             None => user_login,
@@ -98,7 +111,7 @@ impl StatefulFunctions {
         log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
             &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
 
-        effects.update_state(USER_LOGIN, &state_user_login);
+        effects.update_state(USER_LOGIN(), &state_user_login);
 
         let mut profile = UserProfile::new();
         profile.set_name(state_user_login.user_name.to_string());
@@ -109,7 +122,7 @@ impl StatefulFunctions {
 
         effects.send(
             Address::new(greet_function(), &state_user_login.user_name.to_string()),
-            USER_PROFILE_TYPE,
+            USER_PROFILE_TYPE(),
             &profile,
         );
 
@@ -136,7 +149,7 @@ impl StatefulFunctions {
 
         effects.egress(
             EgressIdentifier::new("io.statefun.playground", "egress"),
-            EGRESS_RECORD_TYPE,
+            EGRESS_RECORD_TYPE(),
             &egress_record,
         );
 
@@ -235,10 +248,26 @@ impl Serializable for EgressRecord {
     }
 }
 
-const USER_PROFILE_TYPE: TypeName<MyUserProfile> =
-    TypeName::<MyUserProfile>::custom("my-user-type/user-profile");
+fn USER_PROFILE_TYPE() -> TypeName<MyUserProfile> {
+    TypeName::<MyUserProfile>::new()
+}
+
+impl GetTypename for MyUserProfile {
+    ///
+    fn get_typename() -> &'static str {
+        "my-user-type/user-profile"
+    }
+}
 
 // note: the playground image actually hardcodes this check so we have to match it for now,
 // until we configure our own playground
-const EGRESS_RECORD_TYPE: TypeName<EgressRecord> =
-    TypeName::<EgressRecord>::custom("io.statefun.playground/EgressRecord");
+fn EGRESS_RECORD_TYPE() -> TypeName<EgressRecord> {
+    TypeName::<EgressRecord>::new()
+}
+
+impl GetTypename for EgressRecord {
+    ///
+    fn get_typename() -> &'static str {
+        "io.statefun.playground/EgressRecord"
+    }
+}

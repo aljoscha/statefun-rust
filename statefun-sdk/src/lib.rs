@@ -54,9 +54,7 @@
 pub use error::InvocationError;
 pub use function_registry::FunctionRegistry;
 
-mod built_in_types;
 mod serialization;
-pub use built_in_types::BuiltInTypes;
 pub use serialization::Serializable;
 use serialization::{deserializer, serializer};
 mod state_message;
@@ -67,6 +65,7 @@ mod address;
 mod type_name;
 pub use address::Address;
 pub use type_name::TypeName;
+pub use type_name::GetTypename;
 mod egress_identifier;
 pub use egress_identifier::EgressIdentifier;
 mod context;

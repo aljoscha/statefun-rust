@@ -31,7 +31,7 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier, Serializable, TypeName};
+use crate::{Effects, EgressIdentifier, Serializable, TypeName, GetTypename};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {
@@ -71,7 +71,7 @@ impl KafkaEgress for Effects {
 
         // todo: what do we set this as? see Java SDK
         let type_name: TypeName<KafkaProducerRecord> =
-            TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
+            TypeName::<KafkaProducerRecord>::new();
 
         self.egress(identifier, type_name, &kafka_record);
     }
@@ -88,10 +88,16 @@ impl KafkaEgress for Effects {
 
         // todo: what do we set this as? see Java SDK
         let type_name: TypeName<KafkaProducerRecord> =
-            TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
+            TypeName::<KafkaProducerRecord>::new();
 
         kafka_record.set_key(key.to_owned());
         self.egress(identifier, type_name, &kafka_record);
+    }
+}
+
+impl GetTypename for KafkaProducerRecord {
+    fn get_typename() -> &'static str {
+        "kafka/user-profile"
     }
 }
 
