@@ -69,7 +69,7 @@ trait InvokableFunction {
 struct FnInvokableFunction<F: Fn(Context, StateMessage) -> Effects> {
     function: F,
     marker: ::std::marker::PhantomData<StateMessage>,
-    // todo: these should be specc'ed out like TypeName in the Java SDK,
+    // todo: these should be specc'ed out like TypeSpec in the Java SDK,
     // for now we're just storing plain strings w/o any validation.
     value_specs: Vec<ValueSpecBase>,
 }

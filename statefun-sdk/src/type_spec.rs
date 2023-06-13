@@ -50,7 +50,7 @@ impl GetTypename for String {
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
-pub struct TypeName<T> {
+pub struct TypeSpec<T> {
     pub(crate) typename: &'static str, // typename
 
     // todo: should these implement Result?
@@ -58,10 +58,10 @@ pub struct TypeName<T> {
     pub(crate) deserializer: fn(String, &Vec<u8>) -> T,
 }
 
-impl<T: Serializable + GetTypename> TypeName<T> {
+impl<T: Serializable + GetTypename> TypeSpec<T> {
     ///
-    pub fn new() -> TypeName<T> {
-        TypeName {
+    pub fn new() -> TypeSpec<T> {
+        TypeSpec {
             typename: T::get_typename(),
             serializer,
             deserializer,

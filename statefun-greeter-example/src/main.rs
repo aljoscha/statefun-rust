@@ -4,7 +4,7 @@ use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
     Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-    Serializable, StateMessage, TypeName, ValueSpec, GetTypename,
+    Serializable, StateMessage, TypeSpec, ValueSpec, GetTypename,
 };
 
 use protobuf::Message;
@@ -248,8 +248,8 @@ impl Serializable for EgressRecord {
     }
 }
 
-fn user_profile_type_spec() -> TypeName<MyUserProfile> {
-    TypeName::<MyUserProfile>::new()
+fn user_profile_type_spec() -> TypeSpec<MyUserProfile> {
+    TypeSpec::<MyUserProfile>::new()
 }
 
 impl GetTypename for MyUserProfile {
@@ -261,8 +261,8 @@ impl GetTypename for MyUserProfile {
 
 // note: the playground image actually hardcodes this check so we have to match it for now,
 // until we configure our own playground
-fn egress_record_type_spec() -> TypeName<EgressRecord> {
-    TypeName::<EgressRecord>::new()
+fn egress_record_type_spec() -> TypeSpec<EgressRecord> {
+    TypeSpec::<EgressRecord>::new()
 }
 
 impl GetTypename for EgressRecord {

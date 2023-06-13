@@ -1,7 +1,7 @@
 use crate::Address;
 use crate::EgressIdentifier;
 use crate::StateUpdate;
-use crate::TypeName;
+use crate::TypeSpec;
 use crate::ValueSpec;
 use std::time::Duration;
 
@@ -32,7 +32,7 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<T>(&mut self, address: Address, type_name: TypeName<T>, value: &T) {
+    pub fn send<T>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) {
         let serialized = (type_name.serializer)(value, type_name.typename.to_string());
         self.invocations
             .push((address, type_name.typename.to_string(), serialized));
@@ -43,7 +43,7 @@ impl Effects {
         &mut self,
         address: Address,
         delay: Duration,
-        type_name: TypeName<T>,
+        type_name: TypeSpec<T>,
         value: &T,
     ) {
         let serialized = (type_name.serializer)(value, type_name.typename.to_string());
@@ -53,7 +53,7 @@ impl Effects {
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
     // todo: constrain it with Serializable
-    pub fn egress<T>(&mut self, identifier: EgressIdentifier, type_name: TypeName<T>, value: &T) {
+    pub fn egress<T>(&mut self, identifier: EgressIdentifier, type_name: TypeSpec<T>, value: &T) {
         let serialized = (type_name.serializer)(value, type_name.typename.to_string());
         self.egress_messages
             .push((identifier, type_name.typename.to_string(), serialized));
