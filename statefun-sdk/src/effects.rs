@@ -54,15 +54,16 @@ impl Effects {
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
-    pub fn egress<M: Message>(
+    // todo: constrain it with Serializable
+    pub fn egress<T>(
         &mut self,
         identifier: EgressIdentifier,
-        value_spec: ValueSpecBase,
-        message: M,
+        type_name: TypeName<T>,
+        value: &T,
     ) {
-        // let packed_message = Any::pack(&message).unwrap();
-        // self.egress_messages
-        //     .push((identifier, value_spec.typename, packed_message));
+        let serialized = (type_name.serializer)(value, type_name.typename.to_string());
+        self.egress_messages
+            .push((identifier, type_name.typename.to_string(), serialized));
     }
 
     /// Deletes the state kept under the given name.

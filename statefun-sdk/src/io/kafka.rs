@@ -31,58 +31,79 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier, ValueSpecBase};
+use crate::{Effects, EgressIdentifier, TypeName, Serializable};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
-    fn kafka_egress<M: Message>(&mut self, identifier: EgressIdentifier, topic: &str, message: M);
+    fn kafka_egress<T>(&mut self, type_name: TypeName<T>, identifier: EgressIdentifier, topic: &str, value: &T);
 
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
     ///
     /// This will set the given key on the message sent to record.
-    fn kafka_keyed_egress<M: Message>(
+    fn kafka_keyed_egress<T>(
         &mut self,
+        type_name: TypeName<T>,
         identifier: EgressIdentifier,
         topic: &str,
         key: &str,
-        message: M,
+        value: &T,
     );
 }
 
 impl KafkaEgress for Effects {
-    fn kafka_egress<M: Message>(&mut self, identifier: EgressIdentifier, topic: &str, message: M) {
-        let kafka_record = egress_record(topic, message);
-        // todo: figure out the type name here, maybe just use a string??
+    fn kafka_egress<T>(&mut self, type_name: TypeName<T>, identifier: EgressIdentifier, topic: &str, value: &T) {
+        let kafka_record = egress_record(topic, type_name, value);
+
+        // todo: what do we set this as? see Java SDK
+        let type_name : TypeName<KafkaProducerRecord> = TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
+
         self.egress(
             identifier,
-            ValueSpecBase::new("kafka", "kafka"),
-            kafka_record,
+            type_name,
+            &kafka_record,
         );
     }
 
-    fn kafka_keyed_egress<M: Message>(
+    fn kafka_keyed_egress<T>(
         &mut self,
+        type_name: TypeName<T>,
         identifier: EgressIdentifier,
         topic: &str,
         key: &str,
-        message: M,
+        value: &T,
     ) {
-        let mut kafka_record = egress_record(topic, message);
+        let mut kafka_record = egress_record(topic, type_name, value);
+
+        // todo: what do we set this as? see Java SDK
+        let type_name : TypeName<KafkaProducerRecord> = TypeName::<KafkaProducerRecord>::custom("kafka/user-profile");
+
         kafka_record.set_key(key.to_owned());
         self.egress(
             identifier,
-            ValueSpecBase::new("kafka", "kafka"),
-            kafka_record,
+            type_name,
+            &kafka_record,
         );
     }
 }
 
-fn egress_record<M: Message>(topic: &str, value: M) -> KafkaProducerRecord {
+impl Serializable for KafkaProducerRecord {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
+        self.write_to_bytes().unwrap()
+    }
+
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> KafkaProducerRecord {
+        let result: KafkaProducerRecord = KafkaProducerRecord::parse_from_bytes(&buffer).unwrap();
+        result
+    }
+}
+
+fn egress_record<T>(topic: &str, type_name: TypeName<T>, value: &T) -> KafkaProducerRecord {
     let mut result = KafkaProducerRecord::new();
     result.set_topic(topic.to_owned());
-    result.set_value_bytes(value.write_to_bytes().expect("Could not serialize value."));
+    let serialized = (type_name.serializer)(value, type_name.typename.to_string());
+    result.set_value_bytes(serialized);
     result
 }

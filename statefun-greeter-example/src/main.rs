@@ -4,9 +4,9 @@ use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
     Address, BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable,
-    StateMessage, ValueSpec, TypeName
+    StateMessage, ValueSpec, TypeName, EgressIdentifier
 };
-use statefun_greeter_example_proto::example::UserProfile;
+use statefun_greeter_example_proto::example::{EgressRecord, UserProfile};
 use std::time::SystemTime;
 use protobuf::Message;
 
@@ -129,20 +129,27 @@ impl StatefulFunctions {
 
     pub fn greet(context: Context, message: StateMessage) -> Effects {
         log::info!("--drey called greet: Received {:?}", &message);
-    //     // todo:
-    //     // profile: UserProfile
 
-    //     // log::info!("We should greet {:?}", profile.get_name());
+        let user_profile : UserProfile = match message.get::<MyUserProfile>() {
+            Some(user_profile) => user_profile.0,
+            None => return Effects::new(),  // todo: log
+        };
+
+        log::info!("We should greet {:?}", user_profile.get_name());
 
         let mut effects = Effects::new();
-    //     // let greetings = createGreetingsMessage(profile);
+        // let greetings = createGreetingsMessage(user_profile);
 
-    //     // let mut egressRecord = EgressRecord::new();
-    //     // egressRecord.set_topic("greetings".to_string());
-    //     // egressRecord.set_payload(greetings);
+        let mut egress_record = EgressRecord::new();
+        egress_record.set_topic("greetings".to_string());
+        // egress_record.set_payload(greetings);
+        let egress_record = MyEgressRecord(egress_record);
 
-    //     // effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
-    //     //                egressRecord);
+        // let type_name : TypeName::<EgressRecord> = TypeName::<String>::new(BuiltInTypes::String);
+
+        effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
+                       EGRESS_RECORD_TYPE,
+                       &egress_record);
 
         effects
     }
@@ -216,5 +223,22 @@ impl Serializable for MyUserProfile {
     }
 }
 
+// Have to wrap the struct to implement Serializable
+struct MyEgressRecord(EgressRecord);
+
+impl Serializable for MyEgressRecord {
+    fn serialize(&self, _typename: String) -> Vec<u8> {
+        self.0.write_to_bytes().unwrap()
+    }
+
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyEgressRecord {
+        let user_profile: EgressRecord = EgressRecord::parse_from_bytes(&buffer).unwrap();
+        MyEgressRecord(user_profile)
+    }
+}
+
 const USER_PROFILE_TYPE : TypeName::<MyUserProfile> =
     TypeName::<MyUserProfile>::custom("my-user-type/user-profile");
+
+const EGRESS_RECORD_TYPE : TypeName::<MyEgressRecord> =
+    TypeName::<MyEgressRecord>::custom("my-egress-type/egress-record");
