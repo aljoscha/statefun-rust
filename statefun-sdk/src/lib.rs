@@ -51,37 +51,39 @@
 
 #![deny(missing_docs)]
 
-pub use error::InvocationError;
-pub use function_registry::FunctionRegistry;
-
-mod serialization;
-pub use serialization::Serializable;
-mod message;
-pub use message::Message;
-mod function_type;
-pub use function_type::FunctionType;
-mod address;
-mod type_spec;
-pub use address::Address;
-pub use type_spec::TypeSpec;
-pub use type_spec::GetTypename;
-mod egress_identifier;
-pub use egress_identifier::EgressIdentifier;
-mod context;
-mod state_update;
-mod value_spec;
-use state_update::StateUpdate;
-mod value_spec_base;
-pub use context::Context;
-pub use value_spec::ValueSpec;
-pub use value_spec_base::ValueSpecBase;
-mod effects;
-mod error;
-pub use effects::Effects;
-mod function_registry;
-mod invocation_bridge;
-mod missing_states;
-use missing_states::MissingStates;
 pub mod io;
 pub mod transport;
+
+pub use crate::transport::hyper::HyperHttpTransport;
+pub use address::Address;
+pub use context::Context;
+pub use effects::Effects;
+pub use egress_identifier::EgressIdentifier;
+pub use function_registry::FunctionRegistry;
+pub use function_type::FunctionType;
+pub use message::Message;
+pub use serialization::Serializable;
+pub use type_spec::GetTypename;
+pub use type_spec::TypeSpec;
+pub use value_spec::ValueSpec;
+
+mod address;
+mod context;
+mod effects;
+mod egress_identifier;
+mod error;
+mod function_registry;
+mod function_type;
+mod invocation_bridge;
+mod message;
+mod missing_states;
+mod serialization;
+mod state_update;
+mod type_spec;
+mod value_spec;
+mod value_spec_base;
+use error::InvocationError;
+use missing_states::MissingStates;
+use state_update::StateUpdate;
 use statefun_proto::request_reply::TypedValue;
+use value_spec_base::ValueSpecBase;
