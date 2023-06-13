@@ -43,7 +43,7 @@ pub trait KafkaEgress {
         identifier: EgressIdentifier,
         topic: &str,
         value: &T,
-    );
+    ) -> Result<(), String>;
 
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
@@ -56,7 +56,7 @@ pub trait KafkaEgress {
         topic: &str,
         key: &str,
         value: &T,
-    );
+    ) -> Result<(), String>;
 }
 
 impl KafkaEgress for Effects {
@@ -66,13 +66,13 @@ impl KafkaEgress for Effects {
         identifier: EgressIdentifier,
         topic: &str,
         value: &T,
-    ) {
-        let kafka_record = egress_record(topic, type_spec, value);
+    ) -> Result<(), String> {
+        let kafka_record = egress_record(topic, type_spec, value)?;
 
         // todo: what do we set this as? see Java SDK
         let type_spec: TypeSpec<KafkaProducerRecord> = TypeSpec::<KafkaProducerRecord>::new();
 
-        self.egress(identifier, type_spec, &kafka_record);
+        self.egress(identifier, type_spec, &kafka_record)
     }
 
     fn kafka_keyed_egress<T: Serializable>(
@@ -82,14 +82,14 @@ impl KafkaEgress for Effects {
         topic: &str,
         key: &str,
         value: &T,
-    ) {
-        let mut kafka_record = egress_record(topic, type_spec, value);
+    ) -> Result<(), String> {
+        let mut kafka_record = egress_record(topic, type_spec, value)?;
 
         // todo: what do we set this as? see Java SDK
         let type_spec: TypeSpec<KafkaProducerRecord> = TypeSpec::<KafkaProducerRecord>::new();
 
         kafka_record.set_key(key.to_owned());
-        self.egress(identifier, type_spec, &kafka_record);
+        self.egress(identifier, type_spec, &kafka_record)
     }
 }
 
@@ -100,8 +100,11 @@ impl GetTypename for KafkaProducerRecord {
 }
 
 impl Serializable for KafkaProducerRecord {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
-        self.write_to_bytes().unwrap()
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
+        match self.write_to_bytes() {
+            Ok(result) => Ok(result),
+            Err(result) => Err(result.to_string()),
+        }
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> KafkaProducerRecord {
@@ -114,10 +117,10 @@ fn egress_record<T: Serializable>(
     topic: &str,
     type_spec: TypeSpec<T>,
     value: &T,
-) -> KafkaProducerRecord {
+) -> Result<KafkaProducerRecord, String> {
     let mut result = KafkaProducerRecord::new();
     result.set_topic(topic.to_owned());
-    let serialized = value.serialize(type_spec.typename.to_string());
+    let serialized = value.serialize(type_spec.typename.to_string())?;
     result.set_value_bytes(serialized);
-    result
+    Ok(result)
 }

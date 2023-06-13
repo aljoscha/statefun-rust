@@ -97,9 +97,9 @@ impl StatefulFunctions {
         };
 
         let mut effects = Effects::new();
-        effects.update_state(seen_count_spec(), &seen_count);
-        effects.update_state(is_first_visit_spec(), &is_first_visit);
-        effects.update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms);
+        effects.update_state(seen_count_spec(), &seen_count).unwrap();
+        effects.update_state(is_first_visit_spec(), &is_first_visit).unwrap();
+        effects.update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms).unwrap();
 
         let state_user_login: Option<UserLogin> = context.get_state(user_login_spec());
         let state_user_login = match state_user_login {
@@ -110,7 +110,7 @@ impl StatefulFunctions {
         log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
             &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
 
-        effects.update_state(user_login_spec(), &state_user_login);
+        effects.update_state(user_login_spec(), &state_user_login).unwrap();
 
         let mut profile = UserProfile::new();
         profile.set_name(state_user_login.user_name.to_string());
@@ -123,7 +123,7 @@ impl StatefulFunctions {
             Address::new(greet_function(), &state_user_login.user_name.to_string()),
             user_profile_type_spec(),
             &profile,
-        );
+        ).unwrap();
 
         effects
     }
@@ -150,7 +150,7 @@ impl StatefulFunctions {
             EgressIdentifier::new("io.statefun.playground", "egress"),
             egress_record_type_spec(),
             &egress_record,
-        );
+        ).unwrap();
 
         effects
     }
@@ -203,8 +203,14 @@ struct UserLogin {
 
 // actual routines called by statefun SDK
 impl Serializable for UserLogin {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
-        serde_json::to_vec(self).unwrap()
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
+        match serde_json::to_vec(self) {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                // todo: log the error
+                Err(error.to_string())
+            },
+        }
     }
 
     // todo: this needs to be caught
@@ -218,8 +224,14 @@ impl Serializable for UserLogin {
 struct MyUserProfile(UserProfile);
 
 impl Serializable for MyUserProfile {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
-        self.0.write_to_bytes().unwrap()
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
+        match self.0.write_to_bytes() {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                // todo: log the error
+                Err(error.to_string())
+            },
+        }
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyUserProfile {
@@ -239,8 +251,14 @@ struct EgressRecord {
 }
 
 impl Serializable for EgressRecord {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
-        serde_json::to_vec(self).unwrap()
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
+        match serde_json::to_vec(self) {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                // todo: log the error
+                Err(error.to_string())
+            },
+        }
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> EgressRecord {

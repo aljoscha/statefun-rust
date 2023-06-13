@@ -5,17 +5,20 @@ use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper, StringWrapp
 ///
 pub trait Serializable {
     ///
-    fn serialize(&self, typename: String) -> Vec<u8>;
+    fn serialize(&self, typename: String) -> Result<Vec<u8>, String>;
 
     ///
     fn deserialize(typename: String, buffer: &Vec<u8>) -> Self;
 }
 
 impl Serializable for bool {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = BooleanWrapper::new();
         wrapped.set_value(*self);
-        wrapped.write_to_bytes().unwrap()
+        match wrapped.write_to_bytes() {
+            Ok(result) => Ok(result),
+            Err(result) => Err(result.to_string()),
+        }
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> bool {
@@ -25,7 +28,7 @@ impl Serializable for bool {
 }
 
 impl Serializable for i32 {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = IntWrapper::new();
         log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
@@ -33,7 +36,7 @@ impl Serializable for i32 {
         let res = wrapped.write_to_bytes().unwrap();
         log::debug!("-- drey: res {:?}", res);
 
-        res
+        Ok(res)
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> i32 {
@@ -43,7 +46,7 @@ impl Serializable for i32 {
 }
 
 impl Serializable for i64 {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = LongWrapper::new();
         log::debug!("-- drey: i64 serializing {:?}", self);
         wrapped.set_value(*self);
@@ -51,7 +54,7 @@ impl Serializable for i64 {
         let res = wrapped.write_to_bytes().unwrap();
         log::debug!("-- drey: res {:?}", res);
 
-        res
+        Ok(res)
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> i64 {
@@ -61,7 +64,7 @@ impl Serializable for i64 {
 }
 
 impl Serializable for String {
-    fn serialize(&self, _typename: String) -> Vec<u8> {
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = StringWrapper::new();
         log::debug!("-- drey: String serializing {:?}", self);
         wrapped.set_value(self.clone());
@@ -69,7 +72,7 @@ impl Serializable for String {
         let res = wrapped.write_to_bytes().unwrap();
         log::debug!("-- drey: res {:?}", res);
 
-        res
+        Ok(res)
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> String {

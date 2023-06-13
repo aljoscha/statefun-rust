@@ -33,10 +33,10 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<T: Serializable>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) {
-        let serialized = value.serialize(type_name.typename.to_string());
-        self.invocations
-            .push((address, type_name.typename.to_string(), serialized));
+    pub fn send<T: Serializable>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) -> Result<(), String> {
+        let serialized = value.serialize(type_name.typename.to_string())?;
+        Ok(self.invocations
+            .push((address, type_name.typename.to_string(), serialized)))
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
@@ -46,10 +46,10 @@ impl Effects {
         delay: Duration,
         type_name: TypeSpec<T>,
         value: &T,
-    ) {
-        let serialized = value.serialize(type_name.typename.to_string());
-        self.delayed_invocations
-            .push((address, delay, type_name.typename.to_string(), serialized));
+    ) -> Result<(), String> {
+        let serialized = value.serialize(type_name.typename.to_string())?;
+        Ok(self.delayed_invocations
+            .push((address, delay, type_name.typename.to_string(), serialized)))
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
@@ -59,10 +59,10 @@ impl Effects {
         identifier: EgressIdentifier,
         type_name: TypeSpec<T>,
         value: &T,
-    ) {
-        let serialized = value.serialize(type_name.typename.to_string());
-        self.egress_messages
-            .push((identifier, type_name.typename.to_string(), serialized));
+    ) -> Result<(), String> {
+        let serialized = value.serialize(type_name.typename.to_string())?;
+        Ok(self.egress_messages
+            .push((identifier, type_name.typename.to_string(), serialized)))
     }
 
     /// Deletes the state kept under the given name.
@@ -72,10 +72,10 @@ impl Effects {
     }
 
     /// Updates the state stored under the given name to the given value.
-    pub fn update_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>, value: &T) {
-        let serialized = value.serialize(value_spec.spec.typename.to_string());
+    pub fn update_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>, value: &T) -> Result<(), String> {
+        let serialized = value.serialize(value_spec.spec.typename.to_string())?;
         log::debug!("-- drey: updated state: {:?}", serialized);
-        self.state_updates
-            .push(StateUpdate::Update(value_spec.into(), serialized));
+        Ok(self.state_updates
+            .push(StateUpdate::Update(value_spec.into(), serialized)))
     }
 }
