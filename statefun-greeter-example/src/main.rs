@@ -83,8 +83,7 @@ impl StatefulFunctions {
             None => 0,
         };
 
-        let is_first_visit: Option<bool> = context.get_state(is_first_visit_spec());
-        let is_first_visit = is_first_visit.is_none();
+        let is_first_visit: bool = context.get_state(is_first_visit_spec()).is_none();
 
         let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
             Ok(n) => n.as_secs(),
