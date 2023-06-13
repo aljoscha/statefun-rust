@@ -101,7 +101,7 @@ impl Serializable for KafkaProducerRecord {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> KafkaProducerRecord {
-        let result: KafkaProducerRecord = KafkaProducerRecord::parse_from_bytes(&buffer).unwrap();
+        let result: KafkaProducerRecord = KafkaProducerRecord::parse_from_bytes(buffer).unwrap();
         result
     }
 }

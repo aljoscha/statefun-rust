@@ -39,7 +39,7 @@ impl StatefulFunctions {
 
     pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
         function_registry.register_fn(
-            user_function().clone(),
+            user_function(),
             vec![
                 SEEN_COUNT.into(),
                 IS_FIRST_VISIT.into(),
@@ -50,7 +50,7 @@ impl StatefulFunctions {
         );
 
         function_registry.register_fn(
-            greet_function().clone(),
+            greet_function(),
             vec![],  // no state
             StatefulFunctions::greet,
         );
@@ -72,10 +72,7 @@ impl StatefulFunctions {
         };
 
         let is_first_visit: Option<bool> = context.get_state(IS_FIRST_VISIT);
-        let is_first_visit = match is_first_visit {
-            Some(_) => false,
-            None => true,
-        };
+        let is_first_visit = is_first_visit.is_none();
 
         let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
             Ok(n) => n.as_secs(),
@@ -113,7 +110,7 @@ impl StatefulFunctions {
 
         effects.send(
             Address::new(
-                greet_function().clone(),
+                greet_function(),
                 &state_user_login.user_name.to_string(),
             ),
             USER_PROFILE_TYPE,
@@ -156,15 +153,15 @@ impl StatefulFunctions {
         let seen_count = profile.get_seen_count() as usize;
 
         if seen_count <= greetings_template.len() {
-            return format!(
+            format!(
                 "{:?} {:?}.",
                 greetings_template[seen_count],
                 profile.get_name()
-            );
+            )
         } else {
-            return format!(
+            format!(
             "Nice to see you for the {:?}th time, {:?}! It has been {:?} milliseconds since we last saw you.",
-              seen_count, profile.get_name(), profile.get_last_seen_delta_ms());
+              seen_count, profile.get_name(), profile.get_last_seen_delta_ms())
         }
     }
 }
@@ -184,8 +181,8 @@ fn main() -> anyhow::Result<()> {
 
 #[derive(Serialize, Deserialize, Debug)]
 enum LoginType {
-    WEB = 0,
-    MOBILE = 1,
+    Web = 0,
+    Mobile = 1,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -216,7 +213,7 @@ impl Serializable for MyUserProfile {
     }
 
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyUserProfile {
-        let user_profile: UserProfile = UserProfile::parse_from_bytes(&buffer).unwrap();
+        let user_profile: UserProfile = UserProfile::parse_from_bytes(buffer).unwrap();
         MyUserProfile(user_profile)
     }
 }

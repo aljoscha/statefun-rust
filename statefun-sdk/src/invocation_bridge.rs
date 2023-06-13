@@ -1,4 +1,4 @@
-///! A bridge between the Protobuf world and the world of the Rust SDK. For use by `Transports`.
+//! A bridge between the Protobuf world and the world of the Rust SDK. For use by `Transports`.
 use std::collections::HashMap;
 use std::time::Duration;
 
