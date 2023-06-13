@@ -188,6 +188,7 @@ fn main() -> anyhow::Result<()> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "UPPERCASE")]  // note: using uppercase in the HTTP request
 enum LoginType {
     Web = 0,
     Mobile = 1,
@@ -206,6 +207,7 @@ impl Serializable for UserLogin {
         serde_json::to_vec(self).unwrap()
     }
 
+    // todo: this needs to be caught
     fn deserialize(_typename: String, buffer: &Vec<u8>) -> UserLogin {
         let login: UserLogin = serde_json::from_slice(buffer).unwrap();
         login
