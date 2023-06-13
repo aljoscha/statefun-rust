@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use crate::InvocationError::FunctionNotFound;
-use crate::MissingStateCollection;
+use crate::MissingStates;
 use crate::Message;
 use crate::ValueSpecBase;
 use crate::{Context, Effects, FunctionType, InvocationError};
@@ -125,7 +125,7 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
         }
 
         if !missing_states.is_empty() {
-            return Err(InvocationError::MissingStates(MissingStateCollection {
+            return Err(InvocationError::MissingStates(MissingStates {
                 states: missing_states,
             }));
         }
