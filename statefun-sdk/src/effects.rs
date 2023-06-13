@@ -61,7 +61,8 @@ impl Effects {
 
     /// Deletes the state kept under the given name.
     pub fn delete_state<T>(&mut self, value_spec: ValueSpec<T>) {
-        self.state_updates.push(StateUpdate::Delete(value_spec.into()));
+        self.state_updates
+            .push(StateUpdate::Delete(value_spec.into()));
     }
 
     /// Updates the state stored under the given name to the given value.

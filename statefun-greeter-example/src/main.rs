@@ -51,12 +51,11 @@ impl StatefulFunctions {
 
         function_registry.register_fn(
             greet_function(),
-            vec![],  // no state
+            vec![], // no state
             StatefulFunctions::greet,
         );
     }
 
-    // function_registry.register_fn(FunctionType::new("greeter.fns", "greetings"), vec![SEEN_COUNT.into()], greet);
     pub fn user(context: Context, message: StateMessage) -> Effects {
         let user_login = match message.get::<UserLogin>() {
             Some(user_login) => user_login,
@@ -109,10 +108,7 @@ impl StatefulFunctions {
         let profile = MyUserProfile(profile);
 
         effects.send(
-            Address::new(
-                greet_function(),
-                &state_user_login.user_name.to_string(),
-            ),
+            Address::new(greet_function(), &state_user_login.user_name.to_string()),
             USER_PROFILE_TYPE,
             &profile,
         );
