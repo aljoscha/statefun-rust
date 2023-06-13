@@ -78,12 +78,6 @@ impl Serializable for String {
     }
 }
 
-pub(crate) fn serializer<T: Serializable>(value: &T, typename: String) -> Vec<u8> {
-    // log::debug!("-- drey: serializing type: {:?}", typename);
-    value.serialize(typename)
-    // log::debug!("-- drey: serialized to: {:?}", &res);
-}
-
 // todo
 pub(crate) fn deserializer<T: Serializable>(typename: String, buffer: &Vec<u8>) -> T {
     // log::debug!("-- drey: deserializing type: {:?}", typename);

@@ -1,4 +1,4 @@
-use crate::{deserializer, serializer, Serializable, GetTypename, ValueSpecBase};
+use crate::{deserializer, Serializable, GetTypename, ValueSpecBase};
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
@@ -7,7 +7,7 @@ pub struct ValueSpec<T> {
     pub(crate) typename: &'static str, // type typename
 
     // todo: should these implement Result?
-    pub(crate) serializer: fn(&T, String) -> Vec<u8>,
+    // pub(crate) serializer: fn(&T, String) -> Vec<u8>,
     pub(crate) deserializer: fn(String, &Vec<u8>) -> T,
 }
 
@@ -17,7 +17,7 @@ impl<T: Serializable + GetTypename> ValueSpec<T> {
         ValueSpec {
             name,
             typename: T::get_typename(),
-            serializer,
+            // serializer,
             deserializer,
         }
     }

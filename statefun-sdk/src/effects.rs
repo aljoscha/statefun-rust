@@ -3,6 +3,7 @@ use crate::EgressIdentifier;
 use crate::StateUpdate;
 use crate::TypeSpec;
 use crate::ValueSpec;
+use crate::Serializable;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -32,42 +33,42 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<T>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) {
-        let serialized = (type_name.serializer)(value, type_name.typename.to_string());
+    pub fn send<T: Serializable>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) {
+        let serialized = value.serialize(type_name.typename.to_string());
         self.invocations
             .push((address, type_name.typename.to_string(), serialized));
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
-    pub fn send_after<T>(
+    pub fn send_after<T: Serializable>(
         &mut self,
         address: Address,
         delay: Duration,
         type_name: TypeSpec<T>,
         value: &T,
     ) {
-        let serialized = (type_name.serializer)(value, type_name.typename.to_string());
+        let serialized = value.serialize(type_name.typename.to_string());
         self.delayed_invocations
             .push((address, delay, type_name.typename.to_string(), serialized));
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
     // todo: constrain it with Serializable
-    pub fn egress<T>(&mut self, identifier: EgressIdentifier, type_name: TypeSpec<T>, value: &T) {
-        let serialized = (type_name.serializer)(value, type_name.typename.to_string());
+    pub fn egress<T: Serializable>(&mut self, identifier: EgressIdentifier, type_name: TypeSpec<T>, value: &T) {
+        let serialized = value.serialize(type_name.typename.to_string());
         self.egress_messages
             .push((identifier, type_name.typename.to_string(), serialized));
     }
 
     /// Deletes the state kept under the given name.
-    pub fn delete_state<T>(&mut self, value_spec: ValueSpec<T>) {
+    pub fn delete_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>) {
         self.state_updates
             .push(StateUpdate::Delete(value_spec.into()));
     }
 
     /// Updates the state stored under the given name to the given value.
-    pub fn update_state<T>(&mut self, value_spec: ValueSpec<T>, value: &T) {
-        let serialized = (value_spec.serializer)(value, value_spec.typename.to_string());
+    pub fn update_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>, value: &T) {
+        let serialized = value.serialize(value_spec.typename.to_string());
         log::debug!("-- drey: updated state: {:?}", serialized);
         self.state_updates
             .push(StateUpdate::Update(value_spec.into(), serialized));
