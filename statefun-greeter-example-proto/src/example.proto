@@ -8,11 +8,3 @@ message UserProfile {
     string login_location = 3;
     int32 seen_count = 4;
 }
-
-// A customized response sent to the user
-message EgressRecord {
-    // The name of the user being greeted
-    string topic = 1;
-    // The users customized greeting
-    string payload = 2;
-}

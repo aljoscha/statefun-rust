@@ -6,7 +6,8 @@ use statefun::{
     Address, BuiltInTypes, Context, Effects, FunctionRegistry, FunctionType, Serializable,
     StateMessage, ValueSpec, TypeName, EgressIdentifier
 };
-use statefun_greeter_example_proto::example::{EgressRecord, UserProfile};
+
+use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
 use protobuf::Message;
 
@@ -140,10 +141,7 @@ impl StatefulFunctions {
         let mut effects = Effects::new();
         let greetings = Self::createGreetingsMessage(user_profile);
 
-        let mut egress_record = EgressRecord::new();
-        egress_record.set_topic("greetings".to_string());
-        egress_record.set_payload(greetings);
-        let egress_record = MyEgressRecord(egress_record);
+        let egress_record = EgressRecord { topic : "greetings".to_string(), payload: greetings };
 
         effects.egress(EgressIdentifier::new("io.statefun.playground", "egress"),
                        EGRESS_RECORD_TYPE,
@@ -220,17 +218,25 @@ impl Serializable for MyUserProfile {
     }
 }
 
-// Have to wrap the struct to implement Serializable
-struct MyEgressRecord(EgressRecord);
 
-impl Serializable for MyEgressRecord {
+// A customized response sent to the user
+#[derive(Serialize, Deserialize, Debug)]
+struct EgressRecord {
+    // The name of the user being greeted
+    topic: String,
+
+    // The users customized greeting
+    payload: String,
+}
+
+impl Serializable for EgressRecord {
     fn serialize(&self, _typename: String) -> Vec<u8> {
-        self.0.write_to_bytes().unwrap()
+        serde_json::to_vec(self).unwrap()
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyEgressRecord {
-        let user_profile: EgressRecord = EgressRecord::parse_from_bytes(&buffer).unwrap();
-        MyEgressRecord(user_profile)
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> EgressRecord {
+        let egress: EgressRecord = serde_json::from_slice(buffer).unwrap();
+        egress
     }
 }
 
@@ -239,5 +245,5 @@ const USER_PROFILE_TYPE : TypeName::<MyUserProfile> =
 
 // note: the playground image actually hardcodes this check so we have to match it for now,
 // until we configure our own playground
-const EGRESS_RECORD_TYPE : TypeName::<MyEgressRecord> =
-    TypeName::<MyEgressRecord>::custom("io.statefun.playground/EgressRecord");
+const EGRESS_RECORD_TYPE : TypeName::<EgressRecord> =
+    TypeName::<EgressRecord>::custom("io.statefun.playground/EgressRecord");
