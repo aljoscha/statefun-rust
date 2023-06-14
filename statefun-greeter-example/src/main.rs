@@ -58,23 +58,22 @@ impl StatefulFunctions {
 
         log::info!("We should update user count {:?}", &user_login.user_name);
 
-        let seen_count: Option<i32> = context.get_state(seen_count_spec());
+        let seen_count = context.get_state(seen_count_spec());
         let seen_count = match seen_count {
-            Some(count) => count + 1,
+            Some(count) => count.unwrap() + 1,
             None => 0,
         };
 
-        let is_first_visit: bool = context.get_state(is_first_visit_spec()).is_none();
+        let is_first_visit = context.get_state(is_first_visit_spec()).is_none();
 
         let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(n) => n.as_secs(),
+            Ok(n) => n.as_secs() as i64,
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
 
-        let last_seen_timestamp_ms: Option<i64> = context.get_state(last_seen_timestamp_spec());
-        let last_seen_timestamp_ms = match last_seen_timestamp_ms {
-            Some(_) => current_time as i64,
-            None => current_time as i64,
+        match context.get_state(last_seen_timestamp_spec()) {
+            Some(result) => log::info!("Last stored time: {:?}", result.unwrap()),
+            None => (),
         };
 
         let mut effects = Effects::new();
@@ -85,12 +84,12 @@ impl StatefulFunctions {
             .update_state(is_first_visit_spec(), &is_first_visit)
             .unwrap();
         effects
-            .update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms)
+            .update_state(last_seen_timestamp_spec(), &current_time)
             .unwrap();
 
         let mut profile = UserProfile::new();
         profile.set_name(user_login.user_name.to_string());
-        profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
+        profile.set_last_seen_delta_ms(current_time);
         profile.set_login_location(format!("{:?}", user_login.login_type));
         profile.set_seen_count(seen_count);
         let profile = MyUserProfile(profile);
