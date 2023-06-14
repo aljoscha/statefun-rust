@@ -24,11 +24,8 @@ impl Serializable<bool> for bool {
 impl Serializable<i32> for i32 {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = IntWrapper::new();
-        log::debug!("-- drey: i32 serializing {:?}", self);
         wrapped.set_value(*self);
-        log::debug!("-- drey: wrapped {:?}", wrapped);
         let res = wrapped.write_to_bytes().unwrap();
-        log::debug!("-- drey: res {:?}", res);
 
         Ok(res)
     }
@@ -44,12 +41,8 @@ impl Serializable<i32> for i32 {
 impl Serializable<i64> for i64 {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = LongWrapper::new();
-        log::debug!("-- drey: i64 serializing {:?}", self);
         wrapped.set_value(*self);
-        log::debug!("-- drey: wrapped {:?}", wrapped);
         let res = wrapped.write_to_bytes().unwrap();
-        log::debug!("-- drey: res {:?}", res);
-
         Ok(res)
     }
 
@@ -64,11 +57,8 @@ impl Serializable<i64> for i64 {
 impl Serializable<String> for String {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = StringWrapper::new();
-        log::debug!("-- drey: String serializing {:?}", self);
         wrapped.set_value(self.clone());
-        log::debug!("-- drey: wrapped {:?}", wrapped);
         let res = wrapped.write_to_bytes().unwrap();
-        log::debug!("-- drey: res {:?}", res);
 
         Ok(res)
     }

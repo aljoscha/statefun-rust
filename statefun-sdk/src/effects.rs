@@ -87,7 +87,6 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(value_spec.spec.typename.to_string())?;
-        log::debug!("-- drey: updated state: {:?}", serialized);
         Ok(self
             .state_updates
             .push(StateUpdate::Update(value_spec.into(), serialized)))

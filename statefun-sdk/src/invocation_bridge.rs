@@ -62,8 +62,6 @@ impl InvocationBridge for FunctionRegistry {
                 Ok(effects) => effects,
                 Err(e) => match &e {
                     InvocationError::MissingStates(state_collection) => {
-                        log::debug!("--drey: missing states: {:?}", &state_collection);
-
                         let mut incomplete_context =
                             FromFunction_IncompleteInvocationContext::new();
 
@@ -226,22 +224,8 @@ where
             StateUpdate::Update(value_spec, state) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(value_spec.name);
-                // drey
-                log::debug!("--drey: StateUpdate::Update: {:?}", &state);
-
-                let typed_value = to_typed_value(value_spec.typename.to_string(), state.clone());
-                log::debug!(
-                    "--drey: to_typed_value(value_spec.typename, state): {:?}",
-                    typed_value
-                );
-                let myvec = typed_value.value.to_vec();
-                log::debug!("--drey: to_typed_value VEC: {:?}", myvec);
 
                 proto_state_update.set_state_value(to_typed_value(value_spec.typename, state));
-                log::debug!(
-                    "--drey: StateUpdate::Update: proto_state_update: {:?}",
-                    &proto_state_update.get_state_value()
-                );
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::MODIFY);
                 invocation_response.state_mutations.push(proto_state_update);

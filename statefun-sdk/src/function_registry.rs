@@ -103,9 +103,6 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
         //   first time we write to the state.
 
         for value_spec in self.value_specs.iter() {
-            log::debug!("--drey: checking value spec {:?}", &value_spec);
-            log::debug!("--drey: context.state contains: {:?}", &context.state);
-
             let mut found: bool = false;
             for context_spec in context.state.iter() {
                 if value_spec.name.eq(&context_spec.0.name) {
@@ -115,10 +112,7 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
             }
 
             if !found {
-                log::debug!("--drey: NOT FOUND: {:?}", &value_spec.name);
                 missing_states.push(value_spec.clone());
-            } else {
-                log::debug!("--drey: DID FIND: {:?}", &value_spec.name);
             }
         }
 
@@ -128,7 +122,6 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
             }));
         }
 
-        log::debug!("--drey: Trying to unpack message: {:?}", &message);
         let effects = (self.function)(context, message);
         Ok(effects)
     }

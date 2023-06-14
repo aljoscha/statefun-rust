@@ -110,8 +110,6 @@ impl StatefulFunctions {
     }
 
     pub fn greet(_context: Context, message: Message) -> Effects {
-        log::info!("--drey called greet: Received {:?}", &message);
-
         let user_profile: UserProfile = match message.get::<MyUserProfile>() {
             Ok(user_profile) => user_profile.0,
             Err(error) => panic!("Could not receive MyUserProfile: {:?}", error),

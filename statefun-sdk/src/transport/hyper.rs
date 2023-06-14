@@ -83,17 +83,11 @@ async fn handle_request(
 
     let full_body = hyper::body::to_bytes(body).await?;
     let mut reader = full_body.reader();
-    log::debug!("--drey: full body: {:?}", &reader);
     let to_function: ToFunction = ToFunction::parse_from_reader(&mut reader)?;
-    log::debug!("--drey: received flink message: {:?}", &to_function);
     let from_function = {
         let function_registry = function_registry.lock().unwrap();
         function_registry.invoke_from_proto(to_function)?
     };
-    log::debug!(
-        "--drey: prepared from function message: {:?}",
-        &from_function
-    );
 
     log::debug!("Response: {:#?}", from_function);
 
