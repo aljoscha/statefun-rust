@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use statefun_greeter_example_proto::example::UserProfile;
-use std::collections::HashSet;
 
 ///
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,8 +19,16 @@ pub struct UserLogin {
 
 ///
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TotalVisitedUserIDs {
-    visited_user_ids: HashSet<String>,
+pub struct DelayedMessage {
+    pub time_sent: i64,
+}
+
+impl DelayedMessage {
+    pub fn new(time_sent: i64) -> DelayedMessage {
+        DelayedMessage {
+            time_sent
+        }
+    }
 }
 
 /// A customized response sent to the user

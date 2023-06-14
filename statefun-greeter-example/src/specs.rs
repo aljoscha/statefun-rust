@@ -1,4 +1,4 @@
-use crate::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin};
+use crate::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
 use statefun::{TypeSpec, ValueSpec};
 
 pub fn seen_count_spec() -> ValueSpec<i32> {
@@ -13,8 +13,8 @@ pub fn last_seen_timestamp_spec() -> ValueSpec<i64> {
     ValueSpec::<i64>::new("last_seen_timestamp")
 }
 
-pub fn _total_visited_user_ids_spec() -> ValueSpec<TotalVisitedUserIDs> {
-    ValueSpec::<TotalVisitedUserIDs>::new("total_visited_user_ids")
+pub fn delayed_message_type_spec() -> TypeSpec<DelayedMessage> {
+    TypeSpec::<DelayedMessage>::new()
 }
 
 pub fn user_profile_type_spec() -> TypeSpec<MyUserProfile> {

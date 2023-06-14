@@ -1,8 +1,8 @@
-use crate::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin, UserProfile};
+use crate::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin, UserProfile};
 use protobuf::Message;
 use statefun::{GetTypename, Serializable};
 
-impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
+impl Serializable<DelayedMessage> for DelayedMessage {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
             Ok(result) => Ok(result),
@@ -10,8 +10,8 @@ impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<TotalVisitedUserIDs, String> {
-        match serde_json::from_slice::<TotalVisitedUserIDs>(buffer) {
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<DelayedMessage, String> {
+        match serde_json::from_slice::<DelayedMessage>(buffer) {
             Ok(result) => Ok(result),
             Err(error) => Err(error.to_string()),
         }
@@ -73,7 +73,7 @@ impl GetTypename for UserLogin {
     }
 }
 
-impl GetTypename for TotalVisitedUserIDs {
+impl GetTypename for DelayedMessage {
     ///
     fn get_typename() -> &'static str {
         "my-user-type/total-visited-ids"

@@ -7,9 +7,10 @@ use statefun::transport::Transport;
 use statefun::{
     Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message,
 };
-use types::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin};
+use types::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
 
 use statefun_greeter_example_proto::example::UserProfile;
+use std::time::Duration;
 use std::time::SystemTime;
 
 fn main() -> anyhow::Result<()> {
@@ -47,6 +48,12 @@ impl StatefulFunctions {
             Self::greet_function_type(),
             vec![], // no state
             Self::greet,
+        );
+
+        function_registry.register_fn(
+            Self::delayed_function_type(),
+            vec![], // no state
+            Self::delayed,
         );
     }
 
@@ -86,10 +93,23 @@ impl StatefulFunctions {
 
         let mut effects = Effects::new();
 
-        // delete the profile every 3 visits
+        // delete the profile every 3 visits, and send a delayed message to another function
         if seen_count >= 3 {
             effects.delete_state(seen_count_spec());
             effects.delete_state(is_first_visit_spec());
+
+            let delayed_message = DelayedMessage::new(current_time);
+
+            effects.send_after(
+                Address::new(
+                    Self::delayed_function_type(),
+                    &user_login.user_name.to_string(),
+                ),
+                Duration::from_secs(3),
+                delayed_message_type_spec(),
+                &delayed_message,
+            )
+            .unwrap();
         } else {
             effects
                 .update_state(seen_count_spec(), &seen_count)
@@ -151,6 +171,24 @@ impl StatefulFunctions {
         effects
     }
 
+    pub fn delayed(_context: Context, message: Message) -> Effects {
+        let delayed_message = match message.get(&delayed_message_type_spec()) {
+            Ok(delayed_message) => delayed_message,
+            Err(error) => panic!("Could not receive DelayedMessage: {:?}", error),
+        };
+
+        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(n) => n.as_secs() as i64,
+            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+        };
+
+        log::info!("Received delayed message at {:?}, sent at {:?}", current_time,
+            &delayed_message.time_sent);
+
+        let effects = Effects::new();
+        effects
+    }
+
     fn create_greetings_message(profile: UserProfile) -> String {
         let greetings_template = ["Welcome", "Nice to see you again", "Third time is a charm"];
 
@@ -176,5 +214,9 @@ impl StatefulFunctions {
 
     fn greet_function_type() -> FunctionType {
         FunctionType::new("greeter.fns", "greet")
+    }
+
+    fn delayed_function_type() -> FunctionType {
+        FunctionType::new("greeter.fns", "delayed")
     }
 }
