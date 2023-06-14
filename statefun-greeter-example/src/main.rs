@@ -66,7 +66,7 @@ impl StatefulFunctions {
         let seen_count = context.get_state(seen_count_spec());
         let seen_count = match seen_count {
             Some(count) => count.unwrap() + 1,
-            None => 0,
+            None => 1,
         };
 
         let is_first_visit = context.get_state(is_first_visit_spec()).is_none();
@@ -88,17 +88,17 @@ impl StatefulFunctions {
 
         // delete the profile every 3 visits
         if seen_count >= 3 {
-            effects
-                .delete_state(seen_count_spec());
+            effects.delete_state(seen_count_spec());
+            effects.delete_state(is_first_visit_spec());
         } else {
             effects
                 .update_state(seen_count_spec(), &seen_count)
                 .unwrap();
+            effects
+                .update_state(is_first_visit_spec(), &is_first_visit)
+                .unwrap();
         }
 
-        effects
-            .update_state(is_first_visit_spec(), &is_first_visit)
-            .unwrap();
         effects
             .update_state(last_seen_timestamp_spec(), &current_time)
             .unwrap();
