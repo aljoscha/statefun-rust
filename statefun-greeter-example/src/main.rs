@@ -1,39 +1,17 @@
-use serde::{Deserialize, Serialize};
-
-use std::collections::HashSet;
+mod types;
+mod traits;
+mod specs;
+use specs::*;
+use types::{EgressRecord, UserLogin, TotalVisitedUserIDs, MyUserProfile};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, GetTypename,
-    Message, Serializable, TypeSpec, ValueSpec,
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
+    Message,
 };
 
-use protobuf::Message as ProtoMessage;
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
-
-fn seen_count_spec() -> ValueSpec<i32> {
-    ValueSpec::<i32>::new("seen_count")
-}
-
-fn is_first_visit_spec() -> ValueSpec<bool> {
-    ValueSpec::<bool>::new("is_first_visit")
-}
-
-fn last_seen_timestamp_spec() -> ValueSpec<i64> {
-    ValueSpec::<i64>::new("last_seen_timestamp")
-}
-
-fn total_visited_user_ids_spec() -> ValueSpec<TotalVisitedUserIDs> {
-    ValueSpec::<TotalVisitedUserIDs>::new("total_visited_user_ids")
-}
-
-impl GetTypename for UserLogin {
-    ///
-    fn get_typename() -> &'static str {
-        "my-user-type/user-login"
-    }
-}
 
 // only other way is to use lazy_static..
 fn user_function() -> FunctionType {
@@ -190,146 +168,4 @@ fn main() -> anyhow::Result<()> {
     hyper_transport.run(function_registry)?;
 
     Ok(())
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "UPPERCASE")]  // note: using uppercase in the HTTP request
-enum LoginType {
-    Web = 0,
-    Mobile = 1,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct UserLogin {
-    user_id: String,
-    user_name: String,
-    login_type: LoginType,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct TotalVisitedUserIDs {
-    visited_user_ids: HashSet<String>,
-}
-
-impl GetTypename for TotalVisitedUserIDs {
-    ///
-    fn get_typename() -> &'static str {
-        "my-user-type/total-visited-ids"
-    }
-}
-
-// actual routines called by statefun SDK
-impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
-    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
-        match serde_json::to_vec(self) {
-            Ok(result) => Ok(result),
-            Err(error) => {
-                // todo: log the error
-                Err(error.to_string())
-            },
-        }
-    }
-
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<TotalVisitedUserIDs, String> {
-        match serde_json::from_slice::<TotalVisitedUserIDs>(buffer) {
-            Ok(result) => Ok(result),
-            Err(error) => Err(error.to_string()),
-        }
-    }
-}
-
-// actual routines called by statefun SDK
-impl Serializable<UserLogin> for UserLogin {
-    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
-        match serde_json::to_vec(self) {
-            Ok(result) => Ok(result),
-            Err(error) => Err(error.to_string()),
-        }
-    }
-
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<UserLogin, String> {
-        match serde_json::from_slice::<UserLogin>(buffer) {
-            Ok(result) => Ok(result),
-            Err(error) => Err(error.to_string()),
-        }
-    }
-}
-
-// Have to wrap the struct to implement Serializable
-struct MyUserProfile(UserProfile);
-
-impl Serializable<MyUserProfile> for MyUserProfile {
-    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
-        match self.0.write_to_bytes() {
-            Ok(result) => Ok(result),
-            Err(error) => {
-                // todo: log the error
-                Err(error.to_string())
-            },
-        }
-    }
-
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyUserProfile, String> {
-        match UserProfile::parse_from_bytes(buffer) {
-            Ok(result) => Ok(MyUserProfile(result)),
-            Err(error) => Err(error.to_string()),
-        }
-    }
-}
-
-// A customized response sent to the user
-#[derive(Serialize, Deserialize, Debug)]
-struct EgressRecord {
-    // The name of the user being greeted
-    topic: String,
-
-    // The users customized greeting
-    payload: String,
-}
-
-impl Serializable<EgressRecord> for EgressRecord {
-    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
-        match serde_json::to_vec(self) {
-            Ok(result) => Ok(result),
-            Err(error) => {
-                // todo: log the error
-                Err(error.to_string())
-            },
-        }
-    }
-
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<EgressRecord, String> {
-        match serde_json::from_slice::<EgressRecord>(buffer) {
-            Ok(result) => Ok(result),
-            Err(error) => Err(error.to_string()),
-        }
-    }
-}
-
-fn user_profile_type_spec() -> TypeSpec<MyUserProfile> {
-    TypeSpec::<MyUserProfile>::new()
-}
-
-fn user_login_type_spec() -> TypeSpec<UserLogin> {
-    TypeSpec::<UserLogin>::new()
-}
-
-impl GetTypename for MyUserProfile {
-    ///
-    fn get_typename() -> &'static str {
-        "my-user-type/user-profile"
-    }
-}
-
-// note: the playground image actually hardcodes this check so we have to match it for now,
-// until we configure our own playground
-fn egress_record_type_spec() -> TypeSpec<EgressRecord> {
-    TypeSpec::<EgressRecord>::new()
-}
-
-impl GetTypename for EgressRecord {
-    ///
-    fn get_typename() -> &'static str {
-        "io.statefun.playground/EgressRecord"
-    }
 }
