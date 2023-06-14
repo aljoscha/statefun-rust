@@ -1,6 +1,5 @@
 //! A bridge between the Protobuf world and the world of the Rust SDK. For use by `Transports`.
 use std::collections::HashMap;
-use std::time::Duration;
 
 use protobuf::SingularPtrField;
 
@@ -20,8 +19,7 @@ use statefun_proto::request_reply::ToFunction_PersistedValue;
 use statefun_proto::request_reply::TypedValue;
 
 use crate::function_registry::FunctionRegistry;
-use crate::Message;
-use crate::{Address, Context, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
+use crate::{Address, Context, Message, DelayedInvocation, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
 pub trait InvocationBridge {
@@ -175,13 +173,14 @@ fn serialize_invocation_messages(
 
 fn serialize_delayed_invocation_messages(
     invocation_response: &mut FromFunction_InvocationResponse,
-    delayed_invocation_messages: Vec<(Address, Duration, String, Vec<u8>)>,
+    delayed_invocation_messages: Vec<DelayedInvocation>,
 ) {
     for invocation_message in delayed_invocation_messages {
         let mut proto_invocation_message = FromFunction_DelayedInvocation::new();
-        proto_invocation_message.set_target(invocation_message.0.into_proto());
-        proto_invocation_message.set_delay_in_ms(invocation_message.1.as_millis() as i64);
-        let typed_value = to_typed_value(invocation_message.2, invocation_message.3);
+        proto_invocation_message.set_target(invocation_message.address.into_proto());
+        proto_invocation_message.set_delay_in_ms(invocation_message.delay.as_millis() as i64);
+        proto_invocation_message.set_cancellation_token(invocation_message.cancellation_token);
+        let typed_value = to_typed_value(invocation_message.typename, invocation_message.bytes);
         proto_invocation_message.set_argument(typed_value);
         invocation_response
             .delayed_invocations

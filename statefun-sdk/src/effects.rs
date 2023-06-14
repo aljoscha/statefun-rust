@@ -1,4 +1,5 @@
 use crate::Address;
+use crate::DelayedInvocation;
 use crate::EgressIdentifier;
 use crate::Serializable;
 use crate::StateUpdate;
@@ -15,7 +16,7 @@ use std::time::Duration;
 #[derive(Default, Debug)]
 pub struct Effects {
     pub(crate) invocations: Vec<(Address, String, Vec<u8>)>,
-    pub(crate) delayed_invocations: Vec<(Address, Duration, String, Vec<u8>)>,
+    pub(crate) delayed_invocations: Vec<DelayedInvocation>,
     pub(crate) egress_messages: Vec<(EgressIdentifier, String, Vec<u8>)>,
     pub(crate) state_updates: Vec<StateUpdate>,
 }
@@ -49,13 +50,15 @@ impl Effects {
         &mut self,
         address: Address,
         delay: Duration,
+        cancellation_token: String,
         type_name: TypeSpec<T>,
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(type_name.typename.to_string())?;
-        Ok(self.delayed_invocations.push((
+        Ok(self.delayed_invocations.push(DelayedInvocation::new(
             address,
             delay,
+            cancellation_token,
             type_name.typename.to_string(),
             serialized,
         )))

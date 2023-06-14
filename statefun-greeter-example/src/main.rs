@@ -106,6 +106,7 @@ impl StatefulFunctions {
                     &user_login.user_name.to_string(),
                 ),
                 Duration::from_secs(3),
+                "cancel-token".to_string(),
                 delayed_message_type_spec(),
                 &delayed_message,
             )

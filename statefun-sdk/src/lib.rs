@@ -79,11 +79,14 @@ mod missing_states;
 mod serialization;
 mod state_update;
 mod traits;
+mod delayed_invocation;
 mod type_spec;
 mod value_spec;
 mod value_spec_base;
+
 use error::InvocationError;
 use missing_states::MissingStates;
 use state_update::StateUpdate;
 use statefun_proto::request_reply::TypedValue;
 use value_spec_base::ValueSpecBase;
+use delayed_invocation::DelayedInvocation;
