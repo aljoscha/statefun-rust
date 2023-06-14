@@ -12,7 +12,7 @@ use types::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin};
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
 
-// only other way is to use lazy_static..
+// lazy_static does not work here for some reason
 fn user_function() -> FunctionType {
     FunctionType::new("greeter.fns", "user")
 }
@@ -35,7 +35,6 @@ impl StatefulFunctions {
                 seen_count_spec().into(),
                 is_first_visit_spec().into(),
                 last_seen_timestamp_spec().into(),
-                // user_login_spec().into(),
             ],
             StatefulFunctions::user,
         );
@@ -88,17 +87,6 @@ impl StatefulFunctions {
         effects
             .update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms)
             .unwrap();
-
-        // let state_user_login: Option<UserLogin> = context.get_state(user_login_spec());
-        // let state_user_login = match state_user_login {
-        //     Some(existing_login) => existing_login,
-        //     None => user_login,
-        // };
-
-        // log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
-        //     &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
-
-        // effects.update_state(user_login_spec(), &state_user_login).unwrap();
 
         let mut profile = UserProfile::new();
         profile.set_name(user_login.user_name.to_string());
