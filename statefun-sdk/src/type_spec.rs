@@ -1,11 +1,6 @@
+use crate::GetTypename;
 use crate::Serializable;
 use std::marker::PhantomData;
-
-///
-pub trait GetTypename {
-    ///
-    fn get_typename() -> &'static str;
-}
 
 impl GetTypename for bool {
     ///
