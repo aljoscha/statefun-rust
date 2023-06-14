@@ -69,7 +69,7 @@ impl Serializable<EgressRecord> for EgressRecord {
 impl GetTypename for UserLogin {
     ///
     fn get_typename() -> &'static str {
-        "my-user-type/user-login"
+        "greeter.types/UserLogin"
     }
 }
 

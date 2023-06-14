@@ -52,10 +52,11 @@ impl StatefulFunctions {
 
     pub fn user(context: Context, message: Message) -> Effects {
         if !message.is(&user_login_type_spec()) {
-            panic!("Unexpected message type: {:?}", message.get_typed_value());
+            panic!("Unexpected message type: {:?}. Expected: {:?}", message.get_type(),
+                user_login_type_spec());
         }
 
-        let user_login = match message.get::<UserLogin>() {
+        let user_login = match message.get(&user_login_type_spec()) {
             Ok(user_login) => user_login,
             Err(error) => panic!("Could not receive UserLogin: {:?}", error),
         };
@@ -124,7 +125,7 @@ impl StatefulFunctions {
     }
 
     pub fn greet(_context: Context, message: Message) -> Effects {
-        let user_profile: UserProfile = match message.get::<MyUserProfile>() {
+        let user_profile = match message.get(&user_profile_type_spec()) {
             Ok(user_profile) => user_profile.0,
             Err(error) => panic!("Could not receive MyUserProfile: {:?}", error),
         };

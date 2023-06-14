@@ -13,7 +13,12 @@ impl Message {
     }
 
     ///
-    pub fn get<T: Serializable<T>>(&self) -> Result<T, String> {
+    pub fn get<T : Serializable<T>>(&self, typed_spec: &TypeSpec<T>) -> Result<T, String> {
+        if !self.is(typed_spec) {
+            return Err(format!("Incompatible types. Expected: {:?} Payload: {:?}",
+                typed_spec.typename, self.typed_value.typename));
+        }
+
         T::deserialize(
             self.typed_value.typename.to_string(),
             &self.typed_value.value,
@@ -21,8 +26,8 @@ impl Message {
     }
 
     ///
-    pub fn get_typed_value(&self) -> TypedValue {
-        self.typed_value.clone()
+    pub fn get_type(&self) -> String {
+        self.typed_value.typename.to_string()
     }
 
     ///
