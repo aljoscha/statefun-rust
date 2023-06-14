@@ -32,7 +32,6 @@ impl Effects {
     }
 
     /// Sends a message to the stateful function identified by the address.
-    // todo: check if this needs to be valuespec in the java sdk
     pub fn send<T: Serializable<T>>(
         &mut self,
         address: Address,
@@ -63,7 +62,6 @@ impl Effects {
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
-    // todo: constrain it with Serializable
     pub fn egress<T: Serializable<T>>(
         &mut self,
         identifier: EgressIdentifier,

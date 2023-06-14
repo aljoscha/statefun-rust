@@ -1,6 +1,6 @@
 use crate::{Serializable, TypeSpec, TypedValue};
 
-/// todo: rename this
+///
 #[derive(Debug)]
 pub struct Message {
     typed_value: TypedValue,
