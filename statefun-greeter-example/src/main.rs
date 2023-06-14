@@ -12,13 +12,17 @@ use types::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin};
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
 
-// lazy_static does not work here for some reason
-fn user_function() -> FunctionType {
-    FunctionType::new("greeter.fns", "user")
-}
+fn main() -> anyhow::Result<()> {
+    env_logger::init();
 
-fn greet_function() -> FunctionType {
-    FunctionType::new("greeter.fns", "greet")
+    let functions = StatefulFunctions::new();
+    let mut function_registry = FunctionRegistry::new();
+    functions.register_functions(&mut function_registry);
+
+    let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
+    hyper_transport.run(function_registry)?;
+
+    Ok(())
 }
 
 struct StatefulFunctions {}
@@ -30,19 +34,19 @@ impl StatefulFunctions {
 
     pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
         function_registry.register_fn(
-            user_function(),
+            Self::user_function_type(),
             vec![
                 seen_count_spec().into(),
                 is_first_visit_spec().into(),
                 last_seen_timestamp_spec().into(),
             ],
-            StatefulFunctions::user,
+            Self::user,
         );
 
         function_registry.register_fn(
-            greet_function(),
+            Self::greet_function_type(),
             vec![], // no state
-            StatefulFunctions::greet,
+            Self::greet,
         );
     }
 
@@ -96,7 +100,7 @@ impl StatefulFunctions {
 
         effects
             .send(
-                Address::new(greet_function(), &user_login.user_name.to_string()),
+                Address::new(Self::greet_function_type(), &user_login.user_name.to_string()),
                 user_profile_type_spec(),
                 &profile,
             )
@@ -151,17 +155,13 @@ impl StatefulFunctions {
               seen_count, profile.get_name(), profile.get_last_seen_delta_ms())
         }
     }
-}
 
-fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    // lazy_static does not work here for some reason
+    fn user_function_type() -> FunctionType {
+        FunctionType::new("greeter.fns", "user")
+    }
 
-    let functions = StatefulFunctions::new();
-
-    let mut function_registry = FunctionRegistry::new();
-    functions.register_functions(&mut function_registry);
-    let hyper_transport = HyperHttpTransport::new("0.0.0.0:1108".parse()?);
-    hyper_transport.run(function_registry)?;
-
-    Ok(())
+    fn greet_function_type() -> FunctionType {
+        FunctionType::new("greeter.fns", "greet")
+    }
 }

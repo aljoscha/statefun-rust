@@ -47,13 +47,14 @@ impl<'a> Context<'a> {
     /// might have persisted under the given name.
     /// If the state does not exist, returns None.
     /// If the state does exist but could not be deserialized, returns an error within the option.
-    pub fn get_state<T: Serializable<T>>(&self, value_spec: ValueSpec<T>) -> Option<Result<T, String>> {
+    pub fn get_state<T: Serializable<T>>(
+        &self,
+        value_spec: ValueSpec<T>,
+    ) -> Option<Result<T, String>> {
         let typename = value_spec.spec.typename.to_string();
         let state = self.state.get(&value_spec.into());
         match state {
-            Some(serialized) => {
-                Some(T::deserialize(typename, serialized))
-            }
+            Some(serialized) => Some(T::deserialize(typename, serialized)),
             None => None,
         }
     }
