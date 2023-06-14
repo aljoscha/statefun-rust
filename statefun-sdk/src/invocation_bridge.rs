@@ -73,6 +73,7 @@ impl InvocationBridge for FunctionRegistry {
                                     };
 
                                     expiration_spec.expire_after_millis = value_spec.expiration.time_to_live.as_millis() as i64;
+                                    log::debug!("-- drey Set expiration time as {:?}", expiration_spec.expire_after_millis);
                                 }
                                 None => {
                                     expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;

@@ -93,8 +93,8 @@ impl StatefulFunctions {
 
         let mut effects = Effects::new();
 
-        // delete the profile every 3 visits, and send a delayed message to another function
-        if seen_count >= 3 {
+        // delete the profile every 5 visits, and send a delayed message to another function
+        if seen_count >= 5 {
             effects.delete_state(seen_count_spec());
             effects.delete_state(is_first_visit_spec());
 

@@ -1,8 +1,10 @@
 use crate::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
-use statefun::{TypeSpec, ValueSpec, Expiration};
+use statefun::{TypeSpec, ValueSpec, Expiration, ExpirationType};
+use std::time::Duration;
 
+// 'seen_count' will automatically be purged 5 seconds after the last write
 pub fn seen_count_spec() -> ValueSpec<i32> {
-    ValueSpec::<i32>::new("seen_count", Expiration::never())
+    ValueSpec::<i32>::new("seen_count", Expiration::new(ExpirationType::AfterWrite, Duration::from_secs(5)))
 }
 
 pub fn is_first_visit_spec() -> ValueSpec<bool> {

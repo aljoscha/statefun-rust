@@ -31,9 +31,9 @@ impl Expiration {
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum ExpirationType {
-    ///
+    /// After last read or write
     AfterInvoke = 1,
 
-    ///
+    /// After initial create or the last write
     AfterWrite = 2
 }
