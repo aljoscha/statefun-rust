@@ -33,9 +33,15 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<T: Serializable<T>>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) -> Result<(), String> {
+    pub fn send<T: Serializable<T>>(
+        &mut self,
+        address: Address,
+        type_name: TypeSpec<T>,
+        value: &T,
+    ) -> Result<(), String> {
         let serialized = value.serialize(type_name.typename.to_string())?;
-        Ok(self.invocations
+        Ok(self
+            .invocations
             .push((address, type_name.typename.to_string(), serialized)))
     }
 
@@ -48,8 +54,12 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(type_name.typename.to_string())?;
-        Ok(self.delayed_invocations
-            .push((address, delay, type_name.typename.to_string(), serialized)))
+        Ok(self.delayed_invocations.push((
+            address,
+            delay,
+            type_name.typename.to_string(),
+            serialized,
+        )))
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
@@ -61,7 +71,8 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(type_name.typename.to_string())?;
-        Ok(self.egress_messages
+        Ok(self
+            .egress_messages
             .push((identifier, type_name.typename.to_string(), serialized)))
     }
 
@@ -72,10 +83,15 @@ impl Effects {
     }
 
     /// Updates the state stored under the given name to the given value.
-    pub fn update_state<T: Serializable<T>>(&mut self, value_spec: ValueSpec<T>, value: &T) -> Result<(), String> {
+    pub fn update_state<T: Serializable<T>>(
+        &mut self,
+        value_spec: ValueSpec<T>,
+        value: &T,
+    ) -> Result<(), String> {
         let serialized = value.serialize(value_spec.spec.typename.to_string())?;
         log::debug!("-- drey: updated state: {:?}", serialized);
-        Ok(self.state_updates
+        Ok(self
+            .state_updates
             .push(StateUpdate::Update(value_spec.into(), serialized)))
     }
 }

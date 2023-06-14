@@ -1,7 +1,5 @@
-use statefun::{
-    TypeSpec, ValueSpec,
-};
-use crate::{EgressRecord, UserLogin, TotalVisitedUserIDs, MyUserProfile};
+use crate::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin};
+use statefun::{TypeSpec, ValueSpec};
 
 pub fn seen_count_spec() -> ValueSpec<i32> {
     ValueSpec::<i32>::new("seen_count")

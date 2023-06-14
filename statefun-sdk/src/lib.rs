@@ -62,9 +62,9 @@ pub use egress_identifier::EgressIdentifier;
 pub use function_registry::FunctionRegistry;
 pub use function_type::FunctionType;
 pub use message::Message;
+pub use traits::{GetTypename, Serializable};
 pub use type_spec::TypeSpec;
 pub use value_spec::ValueSpec;
-pub use traits::{GetTypename, Serializable};
 
 mod address;
 mod context;

@@ -1,4 +1,4 @@
-use crate::{Serializable, TypedValue, TypeSpec};
+use crate::{Serializable, TypeSpec, TypedValue};
 
 /// todo: rename this
 #[derive(Debug)]
@@ -16,7 +16,8 @@ impl Message {
     pub fn get<T: Serializable<T>>(&self) -> Result<T, String> {
         T::deserialize(
             self.typed_value.typename.to_string(),
-            &self.typed_value.value)
+            &self.typed_value.value,
+        )
     }
 
     ///
@@ -25,7 +26,7 @@ impl Message {
     }
 
     ///
-    pub (crate) fn new(typed_value: TypedValue) -> Self {
+    pub(crate) fn new(typed_value: TypedValue) -> Self {
         Message { typed_value }
     }
 }

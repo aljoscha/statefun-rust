@@ -1,8 +1,6 @@
-use statefun::{
-    GetTypename, Serializable,
-};
-use crate::{EgressRecord, UserLogin, TotalVisitedUserIDs, MyUserProfile, UserProfile};
+use crate::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin, UserProfile};
 use protobuf::Message;
+use statefun::{GetTypename, Serializable};
 
 impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {

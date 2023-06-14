@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpec<T> {
-    pub (crate) spec: ValueSpecBase,
+    pub(crate) spec: ValueSpecBase,
     phantom: PhantomData<T>,
 }
 

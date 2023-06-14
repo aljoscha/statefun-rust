@@ -52,7 +52,7 @@ impl<'a> Context<'a> {
             Some(serialized) => {
                 match T::deserialize(typename, serialized) {
                     Ok(result) => Some(result),
-                    Err(_error) => None,  // todo: log error
+                    Err(_error) => None, // todo: log error
                 }
             }
             None => None,

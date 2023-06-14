@@ -1,7 +1,7 @@
 // use protobuf::parse_from_bytes;
+use crate::Serializable;
 use protobuf::Message;
 use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper, StringWrapper};
-use crate::Serializable;
 
 impl Serializable<bool> for bool {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {

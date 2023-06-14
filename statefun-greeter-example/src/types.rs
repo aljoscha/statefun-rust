@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use statefun_greeter_example_proto::example::UserProfile;
+use std::collections::HashSet;
 
 ///
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "UPPERCASE")]  // note: using uppercase in the HTTP request
+#[serde(rename_all = "UPPERCASE")] // note: using uppercase in the HTTP request
 pub enum LoginType {
     Web = 0,
     Mobile = 1,

@@ -1,14 +1,13 @@
-mod types;
-mod traits;
 mod specs;
+mod traits;
+mod types;
 use specs::*;
-use types::{EgressRecord, UserLogin, TotalVisitedUserIDs, MyUserProfile};
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType,
-    Message,
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message,
 };
+use types::{EgressRecord, MyUserProfile, TotalVisitedUserIDs, UserLogin};
 
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::SystemTime;
@@ -80,9 +79,15 @@ impl StatefulFunctions {
         };
 
         let mut effects = Effects::new();
-        effects.update_state(seen_count_spec(), &seen_count).unwrap();
-        effects.update_state(is_first_visit_spec(), &is_first_visit).unwrap();
-        effects.update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms).unwrap();
+        effects
+            .update_state(seen_count_spec(), &seen_count)
+            .unwrap();
+        effects
+            .update_state(is_first_visit_spec(), &is_first_visit)
+            .unwrap();
+        effects
+            .update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms)
+            .unwrap();
 
         // let state_user_login: Option<UserLogin> = context.get_state(user_login_spec());
         // let state_user_login = match state_user_login {
@@ -102,11 +107,13 @@ impl StatefulFunctions {
         profile.set_seen_count(seen_count);
         let profile = MyUserProfile(profile);
 
-        effects.send(
-            Address::new(greet_function(), &user_login.user_name.to_string()),
-            user_profile_type_spec(),
-            &profile,
-        ).unwrap();
+        effects
+            .send(
+                Address::new(greet_function(), &user_login.user_name.to_string()),
+                user_profile_type_spec(),
+                &profile,
+            )
+            .unwrap();
 
         effects
     }
@@ -129,11 +136,13 @@ impl StatefulFunctions {
             payload: greetings,
         };
 
-        effects.egress(
-            EgressIdentifier::new("io.statefun.playground", "egress"),
-            egress_record_type_spec(),
-            &egress_record,
-        ).unwrap();
+        effects
+            .egress(
+                EgressIdentifier::new("io.statefun.playground", "egress"),
+                egress_record_type_spec(),
+                &egress_record,
+            )
+            .unwrap();
 
         effects
     }
