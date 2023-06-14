@@ -131,119 +131,151 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use protobuf::well_known_types::StringValue;
+#[cfg(test)]
+mod tests {
+    use protobuf::well_known_types::StringValue;
+    // use crate::function_registry::HashMap;
+    use crate::FunctionRegistry;
+    use crate::*;
+    use std::collections::HashMap;
+    use protobuf::Message as ProtoMessage;
 
-//     use crate::FunctionRegistry;
-//     use crate::*;
+    fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
+        let mut res = TypedValue::new();
+        res.set_typename(typename);
+        res.set_has_value(true);
+        res.set_value(value);
+        res
+    }
 
-//     #[test]
-//     fn call_registered_function() -> anyhow::Result<()> {
-//         let state = HashMap::new();
-//         let address = address_foo().into_proto();
-//         let context = Context::new(&state, &address, &address);
+    #[test]
+    fn call_registered_function() -> anyhow::Result<()> {
+        let state = HashMap::new();
+        let address = address_foo().into_proto();
+        let context = Context::new(&state, &address, &address);
 
-//         let mut registry = FunctionRegistry::new();
-//         registry.register_fn(function_type_foo(), |_context, _message: StringValue| {
-//             Effects::new()
-//         });
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type_foo(), vec![], |_context, _message: Message| {
+            Effects::new()
+        });
 
-//         // todo: fixup with invoke
-//         let packed_argument = Any::pack(&StringValue::new())?;
-//         let _effects = registry.invoke(function_type_foo(), context, packed_argument)?;
+        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let _effects = registry.invoke(function_type_foo(), context, message)?;
 
-//         Ok(())
-//     }
+        Ok(())
+    }
 
-//     #[test]
-//     fn call_unknown_function() -> anyhow::Result<()> {
-//         let state = HashMap::new();
-//         let address = address_foo().into_proto();
-//         let context = Context::new(&state, &address, &address);
+    #[test]
+    fn call_unknown_function() -> anyhow::Result<()> {
+        let state = HashMap::new();
+        let address = address_foo().into_proto();
+        let context = Context::new(&state, &address, &address);
 
-//         let registry = FunctionRegistry::new();
+        let registry = FunctionRegistry::new();
+        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
 
-//         // todo: Fixup
-//         let packed_argument = Any::pack(&StringValue::new())?;
-//         let result = registry.invoke(function_type_bar(), context, packed_argument);
+        let result = registry.invoke(function_type_bar(), context, message);
+        assert!(result.is_err());
 
-//         assert!(result.is_err());
+        Ok(())
+    }
 
-//         Ok(())
-//     }
+    /// Have to wrap the struct to implement Serializable
+    pub struct MyStringValue(pub StringValue);
 
-//     #[test]
-//     fn call_correct_function() -> anyhow::Result<()> {
-//         let state = HashMap::new();
+    impl Serializable<MyStringValue> for MyStringValue {
+        fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
+            match self.0.write_to_bytes() {
+                Ok(result) => Ok(result),
+                Err(error) => Err(error.to_string()),
+            }
+        }
 
-//         let mut registry = FunctionRegistry::new();
-//         registry.register_fn(function_type_foo(), |context, _message: StringValue| {
-//             let mut effects = Effects::new();
+        fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyStringValue, String> {
+            match StringValue::parse_from_bytes(buffer) {
+                Ok(result) => Ok(MyStringValue(result)),
+                Err(error) => Err(error.to_string()),
+            }
+        }
+    }
 
-//             let mut message = StringValue::new();
-//             message.set_value("function_foo".to_owned());
-//             effects.send(context.self_address(), message);
+    impl GetTypename for MyStringValue {
+        ///
+        fn get_typename() -> &'static str {
+            "my-string-value/string-value"
+        }
+    }
 
-//             effects
-//         });
+    #[test]
+    fn call_correct_function() -> anyhow::Result<()> {
+        let state = HashMap::new();
 
-//         registry.register_fn(function_type_bar(), |context, _message: StringValue| {
-//             let mut effects = Effects::new();
+        let mut registry = FunctionRegistry::new();
 
-//             let mut message = StringValue::new();
-//             message.set_value("function_bar".to_owned());
-//             effects.send(context.self_address(), message);
 
-//             effects
-//         });
 
-//         let address_foo = address_foo().into_proto();
-//         let context = Context::new(&state, &address_foo, &address_foo);
-//         // todo: fixup
-//         let packed_argument = Any::pack(&StringValue::new())?;
-//         let effects_foo = registry.invoke(function_type_foo(), context, packed_argument)?;
-//         assert_eq!(
-//             effects_foo.invocations[0]
-//                 .1
-//                 .unpack::<StringValue>()
-//                 .unwrap()
-//                 .unwrap()
-//                 .get_value(),
-//             "function_foo",
-//         );
+        registry.register_fn(function_type_foo(), vec![], |context, _message: Message| {
+            let mut effects = Effects::new();
 
-//         let address_bar = address_bar().into_proto();
-//         let context = Context::new(&state, &address_bar, &address_bar);
-//         // todo: fixup
-//         let packed_argument = Any::pack(&StringValue::new())?;
-//         let effects_bar = registry.invoke(function_type_bar(), context, packed_argument)?;
-//         assert_eq!(
-//             effects_bar.invocations[0]
-//                 .1
-//                 .unpack::<StringValue>()
-//                 .unwrap()
-//                 .unwrap()
-//                 .get_value(),
-//             "function_bar",
-//         );
+            let string_spec = TypeSpec::<MyStringValue>::new();
+            let mut message = StringValue::new();
+            message.set_value("function_foo".to_owned());
+            let message = MyStringValue(message);
+            effects.send(context.self_address(), string_spec, &message).unwrap();
 
-//         Ok(())
-//     }
+            effects
+        });
 
-//     fn function_type_foo() -> FunctionType {
-//         FunctionType::new("namespace", "foo")
-//     }
+        registry.register_fn(function_type_bar(), vec![], |context, _message: Message| {
+            let mut effects = Effects::new();
 
-//     fn function_type_bar() -> FunctionType {
-//         FunctionType::new("namespace", "bar")
-//     }
+            let string_spec = TypeSpec::<MyStringValue>::new();
+            let mut message = StringValue::new();
+            message.set_value("function_bar".to_owned());
+            let message = MyStringValue(message);
+            effects.send(context.self_address(), string_spec, &message).unwrap();
 
-//     fn address_foo() -> Address {
-//         Address::new(function_type_foo(), "doctor")
-//     }
+            effects
+        });
 
-//     fn address_bar() -> Address {
-//         Address::new(function_type_bar(), "doctor")
-//     }
-// }
+        let address_foo = address_foo().into_proto();
+        let context = Context::new(&state, &address_foo, &address_foo);
+        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let effects_foo = registry.invoke(function_type_foo(), context, message)?;
+        assert_eq!(
+                MyStringValue::deserialize("some-type".to_string(),
+                                           &effects_foo.invocations[0].2)
+                    .unwrap().0.value,
+            "function_foo",
+        );
+
+        let address_bar = address_bar().into_proto();
+        let context = Context::new(&state, &address_bar, &address_bar);
+        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let effects_bar = registry.invoke(function_type_bar(), context, message)?;
+        assert_eq!(
+                MyStringValue::deserialize("some-type".to_string(),
+                                           &effects_bar.invocations[0].2)
+                    .unwrap().0.value,
+            "function_bar",
+        );
+
+        Ok(())
+    }
+
+    fn function_type_foo() -> FunctionType {
+        FunctionType::new("namespace", "foo")
+    }
+
+    fn function_type_bar() -> FunctionType {
+        FunctionType::new("namespace", "bar")
+    }
+
+    fn address_foo() -> Address {
+        Address::new(function_type_foo(), "doctor")
+    }
+
+    fn address_bar() -> Address {
+        Address::new(function_type_bar(), "doctor")
+    }
+}
