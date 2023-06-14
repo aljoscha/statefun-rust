@@ -1,31 +1,4 @@
 //! Provides [KafkaEgress](crate::io::kafka::KafkaEgress) for sending egress messages to Kafka.
-//!
-//! To use this, import the `KafkaEgress` trait and then use
-//! [`kafka_egress()`](crate::io::kafka::KafkaEgress::kafka_egress) or
-//! [`kafka_keyed_egress()`](crate::io::kafka::KafkaEgress::kafka_keyed_egress) on an
-//! [Effects](crate::Effects) to send messages to Kafka.
-//!
-//! # Examples
-//!
-//! ```
-//! use protobuf::well_known_types::StringValue;
-//!
-//! use statefun::io::kafka::KafkaEgress;
-//! use statefun::{Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType};
-//!
-//! pub fn relay_to_kafka(_context: Context, message: StringValue) -> Effects {
-//!     let mut effects = Effects::new();
-//!
-//!     effects.kafka_keyed_egress(
-//!         EgressIdentifier::new("example", "greets"),
-//!         "greeting",
-//!         "the key",
-//!         message,
-//!     );
-//!
-//!     effects
-//! }
-//! ```
 
 use protobuf::Message;
 
