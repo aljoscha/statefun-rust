@@ -80,10 +80,21 @@ impl StatefulFunctions {
             None => (),
         };
 
+        log::info!("User login: {:?}. Seen user {:?} times. Is this the first visit: {:?}. Timestamp of last visit: {:?}.",
+            &user_login, &seen_count, &is_first_visit, &current_time);
+
         let mut effects = Effects::new();
-        effects
-            .update_state(seen_count_spec(), &seen_count)
-            .unwrap();
+
+        // delete the profile every 3 visits
+        if seen_count >= 3 {
+            effects
+                .delete_state(seen_count_spec());
+        } else {
+            effects
+                .update_state(seen_count_spec(), &seen_count)
+                .unwrap();
+        }
+
         effects
             .update_state(is_first_visit_spec(), &is_first_visit)
             .unwrap();
