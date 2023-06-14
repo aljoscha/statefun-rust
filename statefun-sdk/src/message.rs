@@ -7,11 +7,8 @@ pub struct Message {
 }
 
 impl Message {
-    // todo: implement has which doesn't take a parameter
-
     ///
     pub fn get<T: Serializable<T>>(&self) -> Option<T> {
-        // todo: make deserializer return Option
         match T::deserialize(
             self.typed_value.typename.to_string(),
             &self.typed_value.value,
