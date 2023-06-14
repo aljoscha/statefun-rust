@@ -134,7 +134,7 @@ impl StatefulFunctions {
         effects
     }
 
-    pub fn create_greetings_message(profile: UserProfile) -> String {
+    fn create_greetings_message(profile: UserProfile) -> String {
         let greetings_template = ["Welcome", "Nice to see you again", "Third time is a charm"];
 
         let seen_count = profile.get_seen_count() as usize;
