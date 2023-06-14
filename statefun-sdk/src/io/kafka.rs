@@ -84,17 +84,16 @@ impl KafkaEgress for Effects {
         value: &T,
     ) -> Result<(), String> {
         let mut kafka_record = egress_record(topic, type_spec, value)?;
-
-        // todo: what do we set this as? see Java SDK
-        let type_spec: TypeSpec<KafkaProducerRecord> = TypeSpec::<KafkaProducerRecord>::new();
-
         kafka_record.set_key(key.to_owned());
+
+        let type_spec: TypeSpec<KafkaProducerRecord> = TypeSpec::<KafkaProducerRecord>::new();
         self.egress(identifier, type_spec, &kafka_record)
     }
 }
 
 impl GetTypename for KafkaProducerRecord {
     fn get_typename() -> &'static str {
+        // todo: what do we set this as? see Java SDK
         "kafka/user-profile"
     }
 }
