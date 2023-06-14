@@ -1,4 +1,3 @@
-// use protobuf::parse_from_bytes;
 use crate::Serializable;
 use protobuf::Message;
 use statefun_proto::types::{
