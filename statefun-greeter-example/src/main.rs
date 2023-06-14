@@ -100,7 +100,10 @@ impl StatefulFunctions {
 
         effects
             .send(
-                Address::new(Self::greet_function_type(), &user_login.user_name.to_string()),
+                Address::new(
+                    Self::greet_function_type(),
+                    &user_login.user_name.to_string(),
+                ),
                 user_profile_type_spec(),
                 &profile,
             )
