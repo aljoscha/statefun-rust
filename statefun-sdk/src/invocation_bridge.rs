@@ -54,7 +54,6 @@ impl InvocationBridge for FunctionRegistry {
             let argument = Message::new(invocation.take_argument());
             let context = Context::new(&persisted_values, &self_address, &caller_address);
 
-            // this passes in TypedValue
             let effects = match self.invoke(context.self_address().function_type, context, argument)
             {
                 Ok(effects) => effects,
