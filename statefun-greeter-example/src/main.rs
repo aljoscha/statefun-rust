@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use std::collections::HashSet;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
@@ -23,8 +24,8 @@ fn last_seen_timestamp_spec() -> ValueSpec<i64> {
     ValueSpec::<i64>::new("last_seen_timestamp")
 }
 
-fn user_login_spec() -> ValueSpec<UserLogin> {
-    ValueSpec::<UserLogin>::new("user_login")
+fn total_visited_user_ids_spec() -> ValueSpec<TotalVisitedUserIDs> {
+    ValueSpec::<TotalVisitedUserIDs>::new("total_visited_user_ids")
 }
 
 impl GetTypename for UserLogin {
@@ -57,7 +58,7 @@ impl StatefulFunctions {
                 seen_count_spec().into(),
                 is_first_visit_spec().into(),
                 last_seen_timestamp_spec().into(),
-                user_login_spec().into(),
+                // user_login_spec().into(),
             ],
             StatefulFunctions::user,
         );
@@ -70,9 +71,13 @@ impl StatefulFunctions {
     }
 
     pub fn user(context: Context, message: Message) -> Effects {
+        if !message.is(&user_login_type_spec()) {
+            panic!("Unexpected message type: {:?}", message.get_typed_value());
+        }
+
         let user_login = match message.get::<UserLogin>() {
-            Some(user_login) => user_login,
-            None => return Effects::new(),
+            Ok(user_login) => user_login,
+            Err(error) => panic!("Could not receive UserLogin: {:?}", error),
         };
 
         log::info!("We should update user count {:?}", &user_login.user_name);
@@ -101,26 +106,26 @@ impl StatefulFunctions {
         effects.update_state(is_first_visit_spec(), &is_first_visit).unwrap();
         effects.update_state(last_seen_timestamp_spec(), &last_seen_timestamp_ms).unwrap();
 
-        let state_user_login: Option<UserLogin> = context.get_state(user_login_spec());
-        let state_user_login = match state_user_login {
-            Some(existing_login) => existing_login,
-            None => user_login,
-        };
+        // let state_user_login: Option<UserLogin> = context.get_state(user_login_spec());
+        // let state_user_login = match state_user_login {
+        //     Some(existing_login) => existing_login,
+        //     None => user_login,
+        // };
 
-        log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
-            &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
+        // log::info!("Seen user {:?} this many times: {:?}. Is this the first visit: {:?}. Timestamp of last visit: {:?}. User login: {:?}",
+        //     &state_user_login.user_name, &seen_count, &is_first_visit,  &last_seen_timestamp_ms, &state_user_login);
 
-        effects.update_state(user_login_spec(), &state_user_login).unwrap();
+        // effects.update_state(user_login_spec(), &state_user_login).unwrap();
 
         let mut profile = UserProfile::new();
-        profile.set_name(state_user_login.user_name.to_string());
+        profile.set_name(user_login.user_name.to_string());
         profile.set_last_seen_delta_ms(last_seen_timestamp_ms);
-        profile.set_login_location(format!("{:?}", state_user_login.login_type));
+        profile.set_login_location(format!("{:?}", user_login.login_type));
         profile.set_seen_count(seen_count);
         let profile = MyUserProfile(profile);
 
         effects.send(
-            Address::new(greet_function(), &state_user_login.user_name.to_string()),
+            Address::new(greet_function(), &user_login.user_name.to_string()),
             user_profile_type_spec(),
             &profile,
         ).unwrap();
@@ -132,8 +137,8 @@ impl StatefulFunctions {
         log::info!("--drey called greet: Received {:?}", &message);
 
         let user_profile: UserProfile = match message.get::<MyUserProfile>() {
-            Some(user_profile) => user_profile.0,
-            None => return Effects::new(), // todo: log
+            Ok(user_profile) => user_profile.0,
+            Err(error) => panic!("Could not receive MyUserProfile: {:?}", error),
         };
 
         log::info!("We should greet {:?}", user_profile.get_name());
@@ -201,8 +206,20 @@ struct UserLogin {
     login_type: LoginType,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct TotalVisitedUserIDs {
+    visited_user_ids: HashSet<String>,
+}
+
+impl GetTypename for TotalVisitedUserIDs {
+    ///
+    fn get_typename() -> &'static str {
+        "my-user-type/total-visited-ids"
+    }
+}
+
 // actual routines called by statefun SDK
-impl Serializable<UserLogin> for UserLogin {
+impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
             Ok(result) => Ok(result),
@@ -210,6 +227,23 @@ impl Serializable<UserLogin> for UserLogin {
                 // todo: log the error
                 Err(error.to_string())
             },
+        }
+    }
+
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<TotalVisitedUserIDs, String> {
+        match serde_json::from_slice::<TotalVisitedUserIDs>(buffer) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+}
+
+// actual routines called by statefun SDK
+impl Serializable<UserLogin> for UserLogin {
+    fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
+        match serde_json::to_vec(self) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(error.to_string()),
         }
     }
 
@@ -274,6 +308,10 @@ impl Serializable<EgressRecord> for EgressRecord {
 
 fn user_profile_type_spec() -> TypeSpec<MyUserProfile> {
     TypeSpec::<MyUserProfile>::new()
+}
+
+fn user_login_type_spec() -> TypeSpec<UserLogin> {
+    TypeSpec::<UserLogin>::new()
 }
 
 impl GetTypename for MyUserProfile {
