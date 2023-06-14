@@ -144,7 +144,9 @@ fn parse_persisted_values(
             ValueSpecBase::new(
                 persisted_value.get_state_name(),
                 persisted_value.get_state_value().get_typename(),
-                Expiration::never(),  // note: we likely don't care about this here, can be empty
+                Expiration::never(),  // note: Flink never gives this info back to us,
+                                      // so we have to be careful to omit it when doing
+                                      // lookups later in the Context
             ),
             persisted_value.get_state_value().get_value().to_vec(),
         );
