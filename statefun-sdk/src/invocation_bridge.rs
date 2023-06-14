@@ -91,6 +91,10 @@ impl InvocationBridge for FunctionRegistry {
                 &mut invocation_response,
                 effects.delayed_invocations,
             );
+            serialize_cancelled_delayed_messages(
+                &mut invocation_response,
+                effects.cancelled_delayed_invocations,
+            );
             serialize_egress_messages(&mut invocation_response, effects.egress_messages);
             update_state(
                 &mut persisted_values,
@@ -172,15 +176,29 @@ fn serialize_invocation_messages(
 
 fn serialize_delayed_invocation_messages(
     invocation_response: &mut FromFunction_InvocationResponse,
-    delayed_invocation_messages: Vec<DelayedInvocation>,
+    delayed_invocations: Vec<DelayedInvocation>,
 ) {
-    for invocation_message in delayed_invocation_messages {
+    for invocation_message in delayed_invocations {
         let mut proto_invocation_message = FromFunction_DelayedInvocation::new();
         proto_invocation_message.set_target(invocation_message.address.into_proto());
         proto_invocation_message.set_delay_in_ms(invocation_message.delay.as_millis() as i64);
         proto_invocation_message.set_cancellation_token(invocation_message.cancellation_token);
         let typed_value = to_typed_value(invocation_message.typename, invocation_message.bytes);
         proto_invocation_message.set_argument(typed_value);
+        invocation_response
+            .delayed_invocations
+            .push(proto_invocation_message);
+    }
+}
+
+fn serialize_cancelled_delayed_messages(
+    invocation_response: &mut FromFunction_InvocationResponse,
+    cancelled_delayed_invocations: Vec<String>,
+) {
+    for cancel_invocation_tokens in cancelled_delayed_invocations {
+        let mut proto_invocation_message = FromFunction_DelayedInvocation::new();
+        proto_invocation_message.set_is_cancellation_request(true);
+        proto_invocation_message.set_cancellation_token(cancel_invocation_tokens);
         invocation_response
             .delayed_invocations
             .push(proto_invocation_message);

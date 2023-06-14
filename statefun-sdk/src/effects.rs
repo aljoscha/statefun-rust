@@ -17,6 +17,7 @@ use std::time::Duration;
 pub struct Effects {
     pub(crate) invocations: Vec<(Address, String, Vec<u8>)>,
     pub(crate) delayed_invocations: Vec<DelayedInvocation>,
+    pub(crate) cancelled_delayed_invocations: Vec<String>,
     pub(crate) egress_messages: Vec<(EgressIdentifier, String, Vec<u8>)>,
     pub(crate) state_updates: Vec<StateUpdate>,
 }
@@ -27,6 +28,7 @@ impl Effects {
         Effects {
             invocations: Vec::new(),
             delayed_invocations: Vec::new(),
+            cancelled_delayed_invocations: Vec::new(),
             egress_messages: Vec::new(),
             state_updates: Vec::new(),
         }
@@ -45,7 +47,7 @@ impl Effects {
             .push((address, type_name.typename.to_string(), serialized)))
     }
 
-    /// Sends a message to the stateful function identified by the address after a delay.
+    /// Sends a delayed message to the stateful function identified by the address after a delay.
     pub fn send_after<T: Serializable<T>>(
         &mut self,
         address: Address,
@@ -62,6 +64,12 @@ impl Effects {
             type_name.typename.to_string(),
             serialized,
         )))
+    }
+
+    /// Cancels a message previously sent via send_after. Note that the message might have already
+    /// been delivered, leading to a no-op operation.
+    pub fn cancel_delayed_message(&mut self, cancellation_token: String) {
+        self.cancelled_delayed_invocations.push(cancellation_token);
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.

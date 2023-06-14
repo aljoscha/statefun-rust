@@ -118,6 +118,10 @@ impl StatefulFunctions {
             effects
                 .update_state(is_first_visit_spec(), &is_first_visit)
                 .unwrap();
+
+
+            // cancel any pending message
+            effects.cancel_delayed_message("cancel-token".to_string());
         }
 
         effects
