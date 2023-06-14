@@ -19,7 +19,7 @@ use statefun_proto::request_reply::ToFunction_PersistedValue;
 use statefun_proto::request_reply::TypedValue;
 
 use crate::function_registry::FunctionRegistry;
-use crate::{Address, Context, Message, DelayedInvocation, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
+use crate::{Address, Context, Expiration, ExpirationType, Message, DelayedInvocation, EgressIdentifier, InvocationError, StateUpdate, ValueSpecBase};
 
 /// An invokable that takes protobuf `ToFunction` as argument and returns a protobuf `FromFunction`.
 pub trait InvocationBridge {
@@ -64,14 +64,27 @@ impl InvocationBridge for FunctionRegistry {
 
                         for value_spec in state_collection.states.iter() {
                             let mut expiration_spec = FromFunction_ExpirationSpec::new();
-                            expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
-                            expiration_spec.expire_after_millis = 0;
+
+                            match &value_spec.expiration.expiration_type {
+                                Some(expiration_type) => {
+                                    expiration_spec.mode = match expiration_type {
+                                        ExpirationType::AfterInvoke => FromFunction_ExpirationSpec_ExpireMode::AFTER_INVOKE,
+                                        ExpirationType::AfterWrite => FromFunction_ExpirationSpec_ExpireMode::AFTER_WRITE,
+                                    };
+
+                                    expiration_spec.expire_after_millis = value_spec.expiration.time_to_live.as_millis() as i64;
+                                }
+                                None => {
+                                    expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
+                                    expiration_spec.expire_after_millis = 0;
+                                }
+                            }
 
                             let mut persisted_value_spec = FromFunction_PersistedValueSpec::new();
-                            persisted_value_spec.state_name = value_spec.name.clone();
                             persisted_value_spec.expiration_spec =
-                                SingularPtrField::some(expiration_spec); // todo: this is always serialized as null
-                                                                         // todo: this should be figured out at runtime
+                                SingularPtrField::some(expiration_spec);
+
+                            persisted_value_spec.state_name = value_spec.name.clone();
                             persisted_value_spec.type_typename = value_spec.typename.clone();
 
                             incomplete_context.missing_values.push(persisted_value_spec);
@@ -130,6 +143,7 @@ fn parse_persisted_values(
             ValueSpecBase::new(
                 persisted_value.get_state_name(),
                 persisted_value.get_state_value().get_typename(),
+                Expiration::never(),  // note: we likely don't care about this here, can be empty
             ),
             persisted_value.get_state_value().get_value().to_vec(),
         );

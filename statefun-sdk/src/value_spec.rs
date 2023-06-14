@@ -1,8 +1,9 @@
-use crate::{GetTypename, Serializable, ValueSpecBase};
+use crate::{GetTypename, Serializable, Expiration, ValueSpecBase};
 use std::marker::PhantomData;
 
 ///
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+// #[derive(Debug, Hash, Eq, PartialEq, Clone)]
+// #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpec<T> {
     pub(crate) spec: ValueSpecBase,
     phantom: PhantomData<T>,
@@ -10,9 +11,9 @@ pub struct ValueSpec<T> {
 
 impl<T: Serializable<T> + GetTypename> ValueSpec<T> {
     ///
-    pub fn new(name: &'static str) -> ValueSpec<T> {
+    pub fn new(name: &'static str, expiration: Expiration) -> ValueSpec<T> {
         ValueSpec {
-            spec: ValueSpecBase::new(name, T::get_typename()),
+            spec: ValueSpecBase::new(name, T::get_typename(), expiration),
             phantom: PhantomData,
         }
     }

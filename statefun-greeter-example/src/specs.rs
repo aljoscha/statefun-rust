@@ -1,16 +1,16 @@
 use crate::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
-use statefun::{TypeSpec, ValueSpec};
+use statefun::{TypeSpec, ValueSpec, Expiration};
 
 pub fn seen_count_spec() -> ValueSpec<i32> {
-    ValueSpec::<i32>::new("seen_count")
+    ValueSpec::<i32>::new("seen_count", Expiration::never())
 }
 
 pub fn is_first_visit_spec() -> ValueSpec<bool> {
-    ValueSpec::<bool>::new("is_first_visit")
+    ValueSpec::<bool>::new("is_first_visit", Expiration::never())
 }
 
 pub fn last_seen_timestamp_spec() -> ValueSpec<i64> {
-    ValueSpec::<i64>::new("last_seen_timestamp")
+    ValueSpec::<i64>::new("last_seen_timestamp", Expiration::never())
 }
 
 pub fn delayed_message_type_spec() -> TypeSpec<DelayedMessage> {

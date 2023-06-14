@@ -101,6 +101,10 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
         //
         // - Therefore we cannot check the typename consistently as it's only ever set after the
         //   first time we write to the state.
+        //
+        // See also:
+        //   - https://issues.apache.org/jira/browse/FLINK-20265
+        //   - https://github.com/apache/flink-statefun/pull/177
 
         for value_spec in self.value_specs.iter() {
             let mut found: bool = false;
