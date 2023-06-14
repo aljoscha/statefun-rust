@@ -221,6 +221,7 @@ where
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::DELETE);
                 invocation_response.state_mutations.push(proto_state_update);
             }
+
             StateUpdate::Update(value_spec, state) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(value_spec.name);

@@ -28,7 +28,6 @@ impl Serializable<i32> for i32 {
         let mut wrapped = IntWrapper::new();
         wrapped.set_value(*self);
         let res = wrapped.write_to_bytes().unwrap();
-
         Ok(res)
     }
 
@@ -93,7 +92,6 @@ impl Serializable<String> for String {
         let mut wrapped = StringWrapper::new();
         wrapped.set_value(self.clone());
         let res = wrapped.write_to_bytes().unwrap();
-
         Ok(res)
     }
 
