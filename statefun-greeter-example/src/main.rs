@@ -159,7 +159,7 @@ impl StatefulFunctions {
         if seen_count <= greetings_template.len() {
             format!(
                 "{:?} {:?}.",
-                greetings_template[seen_count],
+                greetings_template[seen_count % (greetings_template.len() - 1)],
                 profile.get_name()
             )
         } else {
