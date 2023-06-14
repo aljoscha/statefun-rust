@@ -33,14 +33,14 @@ impl Effects {
 
     /// Sends a message to the stateful function identified by the address.
     // todo: check if this needs to be valuespec in the java sdk
-    pub fn send<T: Serializable>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) -> Result<(), String> {
+    pub fn send<T: Serializable<T>>(&mut self, address: Address, type_name: TypeSpec<T>, value: &T) -> Result<(), String> {
         let serialized = value.serialize(type_name.typename.to_string())?;
         Ok(self.invocations
             .push((address, type_name.typename.to_string(), serialized)))
     }
 
     /// Sends a message to the stateful function identified by the address after a delay.
-    pub fn send_after<T: Serializable>(
+    pub fn send_after<T: Serializable<T>>(
         &mut self,
         address: Address,
         delay: Duration,
@@ -54,7 +54,7 @@ impl Effects {
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
     // todo: constrain it with Serializable
-    pub fn egress<T: Serializable>(
+    pub fn egress<T: Serializable<T>>(
         &mut self,
         identifier: EgressIdentifier,
         type_name: TypeSpec<T>,
@@ -66,13 +66,13 @@ impl Effects {
     }
 
     /// Deletes the state kept under the given name.
-    pub fn delete_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>) {
+    pub fn delete_state<T: Serializable<T>>(&mut self, value_spec: ValueSpec<T>) {
         self.state_updates
             .push(StateUpdate::Delete(value_spec.into()));
     }
 
     /// Updates the state stored under the given name to the given value.
-    pub fn update_state<T: Serializable>(&mut self, value_spec: ValueSpec<T>, value: &T) -> Result<(), String> {
+    pub fn update_state<T: Serializable<T>>(&mut self, value_spec: ValueSpec<T>, value: &T) -> Result<(), String> {
         let serialized = value.serialize(value_spec.spec.typename.to_string())?;
         log::debug!("-- drey: updated state: {:?}", serialized);
         Ok(self.state_updates

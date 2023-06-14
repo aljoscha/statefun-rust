@@ -202,7 +202,7 @@ struct UserLogin {
 }
 
 // actual routines called by statefun SDK
-impl Serializable for UserLogin {
+impl Serializable<UserLogin> for UserLogin {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
             Ok(result) => Ok(result),
@@ -213,17 +213,18 @@ impl Serializable for UserLogin {
         }
     }
 
-    // todo: this needs to be caught
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> UserLogin {
-        let login: UserLogin = serde_json::from_slice(buffer).unwrap();
-        login
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<UserLogin, String> {
+        match serde_json::from_slice::<UserLogin>(buffer) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(error.to_string()),
+        }
     }
 }
 
 // Have to wrap the struct to implement Serializable
 struct MyUserProfile(UserProfile);
 
-impl Serializable for MyUserProfile {
+impl Serializable<MyUserProfile> for MyUserProfile {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match self.0.write_to_bytes() {
             Ok(result) => Ok(result),
@@ -234,9 +235,11 @@ impl Serializable for MyUserProfile {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> MyUserProfile {
-        let user_profile: UserProfile = UserProfile::parse_from_bytes(buffer).unwrap();
-        MyUserProfile(user_profile)
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyUserProfile, String> {
+        match UserProfile::parse_from_bytes(buffer) {
+            Ok(result) => Ok(MyUserProfile(result)),
+            Err(error) => Err(error.to_string()),
+        }
     }
 }
 
@@ -250,7 +253,7 @@ struct EgressRecord {
     payload: String,
 }
 
-impl Serializable for EgressRecord {
+impl Serializable<EgressRecord> for EgressRecord {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
             Ok(result) => Ok(result),
@@ -261,9 +264,11 @@ impl Serializable for EgressRecord {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> EgressRecord {
-        let egress: EgressRecord = serde_json::from_slice(buffer).unwrap();
-        egress
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<EgressRecord, String> {
+        match serde_json::from_slice::<EgressRecord>(buffer) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(error.to_string()),
+        }
     }
 }
 

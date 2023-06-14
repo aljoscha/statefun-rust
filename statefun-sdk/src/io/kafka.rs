@@ -37,7 +37,7 @@ use crate::{Effects, EgressIdentifier, GetTypename, Serializable, TypeSpec};
 pub trait KafkaEgress {
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
-    fn kafka_egress<T: Serializable>(
+    fn kafka_egress<T: Serializable<T>>(
         &mut self,
         type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
@@ -49,7 +49,7 @@ pub trait KafkaEgress {
     /// `EgressIdentifier`.
     ///
     /// This will set the given key on the message sent to record.
-    fn kafka_keyed_egress<T: Serializable>(
+    fn kafka_keyed_egress<T: Serializable<T>>(
         &mut self,
         type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
@@ -60,7 +60,7 @@ pub trait KafkaEgress {
 }
 
 impl KafkaEgress for Effects {
-    fn kafka_egress<T: Serializable>(
+    fn kafka_egress<T: Serializable<T>>(
         &mut self,
         type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
@@ -75,7 +75,7 @@ impl KafkaEgress for Effects {
         self.egress(identifier, type_spec, &kafka_record)
     }
 
-    fn kafka_keyed_egress<T: Serializable>(
+    fn kafka_keyed_egress<T: Serializable<T>>(
         &mut self,
         type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
@@ -99,7 +99,7 @@ impl GetTypename for KafkaProducerRecord {
     }
 }
 
-impl Serializable for KafkaProducerRecord {
+impl Serializable<KafkaProducerRecord> for KafkaProducerRecord {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match self.write_to_bytes() {
             Ok(result) => Ok(result),
@@ -107,13 +107,15 @@ impl Serializable for KafkaProducerRecord {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> KafkaProducerRecord {
-        let result: KafkaProducerRecord = KafkaProducerRecord::parse_from_bytes(buffer).unwrap();
-        result
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<KafkaProducerRecord, String> {
+        match KafkaProducerRecord::parse_from_bytes(buffer) {
+            Ok(result) => Ok(result),
+            Err(result) => Err(result.to_string()),
+        }
     }
 }
 
-fn egress_record<T: Serializable>(
+fn egress_record<T: Serializable<T>>(
     topic: &str,
     type_spec: TypeSpec<T>,
     value: &T,

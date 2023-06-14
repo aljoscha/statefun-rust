@@ -7,17 +7,22 @@ pub struct Message {
 }
 
 impl Message {
+    // todo: implement has which doesn't take a parameter
+
     ///
-    pub fn get<T: Serializable>(&self) -> Option<T> {
+    pub fn get<T: Serializable<T>>(&self) -> Option<T> {
         // todo: make deserializer return Option
-        Some(T::deserialize(
+        match T::deserialize(
             self.typed_value.typename.to_string(),
             &self.typed_value.value,
-        ))
+        ) {
+            Ok(result) => Some(result),
+            Err(_error) => None,  // todo: log errors
+        }
     }
 
     ///
-    pub fn new(typed_value: TypedValue) -> Self {
+    pub (crate) fn new(typed_value: TypedValue) -> Self {
         Message { typed_value }
     }
 }

@@ -8,7 +8,7 @@ pub struct ValueSpec<T> {
     phantom: PhantomData<T>,
 }
 
-impl<T: Serializable + GetTypename> ValueSpec<T> {
+impl<T: Serializable<T> + GetTypename> ValueSpec<T> {
     ///
     pub fn new(name: &'static str) -> ValueSpec<T> {
         ValueSpec {

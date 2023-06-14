@@ -2,7 +2,6 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use protobuf::ProtobufError;
 use protobuf::SingularPtrField;
 
 use statefun_proto::request_reply::FromFunction;
@@ -212,7 +211,7 @@ fn serialize_egress_messages(
 fn serialize_state_updates<T>(
     invocation_response: &mut FromFunction_InvocationResponse,
     state_updates: T,
-) -> Result<(), ProtobufError>
+) -> Result<(), InvocationError>
 where
     T: IntoIterator<Item = StateUpdate>,
 {

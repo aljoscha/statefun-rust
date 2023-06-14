@@ -3,15 +3,15 @@ use protobuf::Message;
 use statefun_proto::types::{BooleanWrapper, IntWrapper, LongWrapper, StringWrapper};
 
 ///
-pub trait Serializable {
+pub trait Serializable<T> {
     ///
     fn serialize(&self, typename: String) -> Result<Vec<u8>, String>;
 
     ///
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Self;
+    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<T, String>;
 }
 
-impl Serializable for bool {
+impl Serializable<bool> for bool {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = BooleanWrapper::new();
         wrapped.set_value(*self);
@@ -21,13 +21,15 @@ impl Serializable for bool {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> bool {
-        let wrapped = BooleanWrapper::parse_from_bytes(buffer).unwrap();
-        wrapped.get_value()
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<bool, String> {
+        match BooleanWrapper::parse_from_bytes(buffer) {
+            Ok(result) => Ok(result.get_value()),
+            Err(result) => Err(result.to_string()),
+        }
     }
 }
 
-impl Serializable for i32 {
+impl Serializable<i32> for i32 {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = IntWrapper::new();
         log::debug!("-- drey: i32 serializing {:?}", self);
@@ -39,13 +41,15 @@ impl Serializable for i32 {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> i32 {
-        let wrapped = IntWrapper::parse_from_bytes(buffer).unwrap();
-        wrapped.get_value()
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<i32, String> {
+        match IntWrapper::parse_from_bytes(buffer) {
+            Ok(result) => Ok(result.get_value()),
+            Err(result) => Err(result.to_string()),
+        }
     }
 }
 
-impl Serializable for i64 {
+impl Serializable<i64> for i64 {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = LongWrapper::new();
         log::debug!("-- drey: i64 serializing {:?}", self);
@@ -57,13 +61,15 @@ impl Serializable for i64 {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> i64 {
-        let wrapped = LongWrapper::parse_from_bytes(buffer).unwrap();
-        wrapped.get_value()
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<i64, String> {
+        match LongWrapper::parse_from_bytes(buffer) {
+            Ok(result) => Ok(result.get_value()),
+            Err(result) => Err(result.to_string()),
+        }
     }
 }
 
-impl Serializable for String {
+impl Serializable<String> for String {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         let mut wrapped = StringWrapper::new();
         log::debug!("-- drey: String serializing {:?}", self);
@@ -75,8 +81,10 @@ impl Serializable for String {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> String {
-        let wrapped = StringWrapper::parse_from_bytes(buffer).unwrap();
-        wrapped.get_value().to_string()
+    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<String, String> {
+        match StringWrapper::parse_from_bytes(buffer) {
+            Ok(result) => Ok(result.get_value().to_string()),
+            Err(result) => Err(result.to_string()),
+        }
     }
 }

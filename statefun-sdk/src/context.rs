@@ -45,13 +45,15 @@ impl<'a> Context<'a> {
 
     /// Returns the state (or persisted) value that previous invocations of this stateful function
     /// might have persisted under the given name.
-    pub fn get_state<T: Serializable>(&self, value_spec: ValueSpec<T>) -> Option<T> {
+    pub fn get_state<T: Serializable<T>>(&self, value_spec: ValueSpec<T>) -> Option<T> {
         let typename = value_spec.spec.typename.to_string();
         let state = self.state.get(&value_spec.into());
         match state {
             Some(serialized) => {
-                let deserialized: T = T::deserialize(typename, serialized);
-                Some(deserialized)
+                match T::deserialize(typename, serialized) {
+                    Ok(result) => Some(result),
+                    Err(_error) => None,  // todo: log error
+                }
             }
             None => None,
         }

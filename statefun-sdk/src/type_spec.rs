@@ -56,7 +56,7 @@ pub struct TypeSpec<T> {
     phantom: PhantomData<T>,
 }
 
-impl<T: Serializable + GetTypename> TypeSpec<T> {
+impl<T: Serializable<T> + GetTypename> TypeSpec<T> {
     ///
     pub fn new() -> TypeSpec<T> {
         TypeSpec {
