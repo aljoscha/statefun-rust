@@ -1,4 +1,4 @@
-use crate::{Serializable, TypedValue};
+use crate::{Serializable, TypedValue, TypeSpec};
 
 /// todo: rename this
 #[derive(Debug)]
@@ -8,14 +8,20 @@ pub struct Message {
 
 impl Message {
     ///
-    pub fn get<T: Serializable<T>>(&self) -> Option<T> {
-        match T::deserialize(
+    pub fn is<T>(&self, typed_spec: &TypeSpec<T>) -> bool {
+        self.typed_value.typename.eq(typed_spec.typename)
+    }
+
+    ///
+    pub fn get<T: Serializable<T>>(&self) -> Result<T, String> {
+        T::deserialize(
             self.typed_value.typename.to_string(),
-            &self.typed_value.value,
-        ) {
-            Ok(result) => Some(result),
-            Err(_error) => None,  // todo: log errors
-        }
+            &self.typed_value.value)
+    }
+
+    ///
+    pub fn get_typed_value(&self) -> TypedValue {
+        self.typed_value.clone()
     }
 
     ///
