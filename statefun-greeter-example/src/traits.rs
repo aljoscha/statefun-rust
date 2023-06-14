@@ -4,15 +4,11 @@ use statefun::{
 use crate::{EgressRecord, UserLogin, TotalVisitedUserIDs, MyUserProfile, UserProfile};
 use protobuf::Message;
 
-// actual routines called by statefun SDK
 impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
             Ok(result) => Ok(result),
-            Err(error) => {
-                // todo: log the error
-                Err(error.to_string())
-            },
+            Err(error) => Err(error.to_string()),
         }
     }
 
@@ -24,7 +20,6 @@ impl Serializable<TotalVisitedUserIDs> for TotalVisitedUserIDs {
     }
 }
 
-// actual routines called by statefun SDK
 impl Serializable<UserLogin> for UserLogin {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
@@ -45,10 +40,7 @@ impl Serializable<MyUserProfile> for MyUserProfile {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match self.0.write_to_bytes() {
             Ok(result) => Ok(result),
-            Err(error) => {
-                // todo: log the error
-                Err(error.to_string())
-            },
+            Err(error) => Err(error.to_string()),
         }
     }
 
@@ -64,10 +56,7 @@ impl Serializable<EgressRecord> for EgressRecord {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
         match serde_json::to_vec(self) {
             Ok(result) => Ok(result),
-            Err(error) => {
-                // todo: log the error
-                Err(error.to_string())
-            },
+            Err(error) => Err(error.to_string()),
         }
     }
 
