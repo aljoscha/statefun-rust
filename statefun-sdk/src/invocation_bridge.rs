@@ -250,6 +250,8 @@ where
             StateUpdate::Delete(value_spec) => {
                 let mut proto_state_update = FromFunction_PersistedValueMutation::new();
                 proto_state_update.set_state_name(value_spec.name);
+                // Note: DELETE is the default enum and will not be serialized over the wire,
+                // this is an optimization in Protobuf: https://stackoverflow.com/a/71207894
                 proto_state_update
                     .set_mutation_type(FromFunction_PersistedValueMutation_MutationType::DELETE);
                 invocation_response.state_mutations.push(proto_state_update);
