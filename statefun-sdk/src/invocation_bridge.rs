@@ -293,7 +293,7 @@ mod tests {
     use protobuf::RepeatedField;
 
     use statefun_proto::request_reply::FromFunction_DelayedInvocation;
-    // use statefun_proto::request_reply::FromFunction_EgressMessage;
+    use statefun_proto::request_reply::FromFunction_EgressMessage;
     use statefun_proto::request_reply::FromFunction_Invocation;
     // use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
     // use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
@@ -447,48 +447,48 @@ mod tests {
         Ok(())
     }
 
-    // // Verifies that egresses are correctly forwarded to the Protobuf FromFunction
-    // #[test]
-    // fn forward_egresses_from_function() -> anyhow::Result<()> {
-    //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, _message: String| {
-    //         let mut effects = Effects::new();
+    // Verifies that egresses are correctly forwarded to the Protobuf FromFunction
+    #[test]
+    fn forward_egresses_from_function() -> anyhow::Result<()> {
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type(), vec![], |_context, _message| {
+            let mut effects = Effects::new();
 
-    //         effects.egress(
-    //             EgressIdentifier::new("namespace", "name"),
-    //             string_value("egress"),
-    //         );
+            effects.egress(
+                EgressIdentifier::new("namespace", "name"),
+                &"egress".to_string(),
+            ).unwrap();
 
-    //         effects
-    //     });
+            effects
+        });
 
-    //     let to_function = complete_to_function();
-    //     let mut from_function = registry.invoke_from_proto(to_function)?;
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
 
-    //     let mut invocation_response = from_function.take_invocation_result();
-    //     let mut egresses = invocation_response.take_outgoing_egresses();
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut egresses = invocation_response.take_outgoing_egresses();
 
-    //     assert_egress(
-    //         egresses.remove(0),
-    //         "namespace",
-    //         "name",
-    //         string_value("egress"),
-    //     );
-    //     assert_egress(
-    //         egresses.remove(0),
-    //         "namespace",
-    //         "name",
-    //         string_value("egress"),
-    //     );
-    //     assert_egress(
-    //         egresses.remove(0),
-    //         "namespace",
-    //         "name",
-    //         string_value("egress"),
-    //     );
+        assert_egress(
+            egresses.remove(0),
+            "namespace",
+            "name",
+            "egress".to_string(),
+        );
+        assert_egress(
+            egresses.remove(0),
+            "namespace",
+            "name",
+            "egress".to_string(),
+        );
+        assert_egress(
+            egresses.remove(0),
+            "namespace",
+            "name",
+            "egress".to_string(),
+        );
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     // // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
     // #[test]
@@ -609,19 +609,20 @@ mod tests {
         );
     }
 
-    // fn assert_egress(
-    //     egress: FromFunction_EgressMessage,
-    //     expected_namespace: &str,
-    //     expected_name: &str,
-    //     expected_message: String,
-    // ) {
-    //     assert_eq!(egress.get_egress_namespace(), expected_namespace);
-    //     assert_eq!(egress.get_egress_type(), expected_name);
-    //     assert_eq!(
-    //         unpack_any::<String>(egress.get_argument()),
-    //         expected_message
-    //     );
-    // }
+    fn assert_egress(
+        egress: FromFunction_EgressMessage,
+        expected_namespace: &str,
+        expected_name: &str,
+        expected_message: String,
+    ) {
+        assert_eq!(egress.get_egress_namespace(), expected_namespace);
+        assert_eq!(egress.get_egress_type(), expected_name);
+        assert_eq!(
+            String::deserialize(String::get_typename().to_string(),
+                &egress.get_argument().get_value().to_vec()).unwrap(),
+            expected_message
+        );
+    }
 
     // fn assert_state_update<T: Message + PartialEq>(
     //     state_mutation: &FromFunction_PersistedValueMutation,
