@@ -73,7 +73,6 @@ impl InvocationBridge for FunctionRegistry {
                                     };
 
                                     expiration_spec.expire_after_millis = value_spec.expiration.time_to_live.as_millis() as i64;
-                                    log::debug!("-- drey Set expiration time as {:?}", expiration_spec.expire_after_millis);
                                 }
                                 None => {
                                     expiration_spec.mode = FromFunction_ExpirationSpec_ExpireMode::NONE;
@@ -304,6 +303,8 @@ where
 #[cfg(test)]
 mod tests {
     use core::time::Duration;
+    use core::fmt::Debug;
+    use std::collections::HashMap;
     // use protobuf::well_known_types::Any;
     // use protobuf::Message;
 
@@ -313,8 +314,8 @@ mod tests {
     use statefun_proto::request_reply::FromFunction_DelayedInvocation;
     use statefun_proto::request_reply::FromFunction_EgressMessage;
     use statefun_proto::request_reply::FromFunction_Invocation;
-    // use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
-    // use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
+    use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
+    use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
     use statefun_proto::request_reply::ToFunction;
     use statefun_proto::request_reply::ToFunction_Invocation;
     use statefun_proto::request_reply::ToFunction_InvocationBatchRequest;
@@ -508,80 +509,84 @@ mod tests {
         Ok(())
     }
 
-    // // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
-    // #[test]
-    // fn forward_state_mutations_from_function() -> anyhow::Result<()> {
-    //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, _message: String| {
-    //         let mut effects = Effects::new();
+    // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
+    #[test]
+    fn forward_state_mutations_from_function() -> anyhow::Result<()> {
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type(), vec![foo_state().into(), bar_state().into()],
+                             |_context, _message: Message| {
+            let mut effects = Effects::new();
 
-    //         effects.update_state(bar_state, &i32_value(84));
-    //         effects.delete_state(foo_state);
+            effects.update_state(bar_state(), &84).unwrap();
+            effects.delete_state(foo_state());
 
-    //         effects
-    //     });
+            effects
+        });
 
-    //     let to_function = complete_to_function();
-    //     let mut from_function = registry.invoke_from_proto(to_function)?;
+        // request
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
 
-    //     let mut invocation_response = from_function.take_invocation_result();
-    //     let state_mutations = invocation_response.take_state_mutations();
+        let mut invocation_response = from_function.take_invocation_result();
+        let state_mutations = invocation_response.take_state_mutations();
 
-    //     let state_map = to_state_map(state_mutations);
-    //     assert_eq!(state_map.len(), 2);
+        let state_map = to_state_map(state_mutations);
+        assert_eq!(state_map.len(), 2);
 
-    //     let bar_state = state_map.get(bar_state).unwrap();
-    //     let foo_state = state_map.get(foo_state).unwrap();
+        let bar_state_mutation = state_map.get(&bar_state().spec.name).unwrap();
+        let foo_state_mutation = state_map.get(&foo_state().spec.name).unwrap();
 
-    //     // state updates are coalesced
-    //     assert_state_update(bar_state, bar_state, i32_value(84));
-    //     assert_state_delete(foo_state, foo_state);
+        // state updates are coalesced
+        assert_state_update(bar_state_mutation, bar_state().spec.name.as_str(), 84 as i32);
+        assert_state_delete(foo_state_mutation, foo_state().spec.name.as_str());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // fn to_state_map(
-    //     state_mutations: RepeatedField<FromFunction_PersistedValueMutation>,
-    // ) -> HashMap<String, FromFunction_PersistedValueMutation> {
-    //     let mut state_mutations_map = HashMap::new();
-    //     for state_mutation in state_mutations.into_iter() {
-    //         state_mutations_map.insert(state_mutation.get_state_name().to_string(), state_mutation);
-    //     }
-    //     state_mutations_map
-    // }
+    fn to_state_map(
+        state_mutations: RepeatedField<FromFunction_PersistedValueMutation>,
+    ) -> HashMap<String, FromFunction_PersistedValueMutation> {
+        let mut state_mutations_map = HashMap::new();
+        for state_mutation in state_mutations.into_iter() {
+            state_mutations_map.insert(state_mutation.get_state_name().to_string(), state_mutation);
+        }
+        state_mutations_map
+    }
 
-    // // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
-    // #[test]
-    // fn state_mutations_available_in_subsequent_invocations() -> anyhow::Result<()> {
-    //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |context, _message: String| {
-    //         let state: Int32Value = context.get_state(bar_state).unwrap();
+    // Verifies that state mutations are correctly forwarded to the Protobuf FromFunction
+    #[test]
+    fn state_mutations_available_in_subsequent_invocations() -> anyhow::Result<()> {
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type(), vec![], |context, _message| {
+            let state: i32 = context.get_state(bar_state()).unwrap().unwrap();
+            let updated_state = state + 1;
 
-    //         let mut effects = Effects::new();
-    //         effects.update_state(bar_state, &i32_value(state.get_value() + 1));
-    //         effects.delete_state(foo_state);
+            let mut effects = Effects::new();
+            effects.update_state(bar_state(), &updated_state).unwrap();
+            effects.delete_state(foo_state());
 
-    //         effects
-    //     });
+            effects
+        });
 
-    //     let to_function = complete_to_function();
-    //     let mut from_function = registry.invoke_from_proto(to_function)?;
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
 
-    //     let mut invocation_response = from_function.take_invocation_result();
-    //     let state_mutations = invocation_response.take_state_mutations();
+        let mut invocation_response = from_function.take_invocation_result();
+        let state_mutations = invocation_response.take_state_mutations();
 
-    //     let state_map = to_state_map(state_mutations);
-    //     assert_eq!(state_map.len(), 2);
+        let state_map = to_state_map(state_mutations);
+        assert_eq!(state_map.len(), 2);
 
-    //     let bar_state = state_map.get(bar_state).unwrap();
-    //     let foo_state = state_map.get(foo_state).unwrap();
+        let bar_state_mutation = state_map.get(&bar_state().spec.name).unwrap();
+        let foo_state_mutation = state_map.get(&foo_state().spec.name).unwrap();
 
-    //     // state updates are coalesced
-    //     assert_state_update(bar_state, bar_state, i32_value(3));
-    //     assert_state_delete(foo_state, foo_state);
+        // state updates are coalesced
+        // started with 84 (see states()), 3 invocations in one batch request == 87
+        assert_state_update(bar_state_mutation, bar_state().spec.name.as_str(), 84 + 3 as i32);
+        assert_state_delete(foo_state_mutation, foo_state().spec.name.as_str());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     fn assert_invocation(
         invocation: FromFunction_Invocation,
@@ -642,31 +647,34 @@ mod tests {
         );
     }
 
-    // fn assert_state_update<T: Message + PartialEq>(
-    //     state_mutation: &FromFunction_PersistedValueMutation,
-    //     expected_name: &str,
-    //     expected_value: T,
-    // ) {
-    //     assert_eq!(
-    //         state_mutation.get_mutation_type(),
-    //         FromFunction_PersistedValueMutation_MutationType::MODIFY
-    //     );
-    //     assert_eq!(state_mutation.get_state_name(), expected_name);
-    //     let packed_state: Any = deserialize_state(state_mutation.get_state_value());
-    //     let unpacked_state_value: Option<T> = unpack_state(expected_name, &packed_state);
-    //     assert_eq!(unpacked_state_value.unwrap(), expected_value)
-    // }
+    fn assert_state_update<T : Serializable<T> + TypeName + Debug + PartialEq>(
+        state_mutation: &FromFunction_PersistedValueMutation,
+        expected_name: &str,
+        expected_value: T,
+    ) {
+        assert_eq!(
+            state_mutation.get_mutation_type(),
+            FromFunction_PersistedValueMutation_MutationType::MODIFY
+        );
+        assert_eq!(state_mutation.get_state_name(), expected_name);
 
-    // fn assert_state_delete(
-    //     state_mutation: &FromFunction_PersistedValueMutation,
-    //     expected_name: &str,
-    // ) {
-    //     assert_eq!(
-    //         state_mutation.get_mutation_type(),
-    //         FromFunction_PersistedValueMutation_MutationType::DELETE
-    //     );
-    //     assert_eq!(state_mutation.get_state_name(), expected_name);
-    // }
+        println!("Serialized value: {:?}", &state_mutation.get_state_value().get_value().to_vec());
+
+        let unpacked_state = T::deserialize(T::get_typename().to_string(),
+                &state_mutation.get_state_value().get_value().to_vec()).unwrap();
+        assert_eq!(unpacked_state, expected_value)
+    }
+
+    fn assert_state_delete(
+        state_mutation: &FromFunction_PersistedValueMutation,
+        expected_name: &str,
+    ) {
+        assert_eq!(
+            state_mutation.get_mutation_type(),
+            FromFunction_PersistedValueMutation_MutationType::DELETE
+        );
+        assert_eq!(state_mutation.get_state_name(), expected_name);
+    }
 
     /// Creates a complete Protobuf ToFunction that contains every possible field/type, including
     /// multiple invocations to test batching behaviour.
@@ -702,7 +710,6 @@ mod tests {
     fn states() -> RepeatedField<ToFunction_PersistedValue> {
         let mut states = RepeatedField::new();
 
-        // todo: this needs to be state name
         states.push(state(foo_state().into(), 42));
         states.push(state(bar_state().into(), 84));
 
@@ -743,30 +750,9 @@ mod tests {
         typed_value.set_has_value(true);
         typed_value.set_value(argument.serialize(String::get_typename().to_string()).unwrap());
 
-        // let message = string_value(argument);
-        // let packed_argument = Any::pack(&message).unwrap();
         invocation.set_caller(caller.into_proto());
         invocation.set_argument(typed_value);
 
         invocation
     }
-
-    // fn string_value(value: &str) -> String {
-    //     // String (and generated code from protobuf in general) is not very ergonomic...
-    //     let mut result = String::new();
-    //     result.set_value(value.to_owned());
-    //     result
-    // }
-
-    // fn i32_value(value: i32) -> Int32Value {
-    //     let mut result = Int32Value::new();
-    //     result.set_value(value);
-    //     result
-    // }
-
-    // fn unpack_any<M: Message>(any: &Any) -> M {
-    //     any.unpack()
-    //         .expect("Could not unwrap Result")
-    //         .expect("Could not unwrap Option.")
-    // }
 }
