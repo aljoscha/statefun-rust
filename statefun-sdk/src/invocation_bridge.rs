@@ -162,7 +162,23 @@ fn update_state(
     for state_update in state_updates {
         match state_update {
             StateUpdate::Delete(value_spec) => {
-                persisted_state.remove(&value_spec);
+                // Note: we don't remove persisted state, we only remove the value.
+                // This mimics what Flink does, and ensures that batch requests to the same function
+                // work correctly. For example, a 2x batch request to the same function where the
+                // function calls `update("mystate"); delete("mystate")` should result in a response
+                // to apache requesting `mystate` value to be removed.
+                //
+                // If we removed this `persisted_state` then the 2nd invocation within the batch
+                // would cause the function to respond with `incomplete_invocation_context`,
+                // eventually causing Flink to request the batched request to the function,
+                // where again the 2nd invocation in the function will respond with
+                // `incomplete_invocation_context`.
+                //
+                // This leads to an infinite loop.
+                //
+                // Instead the state has to be marked as cleared out, but the key is never deleted.
+                // Remember that this key is part of the function's registered state signature.
+                persisted_state.insert(value_spec.clone(), vec![]);
                 coalesced_state.insert(value_spec.clone(), StateUpdate::Delete(value_spec.clone()));
             }
             StateUpdate::Update(value_spec, state) => {
