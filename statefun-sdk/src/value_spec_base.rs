@@ -1,11 +1,11 @@
-use crate::{Expiration};
+use crate::Expiration;
 
 ///
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpecBase {
-    pub(crate) name: String,            // state name
-    pub(crate) typename: String,        // type typename
-    pub(crate) expiration: Expiration,  // time to live
+    pub(crate) name: String,           // state name
+    pub(crate) typename: String,       // type typename
+    pub(crate) expiration: Expiration, // time to live
 }
 
 impl ValueSpecBase {

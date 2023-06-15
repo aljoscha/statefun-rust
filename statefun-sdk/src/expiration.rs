@@ -4,17 +4,17 @@ use std::time::Duration;
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Expiration {
     ///
-    pub expiration_type : Option<ExpirationType>,
+    pub expiration_type: Option<ExpirationType>,
 
     ///
-    pub time_to_live : Duration,
+    pub time_to_live: Duration,
 }
 
 impl Expiration {
     ///
-    pub fn new(expiration_type : ExpirationType, time_to_live : Duration) -> Expiration {
+    pub fn new(expiration_type: ExpirationType, time_to_live: Duration) -> Expiration {
         Expiration {
-            expiration_type : Some(expiration_type),
+            expiration_type: Some(expiration_type),
             time_to_live,
         }
     }
@@ -35,5 +35,5 @@ pub enum ExpirationType {
     AfterInvoke = 1,
 
     /// After initial create or the last write
-    AfterWrite = 2
+    AfterWrite = 2,
 }

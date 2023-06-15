@@ -25,9 +25,7 @@ pub struct DelayedMessage {
 
 impl DelayedMessage {
     pub fn new(time_sent: i64) -> DelayedMessage {
-        DelayedMessage {
-            time_sent
-        }
+        DelayedMessage { time_sent }
     }
 }
 

@@ -5,9 +5,9 @@ use specs::*;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName,
 };
-use types::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
+use types::{DelayedMessage, EgressRecord, MyUserProfile, UserLogin};
 
 use statefun_greeter_example_proto::example::UserProfile;
 use std::time::Duration;
@@ -59,8 +59,11 @@ impl StatefulFunctions {
 
     pub fn user(context: Context, message: Message) -> Effects {
         if !message.is::<UserLogin>() {
-            panic!("Unexpected message type: {:?}. Expected: {:?}", message.get_type(),
-                UserLogin::get_typename());
+            panic!(
+                "Unexpected message type: {:?}. Expected: {:?}",
+                message.get_type(),
+                UserLogin::get_typename()
+            );
         }
 
         let user_login = match message.get::<UserLogin>() {
@@ -99,16 +102,14 @@ impl StatefulFunctions {
 
             let delayed_message = DelayedMessage::new(current_time);
 
-            effects.send_after(
-                Address::new(
-                    Self::delayed_function_type(),
-                    &user_login.user_name,
-                ),
-                Duration::from_secs(3),
-                "cancel-token".to_string(),
-                &delayed_message,
-            )
-            .unwrap();
+            effects
+                .send_after(
+                    Address::new(Self::delayed_function_type(), &user_login.user_name),
+                    Duration::from_secs(3),
+                    "cancel-token".to_string(),
+                    &delayed_message,
+                )
+                .unwrap();
         } else {
             effects
                 .update_state(seen_count_spec(), &seen_count)
@@ -116,7 +117,6 @@ impl StatefulFunctions {
             effects
                 .update_state(is_first_visit_spec(), &is_first_visit)
                 .unwrap();
-
 
             // cancel any pending message
             effects.cancel_delayed_message("cancel-token".to_string());
@@ -135,10 +135,7 @@ impl StatefulFunctions {
 
         effects
             .send(
-                Address::new(
-                    Self::greet_function_type(),
-                    &user_login.user_name,
-                ),
+                Address::new(Self::greet_function_type(), &user_login.user_name),
                 &profile,
             )
             .unwrap();
@@ -183,8 +180,11 @@ impl StatefulFunctions {
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
 
-        log::info!("Received delayed message at {:?}, sent at {:?}", current_time,
-            &delayed_message.time_sent);
+        log::info!(
+            "Received delayed message at {:?}, sent at {:?}",
+            current_time,
+            &delayed_message.time_sent
+        );
 
         Effects::new()
     }

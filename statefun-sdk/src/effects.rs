@@ -3,8 +3,8 @@ use crate::DelayedInvocation;
 use crate::EgressIdentifier;
 use crate::Serializable;
 use crate::StateUpdate;
-use crate::ValueSpec;
 use crate::TypeName;
+use crate::ValueSpec;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -41,8 +41,7 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(T::get_typename().to_string())?;
-        self
-            .invocations
+        self.invocations
             .push((address, T::get_typename().to_string(), serialized));
         Ok(())
     }
@@ -79,8 +78,7 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(T::get_typename().to_string())?;
-        self
-            .egress_messages
+        self.egress_messages
             .push((identifier, T::get_typename().to_string(), serialized));
         Ok(())
     }
@@ -98,8 +96,7 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(value_spec.spec.typename.to_string())?;
-        self
-            .state_updates
+        self.state_updates
             .push(StateUpdate::Update(value_spec.into(), serialized));
         Ok(())
     }

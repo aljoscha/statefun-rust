@@ -4,7 +4,7 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier, TypeName, Serializable};
+use crate::{Effects, EgressIdentifier, Serializable, TypeName};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {

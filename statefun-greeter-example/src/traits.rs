@@ -1,6 +1,6 @@
-use crate::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin, UserProfile};
+use crate::{DelayedMessage, EgressRecord, MyUserProfile, UserLogin, UserProfile};
 use protobuf::Message;
-use statefun::{TypeName, Serializable};
+use statefun::{Serializable, TypeName};
 
 impl Serializable<DelayedMessage> for DelayedMessage {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {

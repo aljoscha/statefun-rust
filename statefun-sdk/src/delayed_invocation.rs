@@ -2,7 +2,7 @@ use crate::Address;
 use std::time::Duration;
 
 #[derive(Debug)]
-pub (crate) struct DelayedInvocation {
+pub(crate) struct DelayedInvocation {
     pub address: Address,
     pub delay: Duration,
     pub cancellation_token: String,
@@ -11,7 +11,13 @@ pub (crate) struct DelayedInvocation {
 }
 
 impl DelayedInvocation {
-    pub fn new(address: Address, delay: Duration, cancellation_token: String, typename: String, bytes: Vec<u8>) -> DelayedInvocation {
+    pub fn new(
+        address: Address,
+        delay: Duration,
+        cancellation_token: String,
+        typename: String,
+        bytes: Vec<u8>,
+    ) -> DelayedInvocation {
         DelayedInvocation {
             address,
             delay,

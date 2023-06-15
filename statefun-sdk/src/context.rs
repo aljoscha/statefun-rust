@@ -1,6 +1,6 @@
 use crate::Address;
-use crate::Serializable;
 use crate::Expiration;
+use crate::Serializable;
 use crate::ValueSpec;
 use crate::ValueSpecBase;
 use statefun_proto::request_reply::Address as ProtoAddress;
@@ -56,8 +56,11 @@ impl<'a> Context<'a> {
 
         // note: Flink doesn't give us the TTL when passing existing state around,
         // so we have to leave 'expiration' to its default when doing state lookups
-        let key = ValueSpecBase::new(value_spec.spec.name.as_str(),
-            value_spec.spec.typename.as_str(), Expiration::never());
+        let key = ValueSpecBase::new(
+            value_spec.spec.name.as_str(),
+            value_spec.spec.typename.as_str(),
+            Expiration::never(),
+        );
 
         let state = self.state.get(&key);
         state.map(|serialized| T::deserialize(typename, serialized))

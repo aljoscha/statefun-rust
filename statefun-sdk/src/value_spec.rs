@@ -1,4 +1,4 @@
-use crate::{TypeName, Serializable, Expiration, ValueSpecBase};
+use crate::{Expiration, Serializable, TypeName, ValueSpecBase};
 use std::marker::PhantomData;
 
 ///

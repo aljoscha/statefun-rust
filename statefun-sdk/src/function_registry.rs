@@ -137,8 +137,8 @@ mod tests {
     // use crate::function_registry::HashMap;
     use crate::FunctionRegistry;
     use crate::*;
-    use std::collections::HashMap;
     use protobuf::Message as ProtoMessage;
+    use std::collections::HashMap;
 
     fn to_typed_value(typename: String, value: Vec<u8>) -> TypedValue {
         let mut res = TypedValue::new();
@@ -155,11 +155,13 @@ mod tests {
         let context = Context::new(&state, &address, &address);
 
         let mut registry = FunctionRegistry::new();
-        registry.register_fn(function_type_foo(), vec![], |_context, _message: Message| {
-            Effects::new()
-        });
+        registry.register_fn(
+            function_type_foo(),
+            vec![],
+            |_context, _message: Message| Effects::new(),
+        );
 
-        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let message = Message::new(to_typed_value("some-type".to_string(), vec![]));
         let _effects = registry.invoke(function_type_foo(), context, message)?;
 
         Ok(())
@@ -172,7 +174,7 @@ mod tests {
         let context = Context::new(&state, &address, &address);
 
         let registry = FunctionRegistry::new();
-        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let message = Message::new(to_typed_value("some-type".to_string(), vec![]));
 
         let result = registry.invoke(function_type_bar(), context, message);
         assert!(result.is_err());
@@ -211,9 +213,6 @@ mod tests {
         let state = HashMap::new();
 
         let mut registry = FunctionRegistry::new();
-
-
-
         registry.register_fn(function_type_foo(), vec![], |context, _message: Message| {
             let mut effects = Effects::new();
 
@@ -238,23 +237,25 @@ mod tests {
 
         let address_foo = address_foo().into_proto();
         let context = Context::new(&state, &address_foo, &address_foo);
-        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let message = Message::new(to_typed_value("some-type".to_string(), vec![]));
         let effects_foo = registry.invoke(function_type_foo(), context, message)?;
         assert_eq!(
-                MyStringValue::deserialize("some-type".to_string(),
-                                           &effects_foo.invocations[0].2)
-                    .unwrap().0.value,
+            MyStringValue::deserialize("some-type".to_string(), &effects_foo.invocations[0].2)
+                .unwrap()
+                .0
+                .value,
             "function_foo",
         );
 
         let address_bar = address_bar().into_proto();
         let context = Context::new(&state, &address_bar, &address_bar);
-        let message = Message::new(to_typed_value("some-type".to_string(), vec!()));
+        let message = Message::new(to_typed_value("some-type".to_string(), vec![]));
         let effects_bar = registry.invoke(function_type_bar(), context, message)?;
         assert_eq!(
-                MyStringValue::deserialize("some-type".to_string(),
-                                           &effects_bar.invocations[0].2)
-                    .unwrap().0.value,
+            MyStringValue::deserialize("some-type".to_string(), &effects_bar.invocations[0].2)
+                .unwrap()
+                .0
+                .value,
             "function_bar",
         );
 
