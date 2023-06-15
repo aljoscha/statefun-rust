@@ -285,13 +285,14 @@ where
 
 #[cfg(test)]
 mod tests {
+    use core::time::Duration;
     // use protobuf::well_known_types::Any;
     // use protobuf::Message;
 
     // use protobuf::well_known_types::{Int32Value};
     use protobuf::RepeatedField;
 
-    // use statefun_proto::request_reply::FromFunction_DelayedInvocation;
+    use statefun_proto::request_reply::FromFunction_DelayedInvocation;
     // use statefun_proto::request_reply::FromFunction_EgressMessage;
     use statefun_proto::request_reply::FromFunction_Invocation;
     // use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
@@ -370,7 +371,7 @@ mod tests {
     fn forward_messages_from_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
         registry.register_fn(function_type(), vec![foo_state().into(), bar_state().into()],
-                             |context, message: Message| {
+                             |_context, message: Message| {
             let string_message = message.get::<String>().unwrap();
             let mut effects = Effects::new();
 
@@ -398,45 +399,53 @@ mod tests {
         Ok(())
     }
 
-    // // Verifies that delayed messages are correctly forwarded to the Protobuf FromFunction
-    // #[test]
-    // fn forward_delayed_messages_from_function() -> anyhow::Result<()> {
-    //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, message: String| {
-    //         let mut effects = Effects::new();
+    // Verifies that delayed messages are correctly forwarded to the Protobuf FromFunction
+    #[test]
+    fn forward_delayed_messages_from_function() -> anyhow::Result<()> {
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type(), vec![], |_context, message| {
+            let string_message = message.get::<String>().unwrap();
+            let mut effects = Effects::new();
 
-    //         effects.send_after(caller_address(), Duration::from_secs(5), message.clone());
+            effects.send_after(caller_address(), Duration::from_secs(5), "cancel-token".to_string(),
+                &string_message).unwrap();
 
-    //         effects
-    //     });
+            effects
+        });
 
-    //     let to_function = complete_to_function();
-    //     let mut from_function = registry.invoke_from_proto(to_function)?;
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
 
-    //     let mut invocation_response = from_function.take_invocation_result();
-    //     let mut delayed = invocation_response.take_delayed_invocations();
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut delayed = invocation_response.take_delayed_invocations();
 
-    //     assert_delayed_invocation(
-    //         delayed.remove(0),
-    //         caller_address(),
-    //         5000,
-    //         string_value(MESSAGE1),
-    //     );
-    //     assert_delayed_invocation(
-    //         delayed.remove(0),
-    //         caller_address(),
-    //         5000,
-    //         string_value(MESSAGE2),
-    //     );
-    //     assert_delayed_invocation(
-    //         delayed.remove(0),
-    //         caller_address(),
-    //         5000,
-    //         string_value(MESSAGE3),
-    //     );
+        assert_delayed_invocation(
+            delayed.remove(0),
+            caller_address(),
+            5000,
+            false,
+            "cancel-token".to_string(),
+            MESSAGE1.to_string(),
+        );
+        assert_delayed_invocation(
+            delayed.remove(0),
+            caller_address(),
+            5000,
+            false,
+            "cancel-token".to_string(),
+            MESSAGE2.to_string(),
+        );
+        assert_delayed_invocation(
+            delayed.remove(0),
+            caller_address(),
+            5000,
+            false,
+            "cancel-token".to_string(),
+            MESSAGE3.to_string(),
+        );
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     // // Verifies that egresses are correctly forwarded to the Protobuf FromFunction
     // #[test]
@@ -573,22 +582,32 @@ mod tests {
         );
     }
 
-    // fn assert_delayed_invocation(
-    //     invocation: FromFunction_DelayedInvocation,
-    //     expected_address: Address,
-    //     expected_delay: i64,
-    //     expected_message: String,
-    // ) {
-    //     assert_eq!(
-    //         Address::from_proto(invocation.get_target()),
-    //         expected_address
-    //     );
-    //     assert_eq!(invocation.get_delay_in_ms(), expected_delay);
-    //     assert_eq!(
-    //         unpack_any::<String>(invocation.get_argument()),
-    //         expected_message
-    //     );
-    // }
+    fn assert_delayed_invocation(
+        invocation: FromFunction_DelayedInvocation,
+        expected_address: Address,
+        expected_delay: i64,
+        is_cancellation: bool,
+        cancellation_token: String,
+        expected_message: String,
+    ) {
+        assert_eq!(
+            Address::from_proto(invocation.get_target()),
+            expected_address
+        );
+        assert_eq!(invocation.get_delay_in_ms(), expected_delay);
+        assert_eq!(
+            invocation.get_is_cancellation_request(),
+            is_cancellation);
+
+        assert_eq!(
+            invocation.get_cancellation_token(),
+            cancellation_token);
+        assert_eq!(
+            String::deserialize(String::get_typename().to_string(),
+                &invocation.get_argument().get_value().to_vec()).unwrap(),
+            expected_message
+        );
+    }
 
     // fn assert_egress(
     //     egress: FromFunction_EgressMessage,
