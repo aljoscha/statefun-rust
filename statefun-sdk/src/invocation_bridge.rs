@@ -319,8 +319,6 @@ mod tests {
 
         registry.register_fn(function_type(), vec![foo_state().into(), bar_state().into()],
                              |context, message: Message| {
-            println!("--drey: received call: {:?}", message);
-
             assert_eq!(context.self_address(), self_address());
             assert_eq!(context.caller_address(), caller_address());
             assert_eq!(
@@ -359,6 +357,7 @@ mod tests {
         // response
         let mut invocation_response = from_function.take_invocation_result();
         let mut outgoing = invocation_response.take_outgoing_messages();
+
         assert_invocation(outgoing.remove(0), self_address(), MESSAGE1.to_string());
         assert_invocation(outgoing.remove(0), self_address(), MESSAGE2.to_string());
         assert_invocation(outgoing.remove(0), self_address(), MESSAGE3.to_string());
@@ -366,30 +365,38 @@ mod tests {
         Ok(())
     }
 
-    // // Verifies that messages are correctly forwarded to the Protobuf FromFunction
-    // #[test]
-    // fn forward_messages_from_function() -> anyhow::Result<()> {
-    //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, message: String| {
-    //         let mut effects = Effects::new();
+    // Verifies that messages are correctly forwarded to the Protobuf FromFunction
+    #[test]
+    fn forward_messages_from_function() -> anyhow::Result<()> {
+        let mut registry = FunctionRegistry::new();
+        registry.register_fn(function_type(), vec![foo_state().into(), bar_state().into()],
+                             |context, message: Message| {
+            let string_message = message.get::<String>().unwrap();
+            let mut effects = Effects::new();
 
-    //         effects.send(self_address(), message.clone());
+            effects.send(
+                self_address(),
+                &string_message,
+            )
+            .unwrap();
 
-    //         effects
-    //     });
+            effects
+        });
 
-    //     let to_function = complete_to_function();
-    //     let mut from_function = registry.invoke_from_proto(to_function)?;
+        // request
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
 
-    //     let mut invocation_response = from_function.take_invocation_result();
-    //     let mut outgoing = invocation_response.take_outgoing_messages();
+        // response
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut outgoing = invocation_response.take_outgoing_messages();
 
-    //     assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE1));
-    //     assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE2));
-    //     assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE3));
+        assert_invocation(outgoing.remove(0), self_address(), MESSAGE1.to_string());
+        assert_invocation(outgoing.remove(0), self_address(), MESSAGE2.to_string());
+        assert_invocation(outgoing.remove(0), self_address(), MESSAGE3.to_string());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     // // Verifies that delayed messages are correctly forwarded to the Protobuf FromFunction
     // #[test]
