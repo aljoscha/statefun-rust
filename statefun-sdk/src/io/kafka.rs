@@ -4,13 +4,13 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier, GetTypename, Serializable};
+use crate::{Effects, EgressIdentifier, TypeName, Serializable};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
-    fn kafka_egress<T: Serializable<T> + GetTypename>(
+    fn kafka_egress<T: Serializable<T> + TypeName>(
         &mut self,
         identifier: EgressIdentifier,
         topic: &str,
@@ -21,7 +21,7 @@ pub trait KafkaEgress {
     /// `EgressIdentifier`.
     ///
     /// This will set the given key on the message sent to record.
-    fn kafka_keyed_egress<T: Serializable<T> + GetTypename>(
+    fn kafka_keyed_egress<T: Serializable<T> + TypeName>(
         &mut self,
         identifier: EgressIdentifier,
         topic: &str,
@@ -31,7 +31,7 @@ pub trait KafkaEgress {
 }
 
 impl KafkaEgress for Effects {
-    fn kafka_egress<T: Serializable<T> + GetTypename>(
+    fn kafka_egress<T: Serializable<T> + TypeName>(
         &mut self,
         identifier: EgressIdentifier,
         topic: &str,
@@ -41,7 +41,7 @@ impl KafkaEgress for Effects {
         self.egress(identifier, &kafka_record)
     }
 
-    fn kafka_keyed_egress<T: Serializable<T> + GetTypename>(
+    fn kafka_keyed_egress<T: Serializable<T> + TypeName>(
         &mut self,
         identifier: EgressIdentifier,
         topic: &str,
@@ -54,7 +54,7 @@ impl KafkaEgress for Effects {
     }
 }
 
-impl GetTypename for KafkaProducerRecord {
+impl TypeName for KafkaProducerRecord {
     fn get_typename() -> &'static str {
         "type.googleapis.com/io.statefun.sdk.egress.KafkaProducerRecord"
     }
@@ -76,7 +76,7 @@ impl Serializable<KafkaProducerRecord> for KafkaProducerRecord {
     }
 }
 
-fn egress_record<T: Serializable<T> + GetTypename>(
+fn egress_record<T: Serializable<T> + TypeName>(
     topic: &str,
     value: &T,
 ) -> Result<KafkaProducerRecord, String> {

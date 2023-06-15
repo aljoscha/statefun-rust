@@ -1,6 +1,6 @@
 use crate::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin, UserProfile};
 use protobuf::Message;
-use statefun::{GetTypename, Serializable};
+use statefun::{TypeName, Serializable};
 
 impl Serializable<DelayedMessage> for DelayedMessage {
     fn serialize(&self, _typename: String) -> Result<Vec<u8>, String> {
@@ -66,28 +66,28 @@ impl Serializable<EgressRecord> for EgressRecord {
     }
 }
 
-impl GetTypename for UserLogin {
+impl TypeName for UserLogin {
     ///
     fn get_typename() -> &'static str {
         "greeter.types/UserLogin"
     }
 }
 
-impl GetTypename for DelayedMessage {
+impl TypeName for DelayedMessage {
     ///
     fn get_typename() -> &'static str {
         "my-user-type/total-visited-ids"
     }
 }
 
-impl GetTypename for MyUserProfile {
+impl TypeName for MyUserProfile {
     ///
     fn get_typename() -> &'static str {
         "my-user-type/user-profile"
     }
 }
 
-impl GetTypename for EgressRecord {
+impl TypeName for EgressRecord {
     ///
     fn get_typename() -> &'static str {
         "io.statefun.playground/EgressRecord"

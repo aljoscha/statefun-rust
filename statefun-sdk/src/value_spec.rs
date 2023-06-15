@@ -1,4 +1,4 @@
-use crate::{GetTypename, Serializable, Expiration, ValueSpecBase};
+use crate::{TypeName, Serializable, Expiration, ValueSpecBase};
 use std::marker::PhantomData;
 
 ///
@@ -9,7 +9,7 @@ pub struct ValueSpec<T> {
     phantom: PhantomData<T>,
 }
 
-impl<T: Serializable<T> + GetTypename> ValueSpec<T> {
+impl<T: Serializable<T> + TypeName> ValueSpec<T> {
     ///
     pub fn new(name: &'static str, expiration: Expiration) -> ValueSpec<T> {
         ValueSpec {

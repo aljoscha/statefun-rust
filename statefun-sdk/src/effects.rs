@@ -4,7 +4,7 @@ use crate::EgressIdentifier;
 use crate::Serializable;
 use crate::StateUpdate;
 use crate::ValueSpec;
-use crate::GetTypename;
+use crate::TypeName;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -35,7 +35,7 @@ impl Effects {
     }
 
     /// Sends a message to the stateful function identified by the address.
-    pub fn send<T: Serializable<T> + GetTypename>(
+    pub fn send<T: Serializable<T> + TypeName>(
         &mut self,
         address: Address,
         value: &T,
@@ -47,7 +47,7 @@ impl Effects {
     }
 
     /// Sends a delayed message to the stateful function identified by the address after a delay.
-    pub fn send_after<T: Serializable<T> + GetTypename>(
+    pub fn send_after<T: Serializable<T> + TypeName>(
         &mut self,
         address: Address,
         delay: Duration,
@@ -71,7 +71,7 @@ impl Effects {
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
-    pub fn egress<T: Serializable<T> + GetTypename>(
+    pub fn egress<T: Serializable<T> + TypeName>(
         &mut self,
         identifier: EgressIdentifier,
         value: &T,

@@ -1,4 +1,4 @@
-use crate::{Serializable, TypedValue, GetTypename};
+use crate::{Serializable, TypedValue, TypeName};
 
 ///
 #[derive(Debug)]
@@ -8,12 +8,12 @@ pub struct Message {
 
 impl Message {
     ///
-    pub fn is<T : GetTypename>(&self) -> bool {
+    pub fn is<T : TypeName>(&self) -> bool {
         self.typed_value.typename.eq(T::get_typename())
     }
 
     ///
-    pub fn get<T : Serializable<T> + GetTypename>(&self) -> Result<T, String> {
+    pub fn get<T : Serializable<T> + TypeName>(&self) -> Result<T, String> {
         if !self.is::<T>() {
             return Err(format!("Incompatible types. Expected: {:?} Payload: {:?}",
                 T::get_typename(), self.typed_value.typename));

@@ -5,7 +5,7 @@ use specs::*;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, GetTypename
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName
 };
 use types::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
 

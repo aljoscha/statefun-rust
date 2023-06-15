@@ -1,5 +1,5 @@
 ///
-pub trait GetTypename {
+pub trait TypeName {
     ///
     fn get_typename() -> &'static str;
 }

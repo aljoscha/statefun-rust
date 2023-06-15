@@ -199,7 +199,7 @@ mod tests {
         }
     }
 
-    impl GetTypename for MyStringValue {
+    impl TypeName for MyStringValue {
         ///
         fn get_typename() -> &'static str {
             "my-string-value/string-value"

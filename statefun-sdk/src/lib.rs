@@ -31,7 +31,7 @@ pub use egress_identifier::EgressIdentifier;
 pub use function_registry::FunctionRegistry;
 pub use function_type::FunctionType;
 pub use message::Message;
-pub use traits::{GetTypename, Serializable};
+pub use traits::{TypeName, Serializable};
 pub use value_spec::ValueSpec;
 pub use expiration::{Expiration, ExpirationType};
 
@@ -50,7 +50,7 @@ mod serialization;
 mod state_update;
 mod traits;
 mod delayed_invocation;
-mod get_type_name;
+mod type_name;
 mod value_spec;
 mod value_spec_base;
 
