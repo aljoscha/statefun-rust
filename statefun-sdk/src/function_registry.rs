@@ -217,11 +217,10 @@ mod tests {
         registry.register_fn(function_type_foo(), vec![], |context, _message: Message| {
             let mut effects = Effects::new();
 
-            let string_spec = TypeSpec::<MyStringValue>::new();
             let mut message = StringValue::new();
             message.set_value("function_foo".to_owned());
             let message = MyStringValue(message);
-            effects.send(context.self_address(), string_spec, &message).unwrap();
+            effects.send(context.self_address(), &message).unwrap();
 
             effects
         });
@@ -229,11 +228,10 @@ mod tests {
         registry.register_fn(function_type_bar(), vec![], |context, _message: Message| {
             let mut effects = Effects::new();
 
-            let string_spec = TypeSpec::<MyStringValue>::new();
             let mut message = StringValue::new();
             message.set_value("function_bar".to_owned());
             let message = MyStringValue(message);
-            effects.send(context.self_address(), string_spec, &message).unwrap();
+            effects.send(context.self_address(), &message).unwrap();
 
             effects
         });

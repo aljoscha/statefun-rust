@@ -285,16 +285,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    // todo: remove
-    // use protobuf::well_known_types::Any;
+    use protobuf::well_known_types::Any;
     // use protobuf::Message;
 
-    // use protobuf::well_known_types::{Int32Value};
-    // use protobuf::RepeatedField;
+    use protobuf::well_known_types::{Int32Value};
+    use protobuf::RepeatedField;
 
-    // use statefun_proto::request_reply::FromFunction_DelayedInvocation;
-    // use statefun_proto::request_reply::FromFunction_EgressMessage;
-    // use statefun_proto::request_reply::FromFunction_Invocation;
+    use statefun_proto::request_reply::FromFunction_DelayedInvocation;
+    use statefun_proto::request_reply::FromFunction_EgressMessage;
+    use statefun_proto::request_reply::FromFunction_Invocation;
     use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
     use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
     use statefun_proto::request_reply::ToFunction;
@@ -312,12 +311,8 @@ mod tests {
     const MESSAGE2: &str = "fla";
     const MESSAGE3: &str = "flu";
 
-    // registry.register_fn(function_type_foo(), vec![], |_context, _message: Message| {
-    //         Effects::new()
-    //     });
-
     // Verifies that all possible fields in a ToFunction are accessible in a function
-    /*#[test]
+    #[test]
     fn forward_to_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
 
@@ -326,26 +321,25 @@ mod tests {
             assert_eq!(context.caller_address(), caller_address());
             assert_eq!(
                 context
-                    .get_state(int32_spec)
+                    .get(int32_spec())
                     .expect("State not here."),
-                i32_value(0)
+                0
             );
             assert_eq!(
                 context
-                    .get_state::<Int32Value>(BAR_STATE)
+                    .get(BAR_STATE())
                     .expect("State not here."),
-                i32_value(0)
+                0
             );
 
-            let string_message = message.get(&string_spec).unwrap();
+            let string_message = message.get::<String>().unwrap();
             let mut effects = Effects::new();
 
             // the test checks against this message to ensure that the function was invoked
             // and all the asserts above were executed
             effects.send(
                 self_address(),
-                string_spec(),
-                &effects,
+                &string_message,
             )
             .unwrap();
 
@@ -364,7 +358,7 @@ mod tests {
         // assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE3));
 
         Ok(())
-    }*/
+    }
 
     // // Verifies that messages are correctly forwarded to the Protobuf FromFunction
     // #[test]
@@ -648,11 +642,11 @@ mod tests {
         Address::new(function_type(), "self")
     }
 
-    fn caller_address() -> Address {
-        Address::new(function_type(), "caller")
-    }
-    fn string_spec() { ValueSpec::<String>::new("string_payload") }
-    fn int32_spec() { ValueSpec::<i32>::new("i32_payload") }
+    // fn caller_address() -> Address {
+    //     Address::new(function_type(), "caller")
+    // }
+    fn string_spec() -> ValueSpec<String> { ValueSpec::<String>::new("string_payload", Expiration::never()) }
+    fn int32_spec() -> ValueSpec<i32> { ValueSpec::<i32>::new("i32_payload", Expiration::never()) }
 
     // fn states() -> RepeatedField<ToFunction_PersistedValue> {
     //     let mut states = RepeatedField::new();
