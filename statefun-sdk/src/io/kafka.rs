@@ -4,15 +4,14 @@ use protobuf::Message;
 
 use statefun_proto::kafka_egress::KafkaProducerRecord;
 
-use crate::{Effects, EgressIdentifier, GetTypename, Serializable, TypeSpec};
+use crate::{Effects, EgressIdentifier, GetTypename, Serializable};
 
 /// Extension trait for sending egress messages to Kafka using [Effects](crate::Effects).
 pub trait KafkaEgress {
     /// Sends the given message to the Kafka topic `topic` via the egress specified using the
     /// `EgressIdentifier`.
-    fn kafka_egress<T: Serializable<T>>(
+    fn kafka_egress<T: Serializable<T> + GetTypename>(
         &mut self,
-        type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
         topic: &str,
         value: &T,
@@ -22,9 +21,8 @@ pub trait KafkaEgress {
     /// `EgressIdentifier`.
     ///
     /// This will set the given key on the message sent to record.
-    fn kafka_keyed_egress<T: Serializable<T>>(
+    fn kafka_keyed_egress<T: Serializable<T> + GetTypename>(
         &mut self,
-        type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
         topic: &str,
         key: &str,
@@ -33,31 +31,26 @@ pub trait KafkaEgress {
 }
 
 impl KafkaEgress for Effects {
-    fn kafka_egress<T: Serializable<T>>(
+    fn kafka_egress<T: Serializable<T> + GetTypename>(
         &mut self,
-        type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
         topic: &str,
         value: &T,
     ) -> Result<(), String> {
-        let kafka_record = egress_record(topic, type_spec, value)?;
-        let type_spec: TypeSpec<KafkaProducerRecord> = TypeSpec::<KafkaProducerRecord>::new();
-        self.egress(identifier, type_spec, &kafka_record)
+        let kafka_record = egress_record(topic, value)?;
+        self.egress(identifier, &kafka_record)
     }
 
-    fn kafka_keyed_egress<T: Serializable<T>>(
+    fn kafka_keyed_egress<T: Serializable<T> + GetTypename>(
         &mut self,
-        type_spec: TypeSpec<T>,
         identifier: EgressIdentifier,
         topic: &str,
         key: &str,
         value: &T,
     ) -> Result<(), String> {
-        let mut kafka_record = egress_record(topic, type_spec, value)?;
+        let mut kafka_record = egress_record(topic, value)?;
         kafka_record.set_key(key.to_owned());
-
-        let type_spec: TypeSpec<KafkaProducerRecord> = TypeSpec::<KafkaProducerRecord>::new();
-        self.egress(identifier, type_spec, &kafka_record)
+        self.egress(identifier, &kafka_record)
     }
 }
 
@@ -83,14 +76,13 @@ impl Serializable<KafkaProducerRecord> for KafkaProducerRecord {
     }
 }
 
-fn egress_record<T: Serializable<T>>(
+fn egress_record<T: Serializable<T> + GetTypename>(
     topic: &str,
-    type_spec: TypeSpec<T>,
     value: &T,
 ) -> Result<KafkaProducerRecord, String> {
     let mut result = KafkaProducerRecord::new();
     result.set_topic(topic.to_owned());
-    let serialized = value.serialize(type_spec.typename.to_string())?;
+    let serialized = value.serialize(T::get_typename().to_string())?;
     result.set_value_bytes(serialized);
     Ok(result)
 }

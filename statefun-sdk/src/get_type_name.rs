@@ -1,6 +1,4 @@
 use crate::GetTypename;
-use crate::Serializable;
-use std::marker::PhantomData;
 
 impl GetTypename for bool {
     ///
@@ -41,22 +39,5 @@ impl GetTypename for String {
     ///
     fn get_typename() -> &'static str {
         "io.statefun.types/string"
-    }
-}
-
-///
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
-pub struct TypeSpec<T> {
-    pub(crate) typename: &'static str, // typename
-    phantom: PhantomData<T>,
-}
-
-impl<T: Serializable<T> + GetTypename> TypeSpec<T> {
-    ///
-    pub fn new() -> TypeSpec<T> {
-        TypeSpec {
-            typename: T::get_typename(),
-            phantom: PhantomData,
-        }
     }
 }

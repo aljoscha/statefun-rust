@@ -3,8 +3,8 @@ use crate::DelayedInvocation;
 use crate::EgressIdentifier;
 use crate::Serializable;
 use crate::StateUpdate;
-use crate::TypeSpec;
 use crate::ValueSpec;
+use crate::GetTypename;
 use std::time::Duration;
 
 /// Effects (or side effects) of a stateful function invocation.
@@ -35,33 +35,31 @@ impl Effects {
     }
 
     /// Sends a message to the stateful function identified by the address.
-    pub fn send<T: Serializable<T>>(
+    pub fn send<T: Serializable<T> + GetTypename>(
         &mut self,
         address: Address,
-        type_name: TypeSpec<T>,
         value: &T,
     ) -> Result<(), String> {
-        let serialized = value.serialize(type_name.typename.to_string())?;
+        let serialized = value.serialize(T::get_typename().to_string())?;
         Ok(self
             .invocations
-            .push((address, type_name.typename.to_string(), serialized)))
+            .push((address, T::get_typename().to_string(), serialized)))
     }
 
     /// Sends a delayed message to the stateful function identified by the address after a delay.
-    pub fn send_after<T: Serializable<T>>(
+    pub fn send_after<T: Serializable<T> + GetTypename>(
         &mut self,
         address: Address,
         delay: Duration,
         cancellation_token: String,
-        type_name: TypeSpec<T>,
         value: &T,
     ) -> Result<(), String> {
-        let serialized = value.serialize(type_name.typename.to_string())?;
+        let serialized = value.serialize(T::get_typename().to_string())?;
         Ok(self.delayed_invocations.push(DelayedInvocation::new(
             address,
             delay,
             cancellation_token,
-            type_name.typename.to_string(),
+            T::get_typename().to_string(),
             serialized,
         )))
     }
@@ -73,16 +71,15 @@ impl Effects {
     }
 
     /// Sends a message to the egress identifier by the `EgressIdentifier`.
-    pub fn egress<T: Serializable<T>>(
+    pub fn egress<T: Serializable<T> + GetTypename>(
         &mut self,
         identifier: EgressIdentifier,
-        type_name: TypeSpec<T>,
         value: &T,
     ) -> Result<(), String> {
-        let serialized = value.serialize(type_name.typename.to_string())?;
+        let serialized = value.serialize(T::get_typename().to_string())?;
         Ok(self
             .egress_messages
-            .push((identifier, type_name.typename.to_string(), serialized)))
+            .push((identifier, T::get_typename().to_string(), serialized)))
     }
 
     /// Deletes the state kept under the given name.

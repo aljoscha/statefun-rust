@@ -5,7 +5,7 @@ use specs::*;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message,
+    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, GetTypename
 };
 use types::{EgressRecord, MyUserProfile, DelayedMessage, UserLogin};
 
@@ -58,12 +58,12 @@ impl StatefulFunctions {
     }
 
     pub fn user(context: Context, message: Message) -> Effects {
-        if !message.is(&user_login_type_spec()) {
+        if !message.is::<UserLogin>() {
             panic!("Unexpected message type: {:?}. Expected: {:?}", message.get_type(),
-                user_login_type_spec());
+                UserLogin::get_typename());
         }
 
-        let user_login = match message.get(&user_login_type_spec()) {
+        let user_login = match message.get::<UserLogin>() {
             Ok(user_login) => user_login,
             Err(error) => panic!("Could not receive UserLogin: {:?}", error),
         };
@@ -107,7 +107,6 @@ impl StatefulFunctions {
                 ),
                 Duration::from_secs(3),
                 "cancel-token".to_string(),
-                delayed_message_type_spec(),
                 &delayed_message,
             )
             .unwrap();
@@ -141,7 +140,6 @@ impl StatefulFunctions {
                     Self::greet_function_type(),
                     &user_login.user_name.to_string(),
                 ),
-                user_profile_type_spec(),
                 &profile,
             )
             .unwrap();
@@ -150,7 +148,7 @@ impl StatefulFunctions {
     }
 
     pub fn greet(_context: Context, message: Message) -> Effects {
-        let user_profile = match message.get(&user_profile_type_spec()) {
+        let user_profile = match message.get::<MyUserProfile>() {
             Ok(user_profile) => user_profile.0,
             Err(error) => panic!("Could not receive MyUserProfile: {:?}", error),
         };
@@ -168,7 +166,6 @@ impl StatefulFunctions {
         effects
             .egress(
                 EgressIdentifier::new("io.statefun.playground", "egress"),
-                egress_record_type_spec(),
                 &egress_record,
             )
             .unwrap();
@@ -177,7 +174,7 @@ impl StatefulFunctions {
     }
 
     pub fn delayed(_context: Context, message: Message) -> Effects {
-        let delayed_message = match message.get(&delayed_message_type_spec()) {
+        let delayed_message = match message.get::<DelayedMessage>() {
             Ok(delayed_message) => delayed_message,
             Err(error) => panic!("Could not receive DelayedMessage: {:?}", error),
         };

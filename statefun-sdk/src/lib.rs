@@ -32,7 +32,6 @@ pub use function_registry::FunctionRegistry;
 pub use function_type::FunctionType;
 pub use message::Message;
 pub use traits::{GetTypename, Serializable};
-pub use type_spec::TypeSpec;
 pub use value_spec::ValueSpec;
 pub use expiration::{Expiration, ExpirationType};
 
@@ -51,7 +50,7 @@ mod serialization;
 mod state_update;
 mod traits;
 mod delayed_invocation;
-mod type_spec;
+mod get_type_name;
 mod value_spec;
 mod value_spec_base;
 
