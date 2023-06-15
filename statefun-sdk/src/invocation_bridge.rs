@@ -285,17 +285,17 @@ where
 
 #[cfg(test)]
 mod tests {
-    use protobuf::well_known_types::Any;
+    // use protobuf::well_known_types::Any;
     // use protobuf::Message;
 
-    use protobuf::well_known_types::{Int32Value};
+    // use protobuf::well_known_types::{Int32Value};
     use protobuf::RepeatedField;
 
-    use statefun_proto::request_reply::FromFunction_DelayedInvocation;
-    use statefun_proto::request_reply::FromFunction_EgressMessage;
+    // use statefun_proto::request_reply::FromFunction_DelayedInvocation;
+    // use statefun_proto::request_reply::FromFunction_EgressMessage;
     use statefun_proto::request_reply::FromFunction_Invocation;
-    use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
-    use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
+    // use statefun_proto::request_reply::FromFunction_PersistedValueMutation;
+    // use statefun_proto::request_reply::FromFunction_PersistedValueMutation_MutationType;
     use statefun_proto::request_reply::ToFunction;
     use statefun_proto::request_reply::ToFunction_Invocation;
     use statefun_proto::request_reply::ToFunction_InvocationBatchRequest;
@@ -305,8 +305,9 @@ mod tests {
     use crate::FunctionRegistry;
     use crate::*;
 
-    const FOO_STATE: &str = "foo";
-    const BAR_STATE: &str = "bar";
+    fn foo_state() -> ValueSpec<i32> { ValueSpec::<i32>::new("foo", Expiration::never()) }
+    fn bar_state() -> ValueSpec<i32> { ValueSpec::<i32>::new("bar", Expiration::never()) }
+
     const MESSAGE1: &str = "fli";
     const MESSAGE2: &str = "fla";
     const MESSAGE3: &str = "flu";
@@ -316,20 +317,25 @@ mod tests {
     fn forward_to_function() -> anyhow::Result<()> {
         let mut registry = FunctionRegistry::new();
 
-        registry.register_fn(function_type(), vec![string_spec], |context, message: Message| {
+        registry.register_fn(function_type(), vec![foo_state().into(), bar_state().into()],
+                             |context, message: Message| {
+            println!("--drey: received call: {:?}", message);
+
             assert_eq!(context.self_address(), self_address());
             assert_eq!(context.caller_address(), caller_address());
             assert_eq!(
                 context
-                    .get(int32_spec())
-                    .expect("State not here."),
-                0
+                    .get_state::<i32>(foo_state())
+                    .expect("State not here.")
+                    .unwrap(),
+                42
             );
             assert_eq!(
                 context
-                    .get(BAR_STATE())
-                    .expect("State not here."),
-                0
+                    .get_state::<i32>(bar_state())
+                    .expect("State not here.")
+                    .unwrap(),
+                84
             );
 
             let string_message = message.get::<String>().unwrap();
@@ -346,16 +352,16 @@ mod tests {
             effects
         });
 
-        // let to_function = complete_to_function();
+        // request
+        let to_function = complete_to_function();
+        let mut from_function = registry.invoke_from_proto(to_function)?;
 
-        // let mut from_function = registry.invoke_from_proto(to_function)?;
-
-        // let mut invocation_response = from_function.take_invocation_result();
-        // let mut outgoing = invocation_response.take_outgoing_messages();
-
-        // assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE1));
-        // assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE2));
-        // assert_invocation(outgoing.remove(0), self_address(), string_value(MESSAGE3));
+        // response
+        let mut invocation_response = from_function.take_invocation_result();
+        let mut outgoing = invocation_response.take_outgoing_messages();
+        assert_invocation(outgoing.remove(0), self_address(), MESSAGE1.to_string());
+        assert_invocation(outgoing.remove(0), self_address(), MESSAGE2.to_string());
+        assert_invocation(outgoing.remove(0), self_address(), MESSAGE3.to_string());
 
         Ok(())
     }
@@ -364,7 +370,7 @@ mod tests {
     // #[test]
     // fn forward_messages_from_function() -> anyhow::Result<()> {
     //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, message: StringValue| {
+    //     registry.register_fn(function_type(), |_context, message: String| {
     //         let mut effects = Effects::new();
 
     //         effects.send(self_address(), message.clone());
@@ -389,7 +395,7 @@ mod tests {
     // #[test]
     // fn forward_delayed_messages_from_function() -> anyhow::Result<()> {
     //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, message: StringValue| {
+    //     registry.register_fn(function_type(), |_context, message: String| {
     //         let mut effects = Effects::new();
 
     //         effects.send_after(caller_address(), Duration::from_secs(5), message.clone());
@@ -429,7 +435,7 @@ mod tests {
     // #[test]
     // fn forward_egresses_from_function() -> anyhow::Result<()> {
     //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, _message: StringValue| {
+    //     registry.register_fn(function_type(), |_context, _message: String| {
     //         let mut effects = Effects::new();
 
     //         effects.egress(
@@ -472,11 +478,11 @@ mod tests {
     // #[test]
     // fn forward_state_mutations_from_function() -> anyhow::Result<()> {
     //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |_context, _message: StringValue| {
+    //     registry.register_fn(function_type(), |_context, _message: String| {
     //         let mut effects = Effects::new();
 
-    //         effects.update_state(BAR_STATE, &i32_value(42));
-    //         effects.delete_state(FOO_STATE);
+    //         effects.update_state(bar_state, &i32_value(84));
+    //         effects.delete_state(foo_state);
 
     //         effects
     //     });
@@ -490,12 +496,12 @@ mod tests {
     //     let state_map = to_state_map(state_mutations);
     //     assert_eq!(state_map.len(), 2);
 
-    //     let bar_state = state_map.get(BAR_STATE).unwrap();
-    //     let foo_state = state_map.get(FOO_STATE).unwrap();
+    //     let bar_state = state_map.get(bar_state).unwrap();
+    //     let foo_state = state_map.get(foo_state).unwrap();
 
     //     // state updates are coalesced
-    //     assert_state_update(bar_state, BAR_STATE, i32_value(42));
-    //     assert_state_delete(foo_state, FOO_STATE);
+    //     assert_state_update(bar_state, bar_state, i32_value(84));
+    //     assert_state_delete(foo_state, foo_state);
 
     //     Ok(())
     // }
@@ -514,12 +520,12 @@ mod tests {
     // #[test]
     // fn state_mutations_available_in_subsequent_invocations() -> anyhow::Result<()> {
     //     let mut registry = FunctionRegistry::new();
-    //     registry.register_fn(function_type(), |context, _message: StringValue| {
-    //         let state: Int32Value = context.get_state(BAR_STATE).unwrap();
+    //     registry.register_fn(function_type(), |context, _message: String| {
+    //         let state: Int32Value = context.get_state(bar_state).unwrap();
 
     //         let mut effects = Effects::new();
-    //         effects.update_state(BAR_STATE, &i32_value(state.get_value() + 1));
-    //         effects.delete_state(FOO_STATE);
+    //         effects.update_state(bar_state, &i32_value(state.get_value() + 1));
+    //         effects.delete_state(foo_state);
 
     //         effects
     //     });
@@ -533,36 +539,38 @@ mod tests {
     //     let state_map = to_state_map(state_mutations);
     //     assert_eq!(state_map.len(), 2);
 
-    //     let bar_state = state_map.get(BAR_STATE).unwrap();
-    //     let foo_state = state_map.get(FOO_STATE).unwrap();
+    //     let bar_state = state_map.get(bar_state).unwrap();
+    //     let foo_state = state_map.get(foo_state).unwrap();
 
     //     // state updates are coalesced
-    //     assert_state_update(bar_state, BAR_STATE, i32_value(3));
-    //     assert_state_delete(foo_state, FOO_STATE);
+    //     assert_state_update(bar_state, bar_state, i32_value(3));
+    //     assert_state_delete(foo_state, foo_state);
 
     //     Ok(())
     // }
 
-    // fn assert_invocation(
-    //     invocation: FromFunction_Invocation,
-    //     expected_address: Address,
-    //     expected_message: StringValue,
-    // ) {
-    //     assert_eq!(
-    //         Address::from_proto(invocation.get_target()),
-    //         expected_address
-    //     );
-    //     assert_eq!(
-    //         unpack_any::<StringValue>(invocation.get_argument()),
-    //         expected_message
-    //     );
-    // }
+    fn assert_invocation(
+        invocation: FromFunction_Invocation,
+        expected_address: Address,
+        expected_message: String,
+    ) {
+        assert_eq!(
+            Address::from_proto(invocation.get_target()),
+            expected_address
+        );
+
+        assert_eq!(
+            String::deserialize(String::get_typename().to_string(),
+                &invocation.get_argument().get_value().to_vec()).unwrap(),
+            expected_message
+        );
+    }
 
     // fn assert_delayed_invocation(
     //     invocation: FromFunction_DelayedInvocation,
     //     expected_address: Address,
     //     expected_delay: i64,
-    //     expected_message: StringValue,
+    //     expected_message: String,
     // ) {
     //     assert_eq!(
     //         Address::from_proto(invocation.get_target()),
@@ -570,7 +578,7 @@ mod tests {
     //     );
     //     assert_eq!(invocation.get_delay_in_ms(), expected_delay);
     //     assert_eq!(
-    //         unpack_any::<StringValue>(invocation.get_argument()),
+    //         unpack_any::<String>(invocation.get_argument()),
     //         expected_message
     //     );
     // }
@@ -579,12 +587,12 @@ mod tests {
     //     egress: FromFunction_EgressMessage,
     //     expected_namespace: &str,
     //     expected_name: &str,
-    //     expected_message: StringValue,
+    //     expected_message: String,
     // ) {
     //     assert_eq!(egress.get_egress_namespace(), expected_namespace);
     //     assert_eq!(egress.get_egress_type(), expected_name);
     //     assert_eq!(
-    //         unpack_any::<StringValue>(egress.get_argument()),
+    //         unpack_any::<String>(egress.get_argument()),
     //         expected_message
     //     );
     // }
@@ -615,24 +623,24 @@ mod tests {
     //     assert_eq!(state_mutation.get_state_name(), expected_name);
     // }
 
-    // /// Creates a complete Protobuf ToFunction that contains every possible field/type, including
-    // /// multiple invocations to test batching behaviour.
-    // fn complete_to_function() -> ToFunction {
-    //     let mut to_function = ToFunction::new();
-    //     let invocation_batch = complete_batch_request();
-    //     to_function.set_invocation(invocation_batch);
-    //     to_function
-    // }
+    /// Creates a complete Protobuf ToFunction that contains every possible field/type, including
+    /// multiple invocations to test batching behaviour.
+    fn complete_to_function() -> ToFunction {
+        let mut to_function = ToFunction::new();
+        let invocation_batch = complete_batch_request();
+        to_function.set_invocation(invocation_batch);
+        to_function
+    }
 
-    // fn complete_batch_request() -> ToFunction_InvocationBatchRequest {
-    //     let mut invocation_batch = ToFunction_InvocationBatchRequest::new();
+    fn complete_batch_request() -> ToFunction_InvocationBatchRequest {
+        let mut invocation_batch = ToFunction_InvocationBatchRequest::new();
 
-    //     invocation_batch.set_target(self_address().into_proto());
-    //     invocation_batch.set_state(states());
-    //     invocation_batch.set_invocations(invocations());
+        invocation_batch.set_target(self_address().into_proto());
+        invocation_batch.set_state(states());
+        invocation_batch.set_invocations(invocations());
 
-    //     invocation_batch
-    // }
+        invocation_batch
+    }
 
     fn function_type() -> FunctionType {
         FunctionType::new("namespace", "foo")
@@ -642,58 +650,65 @@ mod tests {
         Address::new(function_type(), "self")
     }
 
-    // fn caller_address() -> Address {
-    //     Address::new(function_type(), "caller")
-    // }
-    fn string_spec() -> ValueSpec<String> { ValueSpec::<String>::new("string_payload", Expiration::never()) }
-    fn int32_spec() -> ValueSpec<i32> { ValueSpec::<i32>::new("i32_payload", Expiration::never()) }
+    fn caller_address() -> Address {
+        Address::new(function_type(), "caller")
+    }
 
-    // fn states() -> RepeatedField<ToFunction_PersistedValue> {
-    //     let mut states = RepeatedField::new();
+    fn states() -> RepeatedField<ToFunction_PersistedValue> {
+        let mut states = RepeatedField::new();
 
-    //     states.push(state(FOO_STATE.to_owned(), 0));
-    //     states.push(state(BAR_STATE.to_owned(), 0));
+        // todo: this needs to be state name
+        states.push(state(foo_state().into(), 42));
+        states.push(state(bar_state().into(), 84));
 
-    //     states
-    // }
+        states
+    }
 
-    // fn state(name: String, value: i32) -> ToFunction_PersistedValue {
-    //     let mut state = ToFunction_PersistedValue::new();
+    fn state(value_spec: ValueSpecBase, value: i32) -> ToFunction_PersistedValue {
+        let mut state = ToFunction_PersistedValue::new();
 
-    //     let state_proto_foo = i32_value(value);
-    //     let any_foo = Any::pack(&state_proto_foo).unwrap();
-    //     state.set_state_name(name);
-    //     state.set_state_value(any_foo.write_to_bytes().unwrap());
+        let mut typed_value = TypedValue::new();
+        typed_value.set_typename(value_spec.typename);
+        typed_value.set_has_value(true);
+        typed_value.set_value(value.serialize(String::get_typename().to_string()).unwrap());
 
-    //     state
-    // }
+        state.set_state_name(value_spec.name);
+        state.set_state_value(typed_value);
+
+        state
+    }
 
     // It's important to create multiple invocations to test whether state updates can be "seen"
     // by later invocations in a batch.
-    // fn invocations() -> RepeatedField<ToFunction_Invocation> {
-    //     let mut invocations = RepeatedField::new();
+    fn invocations() -> RepeatedField<ToFunction_Invocation> {
+        let mut invocations = RepeatedField::new();
 
-    //     invocations.push(invocation(caller_address(), MESSAGE1));
-    //     invocations.push(invocation(caller_address(), MESSAGE2));
-    //     invocations.push(invocation(caller_address(), MESSAGE3));
+        invocations.push(invocation(caller_address(), MESSAGE1.to_string()));
+        invocations.push(invocation(caller_address(), MESSAGE2.to_string()));
+        invocations.push(invocation(caller_address(), MESSAGE3.to_string()));
 
-    //     invocations
-    // }
+        invocations
+    }
 
-    // fn invocation(caller: Address, argument: &str) -> ToFunction_Invocation {
-    //     let mut invocation = ToFunction_Invocation::new();
+    fn invocation(caller: Address, argument: String) -> ToFunction_Invocation {
+        let mut invocation = ToFunction_Invocation::new();
 
-    //     let message = string_value(argument);
-    //     let packed_argument = Any::pack(&message).unwrap();
-    //     invocation.set_caller(caller.into_proto());
-    //     invocation.set_argument(packed_argument);
+        let mut typed_value = TypedValue::new();
+        typed_value.set_typename(String::get_typename().to_string());
+        typed_value.set_has_value(true);
+        typed_value.set_value(argument.serialize(String::get_typename().to_string()).unwrap());
 
-    //     invocation
-    // }
+        // let message = string_value(argument);
+        // let packed_argument = Any::pack(&message).unwrap();
+        invocation.set_caller(caller.into_proto());
+        invocation.set_argument(typed_value);
 
-    // fn string_value(value: &str) -> StringValue {
-    //     // StringValue (and generated code from protobuf in general) is not very ergonomic...
-    //     let mut result = StringValue::new();
+        invocation
+    }
+
+    // fn string_value(value: &str) -> String {
+    //     // String (and generated code from protobuf in general) is not very ergonomic...
+    //     let mut result = String::new();
     //     result.set_value(value.to_owned());
     //     result
     // }
