@@ -41,9 +41,10 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(T::get_typename().to_string())?;
-        Ok(self
+        self
             .invocations
-            .push((address, T::get_typename().to_string(), serialized)))
+            .push((address, T::get_typename().to_string(), serialized));
+        Ok(())
     }
 
     /// Sends a delayed message to the stateful function identified by the address after a delay.
@@ -55,13 +56,14 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(T::get_typename().to_string())?;
-        Ok(self.delayed_invocations.push(DelayedInvocation::new(
+        self.delayed_invocations.push(DelayedInvocation::new(
             address,
             delay,
             cancellation_token,
             T::get_typename().to_string(),
             serialized,
-        )))
+        ));
+        Ok(())
     }
 
     /// Cancels a message previously sent via send_after. Note that the message might have already
@@ -77,9 +79,10 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(T::get_typename().to_string())?;
-        Ok(self
+        self
             .egress_messages
-            .push((identifier, T::get_typename().to_string(), serialized)))
+            .push((identifier, T::get_typename().to_string(), serialized));
+        Ok(())
     }
 
     /// Deletes the state kept under the given name.
@@ -95,8 +98,9 @@ impl Effects {
         value: &T,
     ) -> Result<(), String> {
         let serialized = value.serialize(value_spec.spec.typename.to_string())?;
-        Ok(self
+        self
             .state_updates
-            .push(StateUpdate::Update(value_spec.into(), serialized)))
+            .push(StateUpdate::Update(value_spec.into(), serialized));
+        Ok(())
     }
 }

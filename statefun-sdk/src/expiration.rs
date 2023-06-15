@@ -15,7 +15,7 @@ impl Expiration {
     pub fn new(expiration_type : ExpirationType, time_to_live : Duration) -> Expiration {
         Expiration {
             expiration_type : Some(expiration_type),
-            time_to_live : time_to_live,
+            time_to_live,
         }
     }
 

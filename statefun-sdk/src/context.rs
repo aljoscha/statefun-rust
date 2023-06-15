@@ -60,9 +60,6 @@ impl<'a> Context<'a> {
             value_spec.spec.typename.as_str(), Expiration::never());
 
         let state = self.state.get(&key);
-        match state {
-            Some(serialized) => Some(T::deserialize(typename, serialized)),
-            None => None,
-        }
+        state.map(|serialized| T::deserialize(typename, serialized))
     }
 }

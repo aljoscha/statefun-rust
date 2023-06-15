@@ -14,7 +14,7 @@ impl ValueSpecBase {
         ValueSpecBase {
             name: name.to_string(),
             typename: typename.to_string(),
-            expiration: expiration,
+            expiration,
         }
     }
 }

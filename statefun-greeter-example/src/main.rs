@@ -83,10 +83,9 @@ impl StatefulFunctions {
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
 
-        match context.get_state(last_seen_timestamp_spec()) {
-            Some(result) => log::info!("Last stored time: {:?}", result.unwrap()),
-            None => (),
-        };
+        if let Some(result) = context.get_state(last_seen_timestamp_spec()) {
+            log::info!("Last stored time: {:?}", result.unwrap())
+        }
 
         log::info!("User login: {:?}. Seen user {:?} times. Is this the first visit: {:?}. Timestamp of last visit: {:?}.",
             &user_login, &seen_count, &is_first_visit, &current_time);
@@ -103,7 +102,7 @@ impl StatefulFunctions {
             effects.send_after(
                 Address::new(
                     Self::delayed_function_type(),
-                    &user_login.user_name.to_string(),
+                    &user_login.user_name,
                 ),
                 Duration::from_secs(3),
                 "cancel-token".to_string(),
@@ -138,7 +137,7 @@ impl StatefulFunctions {
             .send(
                 Address::new(
                     Self::greet_function_type(),
-                    &user_login.user_name.to_string(),
+                    &user_login.user_name,
                 ),
                 &profile,
             )
@@ -187,8 +186,7 @@ impl StatefulFunctions {
         log::info!("Received delayed message at {:?}, sent at {:?}", current_time,
             &delayed_message.time_sent);
 
-        let effects = Effects::new();
-        effects
+        Effects::new()
     }
 
     fn create_greetings_message(profile: UserProfile) -> String {
