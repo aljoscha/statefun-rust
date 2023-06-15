@@ -300,10 +300,6 @@ mod tests {
     use core::fmt::Debug;
     use core::time::Duration;
     use std::collections::HashMap;
-    // use protobuf::well_known_types::Any;
-    // use protobuf::Message;
-
-    // use protobuf::well_known_types::{Int32Value};
     use protobuf::RepeatedField;
 
     use statefun_proto::request_reply::FromFunction_DelayedInvocation;

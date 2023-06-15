@@ -8,8 +8,6 @@ use crate::MissingStates;
 use crate::ValueSpecBase;
 use crate::{Context, Effects, FunctionType, InvocationError};
 
-// use statefun_proto::request_reply::TypedValue;
-
 /// Keeps a mapping from `FunctionType` to stateful functions. Use this together with a
 /// [Transport](crate::transport::Transport) to serve stateful functions.
 ///
@@ -134,7 +132,6 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
 #[cfg(test)]
 mod tests {
     use protobuf::well_known_types::StringValue;
-    // use crate::function_registry::HashMap;
     use crate::FunctionRegistry;
     use crate::*;
     use protobuf::Message as ProtoMessage;
