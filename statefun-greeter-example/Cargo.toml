@@ -22,13 +22,7 @@ statefun-greeter-example-proto = { path = "../statefun-greeter-example-proto", v
 protobuf = "2.15"
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = { version = "1.0.96" }
-
-
-# for reading/writing from/to Kafka in the data generator
-# todo: update this
 tokio = { version = "1", features = [ "macros", "sync", "rt-multi-thread" ]}
-# tokio = { version = "0.2", features = ["full"] }
-# tokio = { version = "0.2", features = ["full"] }
 structopt = "0.3.5"
 rand = "0.7"
 futures = "0.3"
