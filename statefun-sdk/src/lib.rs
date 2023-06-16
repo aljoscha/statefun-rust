@@ -46,6 +46,7 @@ mod function_registry;
 mod function_type;
 mod invocation_bridge;
 mod message;
+mod macros;
 mod missing_states;
 mod serialization;
 mod state_update;

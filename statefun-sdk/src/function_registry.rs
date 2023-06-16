@@ -27,6 +27,8 @@ impl FunctionRegistry {
     }
 
     /// Registers the given function under the `function_type`.
+    /// Hint: Use the `specs![]` macro to pass your list of typed ValueSpec's,
+    /// for example `specs![ValueSpec::<i32>::new("integer"), ValueSpec::<String>::new("str")]
     pub fn register_fn<F: Fn(Context, Message) -> Effects + Send + 'static>(
         &mut self,
         function_type: FunctionType,

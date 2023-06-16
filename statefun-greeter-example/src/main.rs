@@ -6,6 +6,7 @@ use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
     Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName,
+    specs,
 };
 use types::{DelayedMessage, EgressRecord, MyUserProfile, UserLogin};
 
@@ -36,10 +37,10 @@ impl StatefulFunctions {
     pub fn register_functions(&self, function_registry: &mut FunctionRegistry) {
         function_registry.register_fn(
             Self::user_function_type(),
-            vec![
-                seen_count_spec().into(),
-                is_first_visit_spec().into(),
-                last_seen_timestamp_spec().into(),
+            specs![
+                seen_count_spec(),
+                is_first_visit_spec(),
+                last_seen_timestamp_spec()
             ],
             Self::user,
         );
