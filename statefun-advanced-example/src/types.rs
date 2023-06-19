@@ -17,6 +17,18 @@ pub struct UserLogin {
     pub login_type: LoginType,
 }
 
+///
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DelayedMessage {
+    pub time_sent: i64,
+}
+
+impl DelayedMessage {
+    pub fn new(time_sent: i64) -> DelayedMessage {
+        DelayedMessage { time_sent }
+    }
+}
+
 /// A customized response sent to the user
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EgressRecord {

@@ -9,6 +9,10 @@ pub fn seen_count_spec() -> ValueSpec<i32> {
     )
 }
 
+pub fn is_first_visit_spec() -> ValueSpec<bool> {
+    ValueSpec::<bool>::new("is_first_visit", Expiration::never())
+}
+
 pub fn last_seen_timestamp_spec() -> ValueSpec<i64> {
     ValueSpec::<i64>::new("last_seen_timestamp", Expiration::never())
 }
