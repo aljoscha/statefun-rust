@@ -1,11 +1,10 @@
-use statefun::{Expiration, ExpirationType, ValueSpec};
-use std::time::Duration;
+use statefun::{Expiration, ValueSpec};
 
 // 'seen_count' will automatically be purged 5 seconds after the last write
 pub fn seen_count_spec() -> ValueSpec<i32> {
     ValueSpec::<i32>::new(
         "seen_count",
-        Expiration::new(ExpirationType::AfterWrite, Duration::from_secs(5)),
+        Expiration::never(),
     )
 }
 
