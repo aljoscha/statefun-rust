@@ -22,7 +22,7 @@ services:
   # NOTE: This is using the outer dir as the context
   greeter-functions:
     build:
-      dockerfile: statefun-greeter-example/Dockerfile
+      dockerfile: statefun-advanced-example/Dockerfile
       context: ..
     expose:
       - "1108"

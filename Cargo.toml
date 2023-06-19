@@ -4,4 +4,5 @@ members = [
     "statefun-sdk",
     "statefun-greeter-example",
     "statefun-greeter-example-proto",
+    "statefun-advanced-example",
 ]

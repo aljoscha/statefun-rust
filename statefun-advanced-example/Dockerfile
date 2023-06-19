@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/src/statefun
 COPY . .
 
-RUN cargo install --path statefun-greeter-example
+RUN cargo install --path statefun-advanced-example
 
 ENV RUST_LOG debug
 EXPOSE 1108
 
-CMD ["statefun-greeter-example"]
+CMD ["statefun-advanced-example"]
