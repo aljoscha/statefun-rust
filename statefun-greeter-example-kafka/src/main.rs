@@ -129,8 +129,8 @@ impl Serializable<MyGreetResponse> for MyGreetResponse {
 }
 
 pub fn relay(_context: Context, message: Message) -> Effects {
-    let my_greetw = match message.get::<MyGreetResponse>() {
-        Ok(my_greetw) => my_greetw,
+    let my_greet = match message.get::<MyGreetResponse>() {
+        Ok(my_greet) => my_greet,
         Err(error) => panic!("Could not receive GreetResponse: {:?}", error),
     };
 
@@ -141,8 +141,8 @@ pub fn relay(_context: Context, message: Message) -> Effects {
     effects.kafka_keyed_egress(
         EgressIdentifier::new("example", "greets"),
         "greetings",
-        &my_greetw.0.get_name().to_string(),
-        &my_greetw,
+        &my_greet.0.get_name().to_string(),
+        &my_greet,
     ).unwrap();
 
     effects
