@@ -1,0 +1,23 @@
+kind: io.statefun.endpoints.v2/http
+spec:
+  functions: example/*
+  urlPathTemplate: http://rust-worker:5000/statefun/{function.name}
+---
+kind: io.statefun.kafka.v1/ingress
+spec:
+  id: example/names
+  address: kafka-broker:9092
+  consumerGroupId: my-consumer-group
+  topics:
+    - topic: names
+      valueType: com.googleapis/example.GreetRequest
+      targets:
+        - example/greeter
+---
+kind: io.statefun.kafka.v1/egress
+spec:
+  id: example/greets
+  address: kafka-broker:9092
+  deliverySemantic:
+    type: exactly-once
+    transactionTimeout: 15min

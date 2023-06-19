@@ -5,4 +5,5 @@ members = [
     "statefun-greeter-example",
     "statefun-greeter-example-proto",
     "statefun-advanced-example",
+    "statefun-greeter-example-kafka",
 ]
