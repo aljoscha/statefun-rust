@@ -1,6 +1,6 @@
 [package]
 name = "statefun-kafka-example"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 readme = "../../../README.md"
 edition = "2018"
@@ -16,8 +16,8 @@ repository = "https://github.com/aljoscha/statefun-rust.git"
 anyhow = "1.0"
 log = "0.4.8"
 env_logger = "0.7.1"
-statefun = { path = "../../../statefun-sdk", version = "0.1.1" }
-statefun-kafka-example-proto = { path = "../statefun-kafka-example-proto", version = "0.1.1" }
+statefun = { path = "../../../statefun-sdk", version = "0.2.0" }
+statefun-kafka-example-proto = { path = "../statefun-kafka-example-proto", version = "0.2.0" }
 protobuf = "2.15"
 
 # for reading/writing from/to Kafka in the data generator

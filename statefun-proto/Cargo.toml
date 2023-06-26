@@ -1,6 +1,6 @@
 [package]
 name = "statefun-proto"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 readme = "../README.md"
 edition = "2018"
