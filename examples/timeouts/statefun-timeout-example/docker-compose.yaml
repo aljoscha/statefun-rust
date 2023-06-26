@@ -22,8 +22,8 @@ services:
   # NOTE: This is using the outer dir as the context
   greeter-functions:
     build:
-      dockerfile: statefun-advanced-example/Dockerfile
-      context: ..
+      dockerfile: examples/timeouts/statefun-timeout-example/Dockerfile
+      context: ../../..
     expose:
       - "1108"
 

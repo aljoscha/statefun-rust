@@ -19,11 +19,11 @@ version: "2.1"
 
 services:
 
-  # NOTE: This is using the outer dir as the context
+  # NOTE: This is using the root project dir as the context
   greeter-functions:
     build:
-      dockerfile: statefun-greeter-example/Dockerfile
-      context: ..
+      dockerfile: examples/greeter/statefun-greeter-example/Dockerfile
+      context: ../../..
     expose:
       - "1108"
 

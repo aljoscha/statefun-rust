@@ -2,7 +2,7 @@
 name = "statefun-kafka-example"
 version = "0.1.1"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
-readme = "../README.md"
+readme = "../../../README.md"
 edition = "2018"
 license = "MIT"
 

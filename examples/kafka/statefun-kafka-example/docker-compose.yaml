@@ -52,16 +52,16 @@ services:
 
   rust-worker:
     build:
-      context: ..
-      dockerfile: statefun-greeter-example-kafka/Dockerfile
-    command: ["statefun-greeter-example-kafka"]
+      context: ../../..
+      dockerfile: examples/kafka/statefun-kafka-example/Dockerfile
+    command: ["statefun-kafka-example"]
     ports:
       - "5000:5000"
 
   datagen:
     build:
-      context: ..
-      dockerfile: statefun-greeter-example-kafka/Dockerfile
+      context: ../../..
+      dockerfile: examples/kafka/statefun-kafka-example/Dockerfile
     command: ["datagen"]
     depends_on:
       - kafka-broker

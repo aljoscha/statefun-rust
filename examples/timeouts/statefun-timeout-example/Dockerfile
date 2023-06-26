@@ -1,4 +1,4 @@
-# Dockerfile for our SDK worker and data generator
+# Dockerfile for the timeouts example
 
 FROM rust:1.70
 
@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/src/statefun
 COPY . .
 
-RUN cargo install --path statefun-advanced-example
+RUN cargo install --path examples/timeouts/statefun-timeout-example
 
 ENV RUST_LOG debug
 EXPOSE 1108
 
-CMD ["statefun-advanced-example"]
+CMD ["statefun-timeout-example"]

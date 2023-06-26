@@ -1,4 +1,4 @@
-# Dockerfile for our SDK worker and data generator
+# Dockerfile for our greeter example
 
 FROM rust:1.70
 
@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/src/statefun
 COPY . .
 
-RUN cargo install --path statefun-greeter-example
+RUN cargo install --path examples/greeter/statefun-greeter-example
 
 ENV RUST_LOG debug
 EXPOSE 1108

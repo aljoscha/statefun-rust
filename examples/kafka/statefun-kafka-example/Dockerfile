@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/src/statefun
 COPY . .
 
-RUN cargo -v install --path statefun-greeter-example-kafka
+RUN cargo -v install --path examples/kafka/statefun-kafka-example
 
 ENV RUST_LOG debug
 

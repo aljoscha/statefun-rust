@@ -18,6 +18,12 @@ To run the example:
 docker-compose up -d
 ```
 
+If you have problems running docker-compose try to build manually and enable console logging:
+
+```
+docker-compose build --progress plain
+```
+
 Then, to see the example in actions, see what comes out of the topic
 `greetings`:
 

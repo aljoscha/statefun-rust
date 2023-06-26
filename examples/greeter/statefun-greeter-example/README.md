@@ -14,6 +14,12 @@ To run the example:
 docker-compose up --build
 ```
 
+If you have problems running docker-compose try to build manually and enable console logging:
+
+```
+docker-compose build --progress plain
+```
+
 ## Play around!
 
 The greeter application allows you to do the following actions:
