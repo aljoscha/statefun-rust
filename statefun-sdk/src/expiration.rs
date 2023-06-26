@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-///
+/// Specifies the expiration type and time to live for a given state
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Expiration {
     ///
@@ -11,7 +11,7 @@ pub struct Expiration {
 }
 
 impl Expiration {
-    ///
+    /// Constructor
     pub fn new(expiration_type: ExpirationType, time_to_live: Duration) -> Expiration {
         Expiration {
             expiration_type: Some(expiration_type),
@@ -19,7 +19,7 @@ impl Expiration {
         }
     }
 
-    ///
+    /// Helper function to mark the state as never expiring
     pub fn never() -> Expiration {
         Expiration {
             expiration_type: None,
@@ -28,7 +28,7 @@ impl Expiration {
     }
 }
 
-///
+/// Specifies the expiration time for a given state
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum ExpirationType {
     /// After last read or write

@@ -19,14 +19,14 @@ impl FunctionType {
         }
     }
 
-    ///
-    pub fn get_name(&self) -> String {
-        self.name.to_string()
-    }
-
-    ///
+    /// Get the namespace of this function
     pub fn get_namespace(&self) -> String {
         self.namespace.to_string()
+    }
+
+    /// Get the name of this function
+    pub fn get_name(&self) -> String {
+        self.name.to_string()
     }
 }
 

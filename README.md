@@ -8,6 +8,11 @@ information about the project.
 
 This library currently targets [Statefun v3.2.0](https://flink.apache.org/2022/01/31/stateful-functions-3.2.0-release-announcement/).
 
+## Changes since v3.x of Apache Statefun
+
+Please note that Apache Statefun v3.x has API breaking changes. This version of the Rust SDK
+only supports v3.x of the Apache Statefun protocol.
+
 ## How to use
 
 There are a few examples provided in the `./examples` directory. Please refer to each example's

@@ -10,7 +10,8 @@ use std::time::Duration;
 /// Effects (or side effects) of a stateful function invocation.
 ///
 /// This can be used to:
-///  - send messages ourselves or other stateful functions
+///  - send messages to ourselves or to other stateful functions
+///  - send tokenized delayed messages, and the ability to cancel such messages
 ///  - send messages to an egress
 ///  - update the state of this stateful function, which will be available on future invocations
 #[derive(Default, Debug)]
@@ -46,7 +47,9 @@ impl Effects {
         Ok(())
     }
 
-    /// Sends a delayed message to the stateful function identified by the address after a delay.
+    /// Sends a delayed message to the stateful function identified by the address after the
+    /// specified delay. The cancellation token is optional, if set it can be used to cancel
+    /// the delayed invocation on a best-effort basis. For cancelling see cancel_delayed_message().
     pub fn send_after<T: Serializable<T> + TypeName>(
         &mut self,
         address: Address,
@@ -65,7 +68,7 @@ impl Effects {
         Ok(())
     }
 
-    /// Cancels a message previously sent via send_after. Note that the message might have already
+    /// Cancels a delayed message on a best-effort basis. Note that the message might have already
     /// been delivered, leading to a no-op operation.
     pub fn cancel_delayed_message(&mut self, cancellation_token: String) {
         self.cancelled_delayed_invocations.push(cancellation_token);
