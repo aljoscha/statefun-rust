@@ -13,6 +13,9 @@ This library currently targets [Statefun v3.2.0](https://flink.apache.org/2022/0
 Please note that Apache Statefun v3.x has API breaking changes. This version of the Rust SDK
 only supports v3.x of the Apache Statefun protocol.
 
+Please note that the new version of this Rust SDK requires user code to implement the new
+`Serializable` and `TypeName` traits. Refer to the example code on how to do this yourself.
+
 ## How to use
 
 There are a few examples provided in the `./examples` directory. Please refer to each example's
