@@ -1,8 +1,8 @@
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
-use statefun_greeter_example_kafka_proto::example::GreetRequest;
-use statefun_greeter_example_kafka_proto::example::GreetResponse;
+use statefun_kafka_example_proto::example::GreetRequest;
+use statefun_kafka_example_proto::example::GreetResponse;
 use statefun::{
     Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName,
     Serializable, Expiration, ValueSpec, specs,

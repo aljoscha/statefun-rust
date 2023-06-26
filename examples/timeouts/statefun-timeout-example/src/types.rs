@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use statefun_greeter_example_proto::example::UserProfile;
+use statefun_timeout_example_proto::example::UserProfile;
 
 ///
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,8 +1,8 @@
 [package]
-name = "statefun-advanced-example"
+name = "statefun-greeter-example"
 version = "0.1.1"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
-readme = "../README.md"
+readme = "../../../README.md"
 edition = "2018"
 license = "MIT"
 
@@ -16,8 +16,8 @@ repository = "https://github.com/aljoscha/statefun-rust.git"
 anyhow = "1.0"
 log = "0.4.8"
 env_logger = "0.7.1"
-statefun = { path = "../statefun-sdk", version = "0.1.1" }
-statefun-proto = { path = "../statefun-proto", version = "0.1.1" }
+statefun = { path = "../../../statefun-sdk", version = "0.1.1" }
+statefun-proto = { path = "../../../statefun-proto", version = "0.1.1" }
 statefun-greeter-example-proto = { path = "../statefun-greeter-example-proto", version = "0.1.1" }
 protobuf = "2.15"
 serde = { version = "1.0.164", features = ["derive"] }

@@ -1,14 +1,10 @@
 # A Simple Greeter Example
 
-This is a simple example that runs two stateful functions that accept requests
-from a Kafka ingress, and then respond by sending greeting responses to a Kafka
-egress. It demonstrates the primitive building blocks of a Stateful Functions
-applications, such as ingresses, handling state in functions, and sending
-messages to egresses.
+This is an example based on the [Java Playground Example](https://github.com/apache/flink-statefun-playground/tree/1ff449204b367e6dd0d0818ca76a5283890ce2c5/java/greeter)
+utilizing custom ingress and egress types as defined in the playground.
 
-The example consists of two stateful functions, a `greeter` and a `relay` that
-show how messages can be passed between stateful functions. All the `relay`
-does is package messages to send them to the Kafka Egress.
+For a more real-world example utilizing vanilla Kafka instances, please take a look at
+`./examples/kafka` instead in the project root.
 
 ## Running the example
 

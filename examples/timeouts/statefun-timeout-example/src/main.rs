@@ -10,7 +10,7 @@ use statefun::{
 };
 use types::{DelayedMessage, EgressRecord, MyUserProfile, UserLogin};
 
-use statefun_greeter_example_proto::example::UserProfile;
+use statefun_timeout_example_proto::example::UserProfile;
 use std::time::Duration;
 use std::time::SystemTime;
 
