@@ -1,6 +1,6 @@
 use crate::Expiration;
 
-///
+/// Used internally by the crate
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct ValueSpecBase {
     pub(crate) name: String,           // state name
