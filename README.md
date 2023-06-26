@@ -4,9 +4,17 @@ An SDK for writing stateful functions in Rust. See the [Apache Flink Stateful
 Functions](https://flink.apache.org/stateful-functions.html) website for more
 information about the project.
 
-Please refer to the [documentation](https://docs.rs/statefun) to learn how to
-use this. There is a complete example available in `statefun-greeter-example` along
-with another `README.md`.
+## Supported StateFun API version
+
+This library currently targets [Statefun v3.2.0](https://flink.apache.org/2022/01/31/stateful-functions-3.2.0-release-announcement/).
+
+## How to use
+
+There are a few examples provided in the `./examples` directory. Please refer to each example's
+readme file fore more info.
+
+Please also refer to the [documentation](https://docs.rs/statefun) to learn more on how to
+set up & use the Statefun cluster.
 
 ## Building
 
