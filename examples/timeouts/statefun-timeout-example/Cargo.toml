@@ -1,0 +1,28 @@
+[package]
+name = "statefun-timeout-example"
+version = "0.2.0"
+authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
+readme = "../../../README.md"
+edition = "2018"
+license = "MIT"
+
+description = "An example that shows how to use the Statefun Rust SDK"
+
+documentation = "https://docs.rs/statefun/"
+homepage = "https://github.com/aljoscha/statefun-rust"
+repository = "https://github.com/aljoscha/statefun-rust.git"
+
+[dependencies]
+anyhow = "1.0"
+log = "0.4.8"
+env_logger = "0.7.1"
+statefun = { path = "../../../statefun-sdk", version = "0.2.0" }
+statefun-proto = { path = "../../../statefun-proto", version = "0.2.0" }
+statefun-timeout-example-proto = { path = "../statefun-timeout-example-proto", version = "0.2.0" }
+protobuf = "2.15"
+serde = { version = "1.0.164", features = ["derive"] }
+serde_json = { version = "1.0.96" }
+tokio = { version = "1", features = [ "macros", "sync", "rt-multi-thread" ]}
+structopt = "0.3.5"
+rand = "0.7"
+futures = "0.3"

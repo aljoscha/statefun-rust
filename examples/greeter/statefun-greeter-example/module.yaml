@@ -1,0 +1,16 @@
+kind: io.statefun.endpoints.v2/http
+spec:
+  functions: greeter.fns/*
+  urlPathTemplate: http://greeter-functions:1108/
+  transport:
+    type: io.statefun.transports.v1/async
+---
+kind: io.statefun.playground.v1/ingress
+spec:
+  port: 8090
+---
+kind: io.statefun.playground.v1/egress
+spec:
+  port: 8091
+  topics:
+    - greetings

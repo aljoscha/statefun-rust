@@ -10,7 +10,7 @@ use protobuf::{Message, ProtobufError};
 use thiserror::Error;
 use tokio::runtime;
 
-use statefun_proto::http_function::ToFunction;
+use statefun_proto::request_reply::ToFunction;
 
 use crate::function_registry::FunctionRegistry;
 use crate::invocation_bridge::InvocationBridge;
@@ -82,7 +82,8 @@ async fn handle_request(
     log::debug!("Parts {:#?}", _parts);
 
     let full_body = hyper::body::to_bytes(body).await?;
-    let to_function: ToFunction = protobuf::parse_from_reader(&mut full_body.reader())?;
+    let mut reader = full_body.reader();
+    let to_function: ToFunction = ToFunction::parse_from_reader(&mut reader)?;
     let from_function = {
         let function_registry = function_registry.lock().unwrap();
         function_registry.invoke_from_proto(to_function)?

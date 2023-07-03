@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package example;
+
+message UserProfile {
+    string name = 1;
+    int64 last_seen_delta_ms = 2;
+    string login_location = 3;
+    int32 seen_count = 4;
+}

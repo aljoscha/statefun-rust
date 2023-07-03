@@ -2,6 +2,10 @@
 members = [
     "statefun-proto",
     "statefun-sdk",
-    "statefun-greeter-example",
-    "statefun-greeter-example-proto",
+    "examples/greeter/statefun-greeter-example",
+    "examples/greeter/statefun-greeter-example-proto",
+    "examples/kafka/statefun-kafka-example",
+    "examples/kafka/statefun-kafka-example-proto",
+    "examples/timeouts/statefun-timeout-example",
+    "examples/timeouts/statefun-timeout-example-proto",
 ]

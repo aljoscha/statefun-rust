@@ -1,0 +1,67 @@
+version: "2.1"
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka-broker:
+    image: wurstmeister/kafka:2.12-2.0.1
+    ports:
+      - "9092:9092"
+    environment:
+      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
+      KAFKA_CREATE_TOPICS: "names:1:1,greetings:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  master:
+    build:
+      context: .
+      dockerfile: Dockerfile.statefun
+    expose:
+      - "6123"
+    ports:
+      - "8081:8081"
+    environment:
+      - ROLE=master
+      - MASTER_HOST=master
+    volumes:
+      - ./checkpoint-dir:/checkpoint-dir
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.statefun
+    expose:
+      - "6121"
+      - "6122"
+    depends_on:
+      - master
+      - kafka-broker
+    links:
+      - "master:master"
+      - "kafka-broker:kafka-broker"
+    environment:
+      - ROLE=worker
+      - MASTER_HOST=master
+    volumes:
+      - ./checkpoint-dir:/checkpoint-dir
+
+  rust-worker:
+    build:
+      context: ../../..
+      dockerfile: examples/kafka/statefun-kafka-example/Dockerfile
+    command: ["statefun-kafka-example"]
+    ports:
+      - "5000:5000"
+
+  datagen:
+    build:
+      context: ../../..
+      dockerfile: examples/kafka/statefun-kafka-example/Dockerfile
+    command: ["datagen"]
+    depends_on:
+      - kafka-broker

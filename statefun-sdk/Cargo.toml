@@ -1,6 +1,6 @@
 [package]
 name = "statefun"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 readme = "../README.md"
 edition = "2018"
@@ -13,13 +13,14 @@ homepage = "https://github.com/aljoscha/statefun-rust"
 repository = "https://github.com/aljoscha/statefun-rust.git"
 
 [dependencies]
+serde = { version = "1.0.164", features = ["derive"] }
 thiserror = "1.0"
 log = "0.4.8"
 tokio = { version = "0.2", features = ["full"] }
 hyper = "0.13"
 bytes = "0.5"
 protobuf = "2.15"
-statefun-proto = { path = "../statefun-proto", version = "0.1.1" }
+statefun-proto = { path = "../statefun-proto", version = "0.2.0" }
 
 [dev-dependencies]
 anyhow = "1.0"
