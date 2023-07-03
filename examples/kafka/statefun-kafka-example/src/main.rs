@@ -1,13 +1,13 @@
+use protobuf::Message as ProtoMessage;
 use statefun::io::kafka::KafkaEgress;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
+use statefun::{
+    specs, Address, Context, Effects, EgressIdentifier, Expiration, FunctionRegistry, FunctionType,
+    Message, Serializable, TypeName, ValueSpec,
+};
 use statefun_kafka_example_proto::example::GreetRequest;
 use statefun_kafka_example_proto::example::GreetResponse;
-use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName,
-    Serializable, Expiration, ValueSpec, specs,
-};
-use protobuf::Message as ProtoMessage;
 
 fn greeter_function_type() -> FunctionType {
     FunctionType::new("example", "greeter")
@@ -19,10 +19,7 @@ fn relay_function_type() -> FunctionType {
 
 // 'seen_count' will automatically be purged 5 seconds after the last write
 pub fn seen_count_spec() -> ValueSpec<i32> {
-    ValueSpec::<i32>::new(
-        "seen_count",
-        Expiration::never(),
-    )
+    ValueSpec::<i32>::new("seen_count", Expiration::never())
 }
 
 /// Have to wrap the struct to implement traits
@@ -68,10 +65,10 @@ pub fn greet(context: Context, message: Message) -> Effects {
     log::info!("We should greet {:?}", greet_request.get_name());
 
     let seen_count = context.get_state(seen_count_spec());
-        let seen_count = match seen_count {
-            Some(count) => count.unwrap() + 1,
-            None => 1,
-        };
+    let seen_count = match seen_count {
+        Some(count) => count.unwrap() + 1,
+        None => 1,
+    };
 
     log::info!(
         "We have seen {:?} {:?} times.",
@@ -81,7 +78,9 @@ pub fn greet(context: Context, message: Message) -> Effects {
 
     let mut effects = Effects::new();
 
-    effects.update_state(seen_count_spec(), &seen_count).unwrap();
+    effects
+        .update_state(seen_count_spec(), &seen_count)
+        .unwrap();
 
     let mut greet_response = GreetResponse::new();
     greet_response.set_name(greet_request.get_name().to_owned());
@@ -138,12 +137,14 @@ pub fn relay(_context: Context, message: Message) -> Effects {
 
     let mut effects = Effects::new();
 
-    effects.kafka_keyed_egress(
-        EgressIdentifier::new("example", "greets"),
-        "greetings",
-        &my_greet.0.get_name().to_string(),
-        &my_greet,
-    ).unwrap();
+    effects
+        .kafka_keyed_egress(
+            EgressIdentifier::new("example", "greets"),
+            "greetings",
+            &my_greet.0.get_name().to_string(),
+            &my_greet,
+        )
+        .unwrap();
 
     effects
 }
@@ -153,17 +154,9 @@ fn main() -> anyhow::Result<()> {
 
     let mut function_registry = FunctionRegistry::new();
 
-    function_registry.register_fn(
-        greeter_function_type(),
-        specs![seen_count_spec()],
-        &greet,
-    );
+    function_registry.register_fn(greeter_function_type(), specs![seen_count_spec()], &greet);
 
-    function_registry.register_fn(
-        relay_function_type(),
-        vec![],
-        &relay,
-    );
+    function_registry.register_fn(relay_function_type(), vec![], &relay);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:5000".parse()?);
     hyper_transport.run(function_registry)?;

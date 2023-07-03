@@ -5,8 +5,8 @@ use specs::*;
 use statefun::transport::hyper::HyperHttpTransport;
 use statefun::transport::Transport;
 use statefun::{
-    Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message, TypeName,
-    specs,
+    specs, Address, Context, Effects, EgressIdentifier, FunctionRegistry, FunctionType, Message,
+    TypeName,
 };
 use types::{EgressRecord, MyUserProfile, UserLogin};
 
@@ -28,10 +28,7 @@ fn main() -> anyhow::Result<()> {
 pub fn register_functions(function_registry: &mut FunctionRegistry) {
     function_registry.register_fn(
         user_function_type(),
-        specs![
-            seen_count_spec(),
-            last_seen_timestamp_spec()
-        ],
+        specs![seen_count_spec(), last_seen_timestamp_spec()],
         user,
     );
 
@@ -72,9 +69,12 @@ pub fn user(context: Context, message: Message) -> Effects {
     };
 
     let mut effects = Effects::new();
-    effects.update_state(seen_count_spec(), &seen_count).unwrap();
-    effects.update_state(last_seen_timestamp_spec(), &now_ms).unwrap();
-
+    effects
+        .update_state(seen_count_spec(), &seen_count)
+        .unwrap();
+    effects
+        .update_state(last_seen_timestamp_spec(), &now_ms)
+        .unwrap();
 
     let mut profile = UserProfile::new();
     profile.set_name(login.user_name.to_string());

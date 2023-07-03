@@ -299,8 +299,8 @@ where
 mod tests {
     use core::fmt::Debug;
     use core::time::Duration;
-    use std::collections::HashMap;
     use protobuf::RepeatedField;
+    use std::collections::HashMap;
 
     use statefun_proto::request_reply::FromFunction_DelayedInvocation;
     use statefun_proto::request_reply::FromFunction_EgressMessage;

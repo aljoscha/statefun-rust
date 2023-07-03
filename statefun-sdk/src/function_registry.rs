@@ -133,9 +133,9 @@ impl<F: Fn(Context, Message) -> Effects> InvokableFunction for FnInvokableFuncti
 
 #[cfg(test)]
 mod tests {
-    use protobuf::well_known_types::StringValue;
     use crate::FunctionRegistry;
     use crate::*;
+    use protobuf::well_known_types::StringValue;
     use protobuf::Message as ProtoMessage;
     use std::collections::HashMap;
 
