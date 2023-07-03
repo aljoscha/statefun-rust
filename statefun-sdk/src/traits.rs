@@ -16,5 +16,5 @@ pub trait Serializable<T> {
     fn serialize(&self, typename: String) -> Result<Vec<u8>, String>;
 
     /// Implements deserialization
-    fn deserialize(typename: String, buffer: &Vec<u8>) -> Result<T, String>;
+    fn deserialize(typename: String, buffer: &[u8]) -> Result<T, String>;
 }

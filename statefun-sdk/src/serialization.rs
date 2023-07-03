@@ -14,7 +14,7 @@ impl Serializable<bool> for bool {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<bool, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<bool, String> {
         match BooleanWrapper::parse_from_bytes(buffer) {
             Ok(result) => Ok(result.get_value()),
             Err(result) => Err(result.to_string()),
@@ -30,7 +30,7 @@ impl Serializable<i32> for i32 {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<i32, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<i32, String> {
         match IntWrapper::parse_from_bytes(buffer) {
             Ok(result) => Ok(result.get_value()),
             Err(result) => Err(result.to_string()),
@@ -46,7 +46,7 @@ impl Serializable<i64> for i64 {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<i64, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<i64, String> {
         match LongWrapper::parse_from_bytes(buffer) {
             Ok(result) => Ok(result.get_value()),
             Err(result) => Err(result.to_string()),
@@ -62,7 +62,7 @@ impl Serializable<f32> for f32 {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<f32, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<f32, String> {
         match FloatWrapper::parse_from_bytes(buffer) {
             Ok(result) => Ok(result.get_value()),
             Err(result) => Err(result.to_string()),
@@ -78,7 +78,7 @@ impl Serializable<f64> for f64 {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<f64, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<f64, String> {
         match DoubleWrapper::parse_from_bytes(buffer) {
             Ok(result) => Ok(result.get_value()),
             Err(result) => Err(result.to_string()),
@@ -94,7 +94,7 @@ impl Serializable<String> for String {
         Ok(res)
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<String, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<String, String> {
         match StringWrapper::parse_from_bytes(buffer) {
             Ok(result) => Ok(result.get_value().to_string()),
             Err(result) => Err(result.to_string()),

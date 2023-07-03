@@ -68,7 +68,7 @@ impl Serializable<KafkaProducerRecord> for KafkaProducerRecord {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<KafkaProducerRecord, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<KafkaProducerRecord, String> {
         match KafkaProducerRecord::parse_from_bytes(buffer) {
             Ok(result) => Ok(result),
             Err(result) => Err(result.to_string()),

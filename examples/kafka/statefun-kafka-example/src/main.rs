@@ -40,7 +40,7 @@ impl Serializable<MyGreetRequest> for MyGreetRequest {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyGreetRequest, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<MyGreetRequest, String> {
         match GreetRequest::parse_from_bytes(buffer) {
             Ok(result) => Ok(MyGreetRequest(result)),
             Err(error) => Err(error.to_string()),
@@ -119,7 +119,7 @@ impl Serializable<MyGreetResponse> for MyGreetResponse {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyGreetResponse, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<MyGreetResponse, String> {
         match GreetResponse::parse_from_bytes(buffer) {
             Ok(result) => Ok(MyGreetResponse(result)),
             Err(error) => Err(error.to_string()),

@@ -192,7 +192,7 @@ mod tests {
             }
         }
 
-        fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyStringValue, String> {
+        fn deserialize(_typename: String, buffer: &[u8]) -> Result<MyStringValue, String> {
             match StringValue::parse_from_bytes(buffer) {
                 Ok(result) => Ok(MyStringValue(result)),
                 Err(error) => Err(error.to_string()),

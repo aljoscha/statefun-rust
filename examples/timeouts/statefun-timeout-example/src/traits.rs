@@ -10,7 +10,7 @@ impl Serializable<DelayedMessage> for DelayedMessage {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<DelayedMessage, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<DelayedMessage, String> {
         match serde_json::from_slice::<DelayedMessage>(buffer) {
             Ok(result) => Ok(result),
             Err(error) => Err(error.to_string()),
@@ -26,7 +26,7 @@ impl Serializable<UserLogin> for UserLogin {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<UserLogin, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<UserLogin, String> {
         match serde_json::from_slice::<UserLogin>(buffer) {
             Ok(result) => Ok(result),
             Err(error) => Err(error.to_string()),
@@ -42,7 +42,7 @@ impl Serializable<MyUserProfile> for MyUserProfile {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<MyUserProfile, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<MyUserProfile, String> {
         match UserProfile::parse_from_bytes(buffer) {
             Ok(result) => Ok(MyUserProfile(result)),
             Err(error) => Err(error.to_string()),
@@ -58,7 +58,7 @@ impl Serializable<EgressRecord> for EgressRecord {
         }
     }
 
-    fn deserialize(_typename: String, buffer: &Vec<u8>) -> Result<EgressRecord, String> {
+    fn deserialize(_typename: String, buffer: &[u8]) -> Result<EgressRecord, String> {
         match serde_json::from_slice::<EgressRecord>(buffer) {
             Ok(result) => Ok(result),
             Err(error) => Err(error.to_string()),
