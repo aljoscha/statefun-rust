@@ -93,7 +93,7 @@ pub fn greet(context: Context, message: Message) -> Effects {
 
     effects
         .send(
-            Address::new(relay_function_type(), &greet_request.get_name()),
+            Address::new(relay_function_type(), greet_request.get_name()),
             &my_greet_response,
         )
         .unwrap();
@@ -141,7 +141,7 @@ pub fn relay(_context: Context, message: Message) -> Effects {
         .kafka_keyed_egress(
             EgressIdentifier::new("example", "greets"),
             "greetings",
-            &my_greet.0.get_name().to_string(),
+            my_greet.0.get_name(),
             &my_greet,
         )
         .unwrap();
@@ -154,9 +154,9 @@ fn main() -> anyhow::Result<()> {
 
     let mut function_registry = FunctionRegistry::new();
 
-    function_registry.register_fn(greeter_function_type(), specs![seen_count_spec()], &greet);
+    function_registry.register_fn(greeter_function_type(), specs![seen_count_spec()], greet);
 
-    function_registry.register_fn(relay_function_type(), vec![], &relay);
+    function_registry.register_fn(relay_function_type(), vec![], relay);
 
     let hyper_transport = HyperHttpTransport::new("0.0.0.0:5000".parse()?);
     hyper_transport.run(function_registry)?;
