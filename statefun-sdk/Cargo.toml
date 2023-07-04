@@ -1,6 +1,6 @@
 [package]
 name = "statefun"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 authors = ["Aljoscha Krettek <aljoscha.krettek@gmail.com>"]
 readme = "../README.md"
 edition = "2018"
