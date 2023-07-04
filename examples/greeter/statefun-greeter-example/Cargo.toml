@@ -16,8 +16,8 @@ repository = "https://github.com/aljoscha/statefun-rust.git"
 anyhow = "1.0"
 log = "0.4.8"
 env_logger = "0.7.1"
-statefun = { path = "../../../statefun-sdk", version = "0.2.0-alpha.1" }
-statefun-proto = { path = "../../../statefun-proto", version = "0.2.0-alpha.1" }
+statefun = { path = "../../../statefun-sdk", version = "0.2.0-alpha.2" }
+statefun-proto = { path = "../../../statefun-proto", version = "0.2.0-alpha.2" }
 statefun-greeter-example-proto = { path = "../statefun-greeter-example-proto", version = "0.2.0" }
 protobuf = "2.15"
 serde = { version = "1.0.164", features = ["derive"] }
